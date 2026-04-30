@@ -13,6 +13,7 @@ import { FuelFilter } from './components/FuelFilter';
 import { StationPanel } from './components/StationPanel';
 import { AboutModal } from './components/AboutModal';
 import { PriceHistoryModal } from './components/PriceHistoryModal';
+import { Footer } from './components/Footer';
 import { useStationHistory } from './hooks/useStationHistory';
 import { timeAgo, FUEL_LABELS, getFuelPrice, getPriceBounds } from './utils/fuel';
 
@@ -170,6 +171,14 @@ export default function App() {
 
   return (
     <div className="relative h-full w-full overflow-hidden">
+      {/* Skip-nav link — visually hidden until focused (WCAG 2.4.1) */}
+      <a
+        href="#city-search"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-[2000] focus:rounded-md focus:bg-primary focus:px-3 focus:py-1.5 focus:text-sm focus:font-medium focus:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+      >
+        Aller à la recherche
+      </a>
+
       {/* Map — still receives ALL nearbyStations so markers exist even outside viewport */}
       <MapView
         center={center}
@@ -291,30 +300,12 @@ export default function App() {
         </div>
       )}
 
-      {/* Footer */}
-      <div className={`absolute bottom-2 left-2 z-10 flex items-center gap-2 rounded-lg bg-white/80 px-3 py-1.5 text-[11px] text-gray-500 shadow-sm backdrop-blur-sm ${selectedCity ? 'hidden md:flex' : ''}`}>
-        <button
-          onClick={() => setShowAbout(true)}
-          className="font-medium text-gray-600 hover:text-gray-900 underline decoration-gray-300 underline-offset-2"
-        >
-          À propos
-        </button>
-        <span className="text-gray-300">·</span>
-        <button
-          onClick={() => setShowHistory(true)}
-          className="font-medium text-gray-600 hover:text-gray-900 underline decoration-gray-300 underline-offset-2"
-        >
-          Évolution des prix
-        </button>
-        <span className="text-gray-300">·</span>
-        <span>Données gouv.fr</span>
-        {meta?.lastUpdate && (
-          <>
-            <span className="text-gray-300">·</span>
-            <span>MAJ {timeAgo(meta.lastUpdate)}</span>
-          </>
-        )}
-      </div>
+      <Footer
+        onShowAbout={() => setShowAbout(true)}
+        onShowHistory={() => setShowHistory(true)}
+        lastUpdate={meta?.lastUpdate}
+        hasCity={!!selectedCity}
+      />
 
       {showAbout && <AboutModal onClose={() => setShowAbout(false)} lastUpdate={meta?.lastUpdate} />}
       {showHistory && <PriceHistoryModal onClose={() => setShowHistory(false)} />}
