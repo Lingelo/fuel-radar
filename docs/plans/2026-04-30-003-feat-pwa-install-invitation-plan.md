@@ -1,7 +1,7 @@
 ---
 title: PWA Install Invitation in Welcome Overlay
 type: feat
-status: active
+status: completed
 date: 2026-04-30
 deepened: 2026-04-30
 origin: docs/brainstorms/2026-04-30-pwa-install-invitation-requirements.md
@@ -175,7 +175,7 @@ graph TB
   U3 --> U4[Unit 4: Regression checklist]
 ```
 
-- [ ] **Unit 1: vite-plugin-pwa setup + recovery page**
+- [x] **Unit 1: vite-plugin-pwa setup + recovery page**
 
 **Goal:** Installer `vite-plugin-pwa`, configurer un SW minimal au scope `/carburants-france/`, déclarer les types TypeScript, livrer la page de récupération `unregister-sw.html`.
 
@@ -217,7 +217,7 @@ graph TB
 - Lighthouse PWA audit (Chrome DevTools) passe le critère « Web app manifest and service worker meet the installability requirements »
 - Pré-merge : `curl -I` du SW déployé en preview pour mesurer le `Cache-Control` réel ; documenter dans le PR
 
-- [ ] **Unit 2: install state observable + capability hook (main.tsx wiring)**
+- [x] **Unit 2: install state observable + capability hook (main.tsx wiring)**
 
 **Goal:** Capter les events PWA dès le démarrage, exposer un état observable avec snapshot ref-stable, fournir un hook React qui orchestre prompt natif vs modal. Inclut la persistance localStorage cross-session avec sync cross-tab.
 
@@ -285,7 +285,7 @@ graph TB
 - Le hook compile sans warning React, pas de re-render en boucle (vérifier StrictMode dev)
 - L'invite (visible une fois Unit 3 mergée) disparaît sans reload sur l'event ci-dessus
 
-- [ ] **Unit 3: InstallInstructionsModal + welcome overlay wire-in**
+- [x] **Unit 3: InstallInstructionsModal + welcome overlay wire-in**
 
 **Goal:** Composant modal avec copy par contexte (3 variantes) ; intégration du lien Installer dans le welcome overlay et montage conditionnel de la modal.
 
@@ -363,7 +363,7 @@ graph TB
 - L'invite disparaît sans reload après install simulé (event `appinstalled` dispatché manuellement)
 - Régression : sélection d'une ville et de carburant fonctionne identiquement à avant la PR
 
-- [ ] **Unit 4: Regression checklist**
+- [x] **Unit 4: Regression checklist**
 
 **Goal:** Documenter les scénarios de validation manuelle pour la PR (ce projet n'a pas de test runner), incluant la table « UA → expected InstallContext » qui remplace les tests unitaires sur `detectInstallContext`.
 
