@@ -46,12 +46,10 @@ interface Props {
   panelOpen?: boolean;
 }
 
-// Tile layer with FR labels (MapTiler dataviz-light) when VITE_MAPTILER_KEY
-// is set, CARTO light_all fallback when key is absent or MapTiler returns
-// errors at runtime. dataviz-light chosen over streets-v4 / bright-v2
-// because the FUEL_COLORS markers (Gazole orange, SP95 green, SP98 blue,
-// E10 teal, E85 violet, GPLc gray) need a neutral basemap to stay
-// readable; a colored streets style would clash with the price markers.
+// Tile layer — OSM France for FR labels without API key. MapTiler
+// dataviz-light remains as an opt-in upgrade when VITE_MAPTILER_KEY is set
+// (more modern minimal aesthetic, but requires account + secret + dashboard
+// config). Default = OSM France because zero-setup and labels FR.
 function BaseTileLayer() {
   const maptilerKey = import.meta.env.VITE_MAPTILER_KEY;
   const [useFallback, setUseFallback] = useState(false);
@@ -59,8 +57,8 @@ function BaseTileLayer() {
   if (!maptilerKey || useFallback) {
     return (
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
-        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://www.openstreetmap.fr/">OSM France</a>'
+        url="https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png"
       />
     );
   }
