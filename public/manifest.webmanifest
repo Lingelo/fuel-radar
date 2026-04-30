@@ -5,7 +5,7 @@
   "description": "Trouvez le carburant le moins cher près de chez vous. Comparez les prix sur une carte interactive.",
   "lang": "fr",
   "dir": "ltr",
-  "theme_color": "#3b82f6",
+  "theme_color": "#000091",
   "background_color": "#ffffff",
   "display": "standalone",
   "orientation": "any",

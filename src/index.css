@@ -5,12 +5,22 @@
 
 @theme {
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  /* Fuel wayfinding colors (preserved — system de wayfinding cartographique) */
   --color-sp95: #22c55e;
   --color-sp98: #3b82f6;
   --color-e10: #14b8a6;
   --color-gazole: #f97316;
   --color-e85: #8b5cf6;
   --color-gplc: #6b7280;
+
+  /* Palette Vague 1 — service public moderne (R2 partial, R5 will extend in Vague 2) */
+  --color-primary: #000091;       /* bleu Marianne — accents, CTAs, header */
+  --color-alert: #E1000F;         /* hausses fortes / erreurs */
+  --color-success: #18753C;       /* baisses / DSFR success-main, WCAG AA */
+  --color-surface: #F5F5FE;       /* fond panneaux légers */
+  --color-ink: #3A3A3A;           /* text primary */
+  --color-ink-muted: #666666;     /* text secondary */
 }
 
 html, body, #root {

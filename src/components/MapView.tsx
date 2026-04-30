@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo } from 'react';
+import { useEffect, useRef, useMemo, useState } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet.markercluster';
@@ -44,6 +44,30 @@ interface Props {
   geolocating?: boolean;
   hasPanel?: boolean;
   panelOpen?: boolean;
+}
+
+// Tile layer with FR labels (MapTiler positron) when VITE_MAPTILER_KEY is set,
+// CARTO light_all fallback when key is absent or MapTiler returns errors at runtime.
+function BaseTileLayer() {
+  const maptilerKey = import.meta.env.VITE_MAPTILER_KEY;
+  const [useFallback, setUseFallback] = useState(false);
+
+  if (!maptilerKey || useFallback) {
+    return (
+      <TileLayer
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
+        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+      />
+    );
+  }
+
+  return (
+    <TileLayer
+      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://www.maptiler.com/">MapTiler</a>'
+      url={`https://api.maptiler.com/maps/positron/{z}/{x}/{y}.png?key=${maptilerKey}&lang=fr`}
+      eventHandlers={{ tileerror: () => setUseFallback(true) }}
+    />
+  );
 }
 
 function createPriceIcon(price: number, color: string, dimmed = false): L.DivIcon {
@@ -434,7 +458,7 @@ function renderPopupHTML(
       <div style="font-size:11px;color:#9ca3af;margin-bottom:8px;">${station.city} \u00b7 ${station.cp} \u00b7 ${distStr}</div>
       ${fuels}
       <a href="${navUrl}" target="_blank" rel="noopener noreferrer"
-         style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:10px;padding:7px 0;background:#3b82f6;color:white;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;">
+         style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:10px;padding:7px 0;background:var(--color-primary);color:white;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
         </svg>
@@ -471,10 +495,10 @@ function SearchRadiusCircle({
     // Radius circle
     const circle = L.circle(center, {
       radius: radiusKm * 1000,
-      color: '#3b82f6',
+      color: '#000091',
       weight: 2,
       opacity: 0.4,
-      fillColor: '#3b82f6',
+      fillColor: '#000091',
       fillOpacity: 0.06,
       interactive: false,
     });
@@ -484,7 +508,7 @@ function SearchRadiusCircle({
     // Center dot
     const dot = L.circleMarker(center, {
       radius: 7,
-      color: '#3b82f6',
+      color: '#000091',
       weight: 3,
       opacity: 0.9,
       fillColor: '#ffffff',
@@ -558,10 +582,7 @@ export function MapView({
         ]}
         maxBoundsViscosity={1.0}
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-        />
+        <BaseTileLayer />
         <MapUpdater center={center} zoom={zoom} bounds={bounds} />
         <BoundsTracker onChange={onVisibleBoundsChange} />
         <SearchRadiusCircle center={searchCenter} radiusKm={searchRadius} />
@@ -585,7 +606,7 @@ export function MapView({
           title="Me localiser"
         >
           {geolocating ? (
-            <svg className="h-5 w-5 animate-spin text-blue-500" viewBox="0 0 24 24" fill="none">
+            <svg className="h-5 w-5 animate-spin text-primary" viewBox="0 0 24 24" fill="none">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>

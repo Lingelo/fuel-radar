@@ -261,7 +261,7 @@ export default function App() {
             <button
               onClick={handleGeolocate}
               disabled={geolocating}
-              className="flex items-center gap-2 rounded-xl bg-blue-500 px-6 py-3 text-sm font-semibold text-white shadow-md transition-colors hover:bg-blue-600 disabled:opacity-60"
+              className="flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white shadow-md transition-colors hover:opacity-90 disabled:opacity-60"
             >
               {geolocating ? (
                 <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">

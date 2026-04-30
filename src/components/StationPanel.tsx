@@ -204,7 +204,7 @@ export function StationPanel({ stations, totalStations, selectedFuel, onStationC
             onClick={() => { setShowSettings(!showSettings); if (!realCostMode) setRealCostMode(true); }}
             className={`flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium transition-colors ${
               realCostMode
-                ? 'bg-blue-50 text-blue-600'
+                ? 'bg-primary/10 text-primary'
                 : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600'
             }`}
             title="Coût réel (trajet inclus)"
@@ -242,7 +242,7 @@ export function StationPanel({ stations, totalStations, selectedFuel, onStationC
                     <button
                       key={`${v.brand}-${v.model}-${i}`}
                       onClick={() => handleVehicleSelect(v)}
-                      className="flex w-full flex-col px-2 py-1 text-left hover:bg-blue-50"
+                      className="flex w-full flex-col px-2 py-1 text-left hover:bg-primary/10"
                     >
                       <span className="text-[11px] font-medium text-gray-700">
                         {v.brand} {v.model}
@@ -337,7 +337,7 @@ export function StationPanel({ stations, totalStations, selectedFuel, onStationC
               onMouseEnter={() => onStationHover(station.id)}
               onMouseLeave={() => onStationHover(null)}
               className={`flex w-full items-center justify-between gap-1.5 border-b border-gray-50 px-3 py-2 text-left transition-colors hover:bg-gray-50 ${
-                isSelected ? 'bg-blue-50' : ''
+                isSelected ? 'bg-primary/10' : ''
               }`}
             >
               <div className="min-w-0 flex-1">

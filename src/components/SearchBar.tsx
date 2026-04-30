@@ -85,7 +85,7 @@ export function SearchBar({ query, onSearch, results, loading, onSelect, onClear
           onChange={(e) => onSearch(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Rechercher une ville (rayon 10 km)..."
-          className="w-full rounded-xl border-0 bg-white py-2.5 pl-10 pr-10 text-sm text-gray-900 shadow-lg ring-1 ring-gray-200 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full rounded-xl border-0 bg-white py-2.5 pl-10 pr-10 text-sm text-gray-900 shadow-lg ring-1 ring-gray-200 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary"
         />
         {query && (
           <button
@@ -116,7 +116,7 @@ export function SearchBar({ query, onSearch, results, loading, onSelect, onClear
                 key={`${city.postcode}-${i}`}
                 onClick={() => onSelect(city)}
                 className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors ${
-                  i === highlightIndex ? 'bg-blue-50' : 'hover:bg-gray-50'
+                  i === highlightIndex ? 'bg-primary/10' : 'hover:bg-gray-50'
                 }`}
               >
                 <svg className="h-4 w-4 shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
