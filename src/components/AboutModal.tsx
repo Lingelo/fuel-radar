@@ -33,19 +33,11 @@ export function AboutModal({ onClose, lastUpdate }: Props) {
         </div>
 
         <div className="mt-4 rounded-lg bg-gray-50 px-3 py-2.5">
-          <p className="mb-1.5 text-xs font-semibold text-gray-700">Sources de données</p>
+          <p className="mb-1.5 text-xs font-semibold text-gray-700">Source de données</p>
           <ul className="space-y-1 text-xs text-gray-500">
             <li>
               <a href="https://donnees.roulez-eco.fr/opendata/instantane" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">prix-carburants.gouv.fr</a>
               {' '}— Prix des carburants en temps réel
-            </li>
-            <li>
-              <a href="https://data.ademe.fr/datasets/ademe-car-labelling" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">ADEME Car Labelling</a>
-              {' '}— Consommation des véhicules neufs
-            </li>
-            <li>
-              <a href="https://www.eea.europa.eu/en/datahub/datahubitem-view/fa8b1229-3db6-495d-b18e-9c9b3267c02b" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">EEA CO2 Monitoring</a>
-              {' '}— Emissions CO2 des véhicules immatriculés en France
             </li>
           </ul>
         </div>
@@ -61,7 +53,7 @@ export function AboutModal({ onClose, lastUpdate }: Props) {
 
         <div className={`${lastUpdate ? 'mt-3' : 'mt-5'} flex items-center justify-between border-t border-gray-100 pt-4`}>
           <span className="text-[11px] text-gray-400">
-            Projet open source — Données gouv.fr, ADEME, EEA
+            Projet open source — Données gouv.fr
           </span>
           <a
             href="https://github.com/Lingelo/carburants-france"
