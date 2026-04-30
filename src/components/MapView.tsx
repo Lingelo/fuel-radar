@@ -525,22 +525,21 @@ function SearchRadiusCircle({
     circle.addTo(map);
     circleRef.current = circle;
 
-    // Center marker — car icon in a circular white badge
+    // Center marker — car icon in a rounded square badge (app-icon style)
     const carIcon = L.divIcon({
       html: `
         <div style="
-          background: white;
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
-          border: 2px solid #171717;
+          background: #171717;
+          width: 32px;
+          height: 32px;
+          border-radius: 8px;
           box-shadow: 0 2px 8px rgba(0,0,0,0.25);
           display: flex;
           align-items: center;
           justify-content: center;
         ">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-               stroke="#171717" stroke-width="2"
+               stroke="white" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round">
             <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9L18 10l-2.7-3.6A2 2 0 0013.7 5H6.3a2 2 0 00-1.6.9L2 9.5 1.5 11C.7 11.3 0 12.1 0 13v3c0 .6.4 1 1 1h2"/>
             <circle cx="7" cy="17" r="2"/>
@@ -548,8 +547,8 @@ function SearchRadiusCircle({
           </svg>
         </div>`,
       className: '',
-      iconSize: [36, 36],
-      iconAnchor: [18, 18],
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
     });
     const marker = L.marker(center, { icon: carIcon, interactive: false });
     marker.addTo(map);
