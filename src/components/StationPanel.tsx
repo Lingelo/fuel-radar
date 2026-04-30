@@ -365,13 +365,13 @@ export function StationPanel({ stations, totalStations, selectedFuel, onStationC
               </div>
               <div className="flex shrink-0 flex-col items-end gap-0.5">
                 <span
-                  className="rounded-full px-2 py-0.5 text-[11px] font-bold text-white"
+                  className="rounded-full px-2 py-0.5 text-[11px] font-bold tabular-nums text-white"
                   style={{ backgroundColor: getPriceColor(price, minPrice, maxPrice) }}
                 >
                   {formatPrice(price)}
                 </span>
                 {realCost !== null && (
-                  <span className="text-[10px] font-semibold text-gray-500">
+                  <span className="text-[10px] font-semibold tabular-nums text-gray-500">
                     {realCost.toFixed(2).replace('.', ',')} € plein
                   </span>
                 )}
