@@ -6,11 +6,13 @@ interface Props {
   onSearch: (q: string) => void;
   results: CityResult[];
   loading: boolean;
+  error?: 'network' | null;
+  onRetry?: () => void;
   onSelect: (city: CityResult) => void;
   onClear: () => void;
 }
 
-export function SearchBar({ query, onSearch, results, loading, onSelect, onClear }: Props) {
+export function SearchBar({ query, onSearch, results, loading, error, onRetry, onSelect, onClear }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [highlightIndex, setHighlightIndex] = useState(-1);
@@ -86,6 +88,11 @@ export function SearchBar({ query, onSearch, results, loading, onSelect, onClear
           onKeyDown={handleKeyDown}
           placeholder="Rechercher une ville (rayon 10 km)..."
           className="w-full rounded-xl border-0 bg-white py-2.5 pl-10 pr-10 text-sm text-gray-900 shadow-lg ring-1 ring-gray-200 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary"
+          role="combobox"
+          aria-expanded={results.length > 0 && query.length >= 2}
+          aria-controls="city-search-listbox"
+          aria-activedescendant={highlightIndex >= 0 ? `city-option-${highlightIndex}` : undefined}
+          aria-autocomplete="list"
         />
         {query && (
           <button
@@ -103,32 +110,54 @@ export function SearchBar({ query, onSearch, results, loading, onSelect, onClear
         )}
       </div>
 
-      {(results.length > 0 || loading) && query.length >= 2 && (
+      {query.length >= 2 && (loading || results.length > 0 || error || (!loading && results.length === 0)) && (
         <div
           ref={dropdownRef}
-          className="absolute top-full z-50 mt-1 w-full overflow-hidden rounded-xl bg-white shadow-xl ring-1 ring-gray-200"
+          className="absolute top-full z-[1100] mt-1 max-h-60 w-full overflow-y-auto rounded-xl bg-white shadow-xl ring-1 ring-gray-200"
         >
-          {loading && results.length === 0 ? (
-            <div className="px-4 py-3 text-sm text-gray-400">Recherche...</div>
-          ) : (
-            results.map((city, i) => (
+          {error ? (
+            <div className="flex items-center justify-between gap-2 px-4 py-3 text-sm" role="alert">
+              <span className="text-gray-600">Erreur réseau</span>
               <button
-                key={`${city.postcode}-${i}`}
-                onClick={() => onSelect(city)}
-                className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors ${
-                  i === highlightIndex ? 'bg-primary/10' : 'hover:bg-gray-50'
-                }`}
+                type="button"
+                onClick={() => {
+                  onRetry?.();
+                  inputRef.current?.focus();
+                }}
+                className="rounded-md px-2 py-1 text-xs font-semibold text-primary hover:bg-primary/10"
               >
-                <svg className="h-4 w-4 shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <div>
-                  <span className="font-medium text-gray-800">{city.name}</span>
-                  <span className="ml-2 text-gray-400">{city.postcode}</span>
-                </div>
+                Réessayer
               </button>
-            ))
+            </div>
+          ) : loading && results.length === 0 ? (
+            <div className="px-4 py-3 text-sm text-gray-400" role="status" aria-live="polite">Recherche...</div>
+          ) : results.length === 0 ? (
+            <div className="px-4 py-3 text-sm text-gray-400" role="status" aria-live="polite">Aucune ville trouvée</div>
+          ) : (
+            <ul id="city-search-listbox" role="listbox" aria-label="Villes trouvées">
+              {results.map((city, i) => (
+                <li key={`${city.postcode}-${i}`}>
+                  <button
+                    id={`city-option-${i}`}
+                    role="option"
+                    aria-selected={i === highlightIndex}
+                    onClick={() => onSelect(city)}
+                    className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors ${
+                      i === highlightIndex ? 'bg-primary/10' : 'hover:bg-gray-50'
+                    }`}
+                  >
+                    <svg className="h-4 w-4 shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <div>
+                      <span className="font-medium text-gray-800">{city.name}</span>
+                      <span className="ml-2 text-gray-400">{city.postcode}</span>
+                    </div>
+                  </button>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
       )}

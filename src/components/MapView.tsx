@@ -602,16 +602,17 @@ export function MapView({
         <button
           onClick={onGeolocate}
           disabled={geolocating}
+          aria-label={geolocating ? 'Localisation en cours' : 'Me localiser'}
           className={`absolute right-3 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-lg ring-1 ring-gray-200 transition-all hover:bg-gray-50 disabled:opacity-60 md:bottom-6 ${hasPanel ? `${panelOpen ? 'bottom-[340px]' : 'bottom-16'} md:right-[300px]` : 'bottom-20'}`}
           title="Me localiser"
         >
           {geolocating ? (
-            <svg className="h-5 w-5 animate-spin text-primary" viewBox="0 0 24 24" fill="none">
+            <svg className="h-5 w-5 animate-spin text-primary" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
           ) : (
-            <svg className="h-5 w-5 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg className="h-5 w-5 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <circle cx="12" cy="12" r="3" />
               <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
             </svg>

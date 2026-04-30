@@ -23,7 +23,7 @@ interface StationWithDistance extends Station {
 }
 
 export default function App() {
-  const { query, search, results, loading: searchLoading, setResults, setQuery } = useCitySearch();
+  const { query, search, results, loading: searchLoading, error: searchError, retry: searchRetry, setResults, setQuery } = useCitySearch();
   const { stations, loading: stationsLoading, error, meta, loadDepartments, resetStations } = useStations();
   const { center, zoom, bounds, flyToCity } = useMapView();
 
@@ -208,6 +208,8 @@ export default function App() {
             onSearch={search}
             results={results}
             loading={searchLoading}
+            error={searchError}
+            onRetry={searchRetry}
             onSelect={handleCitySelect}
             onClear={handleClear}
           />
@@ -245,7 +247,7 @@ export default function App() {
 
       {/* Geo error */}
       {geoError && (
-        <div className="absolute bottom-24 left-1/2 z-20 -translate-x-1/2 md:bottom-8">
+        <div className="absolute bottom-24 left-1/2 z-20 -translate-x-1/2 md:bottom-8" role="alert">
           <div className="rounded-xl bg-red-50 px-5 py-2.5 text-sm text-red-600 shadow-lg whitespace-nowrap">
             {geoError}
           </div>
