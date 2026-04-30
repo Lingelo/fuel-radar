@@ -530,7 +530,10 @@ function SearchRadiusCircle({
 function BoundsTracker({ onChange }: { onChange: (bounds: L.LatLngBounds) => void }) {
   const map = useMap();
   const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
 
   useEffect(() => {
     const handler = () => {

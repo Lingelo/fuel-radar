@@ -5,6 +5,15 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Note on secret handling for VITE_MAPTILER_KEY:
+# - Triggers limited to push on `main` and manual workflow_dispatch — secrets
+#   are NOT exposed to fork PRs (GitHub default for public repos).
+# - The key is injected at the Build step ONLY (step-level env), not the
+#   whole job, to minimize the surface where it is in process environment.
+# - Vite inlines VITE_* into the public JS bundle by design — the real
+#   abuse mitigation is the HTTP Referrer allow-list + hard quota cap
+#   configured on the MapTiler dashboard, NOT this secret indirection.
+
 permissions:
   contents: read
   pages: write
@@ -38,6 +47,13 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          # Optional: when this secret exists, the map switches from CARTO
+          # (English labels) to MapTiler positron raster with `?lang=fr`.
+          # Absent -> the BaseTileLayer component falls back to CARTO at
+          # runtime, no error. Configure the secret in
+          # Settings -> Secrets and variables -> Actions.
+          VITE_MAPTILER_KEY: ${{ secrets.MAPTILER_KEY }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4

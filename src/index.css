@@ -3,7 +3,47 @@
 @import "leaflet.markercluster/dist/MarkerCluster.css";
 @import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 
+/*
+ * Marianne self-host scaffold (R3 deferred).
+ * Activation:
+ *   1. Download .woff2 files from https://www.systeme-de-design.gouv.fr/fondamentaux/typographie/
+ *      (Marianne-Regular, Marianne-Medium, Marianne-Bold).
+ *   2. Verify SHA-256 checksums against the DSFR repo release manifest.
+ *   3. Place files in `public/fonts/`.
+ *   4. Uncomment the @font-face block below.
+ *   5. Switch --font-sans to put 'Marianne' first (commented alt below).
+ *   6. Uncomment the <link rel="preload"> in index.html.
+ *   7. Run Lighthouse staging vs A2 baseline. If LCP regresses > 2 points,
+ *      revert to Inter (fallback runtime kept as second in stack).
+ */
+/*
+@font-face {
+  font-family: 'Marianne';
+  src: url('/carburants-france/fonts/Marianne-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Marianne';
+  src: url('/carburants-france/fonts/Marianne-Medium.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Marianne';
+  src: url('/carburants-france/fonts/Marianne-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+*/
+
 @theme {
+  /* When activating Marianne, replace with:
+     --font-sans: 'Marianne', 'Inter', ui-sans-serif, system-ui, sans-serif;
+   */
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
 
   /* Fuel wayfinding colors (preserved — system de wayfinding cartographique) */

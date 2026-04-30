@@ -18,8 +18,11 @@ export function SearchBar({ query, onSearch, results, loading, error, searched, 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [highlightIndex, setHighlightIndex] = useState(-1);
 
-  // Reset highlight when results change
+  // Reset highlight when results change. eslint complains about setState in
+  // effect, but the alternatives (deriving from results, key prop on listbox)
+  // are messier and not worth the structural cost here.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHighlightIndex(-1);
   }, [results]);
 

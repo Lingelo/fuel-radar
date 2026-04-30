@@ -73,7 +73,7 @@ export default function App() {
       const dept = getDepartmentFromPostalCode(city.postcode);
       const depts = getDepartmentWithNeighbors(dept);
       await loadDepartments(depts);
-      flyToCity(city.lat, city.lng, SEARCH_RADIUS_KM);
+      flyToCity(city.lat, city.lng);
     },
     [search, setResults, loadDepartments, resetStations, flyToCity],
   );
