@@ -31,6 +31,7 @@ This repo follows the compound-engineering plan/brainstorm convention:
 
 - `docs/brainstorms/*-requirements.md` — product requirement docs (origin for plans)
 - `docs/plans/*-plan.md` — implementation plans (consumed by `/ce:work`)
+- `docs/solutions/*` — documented solutions to past problems and best practices, organized by category with YAML frontmatter (`module`, `tags`, `problem_type`); relevant when implementing or debugging in documented areas
 - `docs/regression-checklist-*.md` — manual regression checklists attached to PRs (no test runner in this project)
 - `docs/marianne-licence-a4-notes.md` — A4 pre-work notes for the UI redesign plan
 

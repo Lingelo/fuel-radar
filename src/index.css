@@ -99,6 +99,23 @@ html, body, #root {
   -webkit-backdrop-filter: blur(12px);
 }
 
+/* Scroll fade — right-edge gradient hinting at off-screen content */
+.scroll-fade-right {
+  position: relative;
+}
+.scroll-fade-right::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 1.5rem;
+  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.85));
+  border-radius: 0 0.75rem 0.75rem 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
 /* Custom scrollbar */
 .panel-scroll::-webkit-scrollbar {
   width: 4px;
