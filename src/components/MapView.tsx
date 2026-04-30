@@ -525,34 +525,22 @@ function SearchRadiusCircle({
     circle.addTo(map);
     circleRef.current = circle;
 
-    // Center marker — top-down car silhouette in a rounded-square badge.
-    // Custom SVG (no Unicode emoji renders top-down by default — 🚗 is
-    // side-view on every platform). Drop shadow stays for depth on the
-    // pale CARTO basemap.
+    // Center marker — black top-down car silhouette, no badge.
+    // Drop shadow lifts the SVG off the pale CARTO basemap.
     const carIcon = L.divIcon({
       html: `
-        <div style="
-          background: #171717;
-          width: 32px;
-          height: 32px;
-          border-radius: 8px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        ">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
-            <!-- car body (top-down silhouette) -->
-            <rect x="6" y="2" width="12" height="20" rx="3" />
-            <!-- windshield (front) -->
-            <rect x="8" y="5" width="8" height="4" rx="1" fill="#171717" opacity="0.7" />
-            <!-- rear window -->
-            <rect x="8" y="15" width="8" height="4" rx="1" fill="#171717" opacity="0.7" />
-            <!-- side mirrors -->
-            <rect x="4" y="7" width="2" height="2" rx="0.5" />
-            <rect x="18" y="7" width="2" height="2" rx="0.5" />
-          </svg>
-        </div>`,
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="#171717"
+             style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));">
+          <!-- car body (top-down silhouette) -->
+          <rect x="6" y="2" width="12" height="20" rx="3" />
+          <!-- side mirrors -->
+          <rect x="4" y="7" width="2" height="2" rx="0.5" />
+          <rect x="18" y="7" width="2" height="2" rx="0.5" />
+          <!-- windshield (front) -->
+          <rect x="8" y="5" width="8" height="4" rx="1" fill="white" opacity="0.65" />
+          <!-- rear window -->
+          <rect x="8" y="15" width="8" height="4" rx="1" fill="white" opacity="0.65" />
+        </svg>`,
       className: '',
       iconSize: [32, 32],
       iconAnchor: [16, 16],
