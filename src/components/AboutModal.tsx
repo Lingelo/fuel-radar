@@ -9,7 +9,7 @@ interface Props {
 export function AboutModal({ onClose, lastUpdate }: Props) {
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Carburants France</DialogTitle>
           <DialogDescription>Trouvez le carburant le moins cher près de chez vous</DialogDescription>

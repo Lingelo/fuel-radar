@@ -350,7 +350,7 @@ export function PriceHistoryModal({ onClose }: { onClose: () => void }) {
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-3xl">
         <VisuallyHidden.Root>
           <DialogTitle>Évolution des prix</DialogTitle>
         </VisuallyHidden.Root>
