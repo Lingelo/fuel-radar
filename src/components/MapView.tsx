@@ -46,10 +46,13 @@ interface Props {
   panelOpen?: boolean;
 }
 
-// Tile layer — OSM France for FR labels without API key. MapTiler
-// dataviz-light remains as an opt-in upgrade when VITE_MAPTILER_KEY is set
-// (more modern minimal aesthetic, but requires account + secret + dashboard
-// config). Default = OSM France because zero-setup and labels FR.
+// Tile layer — CARTO light_all by default (neutral minimal aesthetic, lets
+// FUEL_COLORS markers stand out, free, no setup). Labels are in English
+// for non-French zones (Germany/Spain/Italy borders) — accepted trade-off
+// vs OSM France which clashed visually with the markers.
+// MapTiler dataviz-light remains an opt-in upgrade when VITE_MAPTILER_KEY
+// is set (FR labels + modern minimal aesthetic, but requires account + CI
+// secret + dashboard config).
 function BaseTileLayer() {
   const maptilerKey = import.meta.env.VITE_MAPTILER_KEY;
   const [useFallback, setUseFallback] = useState(false);
@@ -57,8 +60,8 @@ function BaseTileLayer() {
   if (!maptilerKey || useFallback) {
     return (
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://www.openstreetmap.fr/">OSM France</a>'
-        url="https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
+        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
       />
     );
   }
