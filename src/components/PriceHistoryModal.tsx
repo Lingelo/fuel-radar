@@ -85,6 +85,8 @@ export function PriceHistoryModal({ onClose }: { onClose: () => void }) {
     prices: { fuel: FuelType; price: number }[];
   } | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     fetch(`${BASE_URL}data/history.json`)
@@ -96,6 +98,19 @@ export function PriceHistoryModal({ onClose }: { onClose: () => void }) {
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+    dialogRef.current?.focus();
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('keydown', handleKey);
+      previouslyFocusedRef.current?.focus();
+    };
+  }, [onClose]);
 
   const toggleFuel = useCallback((fuel: FuelType) => {
     setEnabledFuels((prev) => {
@@ -350,18 +365,24 @@ export function PriceHistoryModal({ onClose }: { onClose: () => void }) {
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="history-modal-title"
     >
       <div
-        className="w-full max-w-2xl rounded-2xl bg-white p-5 shadow-2xl"
+        ref={dialogRef}
+        tabIndex={-1}
+        className="w-full max-w-2xl rounded-2xl bg-white p-5 shadow-2xl focus:outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-gray-800">
+          <h2 id="history-modal-title" className="text-lg font-bold text-gray-800">
             Évolution des prix
           </h2>
           <button
             onClick={onClose}
+            aria-label="Fermer"
             className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
           >
             <svg

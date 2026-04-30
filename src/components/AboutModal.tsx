@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { timeAgo } from '../utils/fuel';
 
@@ -8,23 +8,40 @@ interface Props {
 }
 
 export function AboutModal({ onClose, lastUpdate }: Props) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
+
   useEffect(() => {
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+    dialogRef.current?.focus();
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
     document.addEventListener('keydown', handleKey);
-    return () => document.removeEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('keydown', handleKey);
+      previouslyFocusedRef.current?.focus();
+    };
   }, [onClose]);
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="about-modal-title"
+    >
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
       <div
-        className="relative max-w-md rounded-2xl bg-white p-6 shadow-2xl"
+        ref={dialogRef}
+        tabIndex={-1}
+        className="relative max-w-md rounded-2xl bg-white p-6 shadow-2xl focus:outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           onClick={onClose}
+          aria-label="Fermer"
           className="absolute right-3 top-3 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
         >
           <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -32,7 +49,7 @@ export function AboutModal({ onClose, lastUpdate }: Props) {
           </svg>
         </button>
 
-        <h2 className="mb-1 text-lg font-bold text-gray-900">Carburants France</h2>
+        <h2 id="about-modal-title" className="mb-1 text-lg font-bold text-gray-900">Carburants France</h2>
         <p className="mb-4 text-xs text-gray-400">Trouvez le carburant le moins cher près de chez vous</p>
 
         <div className="space-y-3 text-sm leading-relaxed text-gray-600">
