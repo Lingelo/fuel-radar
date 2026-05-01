@@ -6,6 +6,23 @@ const deptCache = new Map<string, Station[]>();
 const historyCache = new Map<string, StationHistoryData>();
 let metaPromise: Promise<MetaData | null> | null = null;
 
+/**
+ * Drop in-memory station caches and best-effort purge the corresponding
+ * Cache Storage entry so the next fetch goes back to the network. Used
+ * when the app is brought back to foreground after a long pause.
+ */
+export async function invalidateStations(): Promise<void> {
+  deptCache.clear();
+  metaPromise = null;
+  if ('caches' in window) {
+    try {
+      await caches.delete('station-data');
+    } catch {
+      // ignore — cache may not exist on first launch
+    }
+  }
+}
+
 export async function fetchDepartment(dept: string): Promise<Station[]> {
   if (deptCache.has(dept)) return deptCache.get(dept)!;
   try {

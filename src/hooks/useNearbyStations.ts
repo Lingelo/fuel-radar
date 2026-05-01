@@ -3,6 +3,7 @@ import { fetchDepartments } from '../lib/data';
 import { boundingBox, getDepartment } from '../lib/department';
 import { haversineKm } from '../lib/distance';
 import { useFilters } from '../state/FiltersContext';
+import { useForegroundRefresh } from './useForegroundRefresh';
 import type { Station } from '../types';
 
 interface Result {
@@ -17,6 +18,9 @@ interface Result {
  */
 export function useNearbyStations(): Result {
   const { userLocation, radiusKm } = useFilters();
+  // Bumped when the app returns to foreground after >60s — re-runs the
+  // effect below so the user always sees fresh prices on app resume.
+  const foregroundVersion = useForegroundRefresh();
   const [stations, setStations] = useState<Station[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -94,7 +98,7 @@ export function useNearbyStations(): Result {
     return () => {
       cancelled = true;
     };
-  }, [userLocation, radiusKm]);
+  }, [userLocation, radiusKm, foregroundVersion]);
 
   return { stations, loading };
 }
