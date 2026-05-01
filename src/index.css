@@ -1,151 +1,215 @@
-@import "tailwindcss";
-@import "leaflet/dist/leaflet.css";
-@import "leaflet.markercluster/dist/MarkerCluster.css";
-@import "leaflet.markercluster/dist/MarkerCluster.Default.css";
-@import "tw-animate-css";
+@import 'tailwindcss';
+@import 'leaflet/dist/leaflet.css';
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
 
-/*
- ---break---
- */
-@custom-variant dark (&:is(.dark *));
-
-/* App tokens — neutral modern identity. */
 @theme {
+  /* === Material 3 colors from Stitch DESIGN.md === */
+  --color-surface: #f9f9ff;
+  --color-surface-dim: #d3daef;
+  --color-surface-bright: #f9f9ff;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f1f3ff;
+  --color-surface-container: #e9edff;
+  --color-surface-container-high: #e1e8fd;
+  --color-surface-container-highest: #dce2f7;
+  --color-on-surface: #141b2b;
+  --color-on-surface-variant: #5a4138;
+  --color-inverse-surface: #293040;
+  --color-inverse-on-surface: #edf0ff;
+  --color-outline: #8e7166;
+  --color-outline-variant: #e2bfb2;
+  --color-surface-tint: #a73a00;
+  --color-surface-variant: #dce2f7;
+
+  --color-primary: #a33900;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #cc4900;
+  --color-on-primary-container: #fffbff;
+  --color-inverse-primary: #ffb599;
+  --color-primary-fixed: #ffdbce;
+  --color-primary-fixed-dim: #ffb599;
+  --color-on-primary-fixed: #370e00;
+  --color-on-primary-fixed-variant: #7f2b00;
+
+  --color-secondary: #006399;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #7bc2ff;
+  --color-on-secondary-container: #004f7b;
+  --color-secondary-fixed: #cde5ff;
+  --color-secondary-fixed-dim: #94ccff;
+  --color-on-secondary-fixed: #001d32;
+  --color-on-secondary-fixed-variant: #004b74;
+
+  --color-tertiary: #006b2f;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #1e8642;
+  --color-on-tertiary-container: #f7fff3;
+  --color-tertiary-fixed: #95f8a7;
+  --color-tertiary-fixed-dim: #79db8d;
+  --color-on-tertiary-fixed: #00210a;
+  --color-on-tertiary-fixed-variant: #005323;
+
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+
+  --color-background: #f9f9ff;
+  --color-on-background: #141b2b;
+
+  /* === Typography (Inter, custom scale) === */
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
 
-  /* Fuel wayfinding (porte l'expressivité visuelle de l'app, accordée à
-     l'identité neutre — saturation 600 plutôt que 500). Doit rester
-     synchronisé avec FUEL_COLORS dans src/utils/fuel.ts. */
-  --color-sp95: #16a34a;     /* green-600 */
-  --color-sp98: #2563eb;     /* blue-600 */
-  --color-e10: #0d9488;      /* teal-600 */
-  --color-gazole: #ea580c;   /* orange-600 */
-  --color-e85: #7c3aed;      /* violet-600 */
-  --color-gplc: #525252;     /* neutral-600 */
+  --text-display-price: 40px;
+  --text-display-price--line-height: 48px;
+  --text-display-price--letter-spacing: -0.02em;
+  --text-display-price--font-weight: 700;
 
-  /* Semantic tokens used directly in MapView popup HTML (template strings,
-     can't go through Tailwind utilities) */
-  --color-alert: #dc2626;     /* red-600 — hausses prix / erreurs */
-  --color-success: #15803d;   /* green-700 — baisses prix */
-  --color-ink: #171717;       /* near-black — text primary */
-  --color-ink-muted: #525252; /* neutral-600 — text secondary */
+  --text-headline-lg: 24px;
+  --text-headline-lg--line-height: 32px;
+  --text-headline-lg--font-weight: 600;
+
+  --text-headline-md: 20px;
+  --text-headline-md--line-height: 28px;
+  --text-headline-md--font-weight: 600;
+
+  --text-body-lg: 16px;
+  --text-body-lg--line-height: 24px;
+  --text-body-lg--font-weight: 400;
+
+  --text-body-sm: 14px;
+  --text-body-sm--line-height: 20px;
+  --text-body-sm--font-weight: 400;
+
+  --text-label-caps: 12px;
+  --text-label-caps--line-height: 16px;
+  --text-label-caps--letter-spacing: 0.05em;
+  --text-label-caps--font-weight: 700;
+
+  /* === Spacing — 8px linear scale === */
+  --spacing-xs: 4px;
+  --spacing-base: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 16px;
+  --spacing-gutter: 12px;
+  --spacing-container-margin: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* === Border radius === */
+  --radius-sm: 0.25rem;
+  --radius: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-full: 9999px;
 }
 
-/* shadcn/ui token surface — bridged to our palette so shadcn components
-   adopt our identity automatically. */
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-}
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;       /* var(--color-ink) */
-  --card: #ffffff;
-  --card-foreground: #171717;
-  --popover: #ffffff;
-  --popover-foreground: #171717;
-  --primary: #171717;          /* charcoal — neutral, not gov.fr */
-  --primary-foreground: #ffffff;
-  --secondary: #f5f5f5;        /* neutral-100 */
-  --secondary-foreground: #171717;
-  --muted: #f5f5f5;
-  --muted-foreground: #525252; /* var(--color-ink-muted) */
-  --accent: #f5f5f5;
-  --accent-foreground: #171717;
-  --destructive: #dc2626;      /* var(--color-alert) */
-  --border: #e5e5e5;           /* neutral-200 */
-  --input: #e5e5e5;
-  --ring: #171717;             /* focus ring = primary */
-  --radius: 0.625rem;
-}
-
-html, body, #root {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-}
-
-.leaflet-container {
+html,
+body,
+#root {
   height: 100%;
   width: 100%;
-  z-index: 0;
 }
 
-/* Frosted glass effect (used on overlays, header, panels) */
-.glass {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-background);
+  color: var(--color-on-background);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-/* Scroll fade — right-edge gradient hinting at off-screen content */
-.scroll-fade-right {
-  position: relative;
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  width: 1em;
+  height: 1em;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  flex-shrink: 0;
+  /* Hide the literal glyph name (e.g. "search") until the icon font is
+     ready. Combined with display=block on the @font-face, this prevents
+     a brief flash of raw text on cold reload. */
+  color: transparent;
+  text-shadow: 0 0 0 currentColor;
 }
-.scroll-fade-right::after {
-  content: '';
+.material-symbols-outlined:not(:lang(rtl)) {
+  color: inherit;
+  text-shadow: none;
+}
+/* Fade icons in once the font has loaded. Browsers expose this via
+   `document.fonts.ready` — we add `.fonts-loaded` on <html>. */
+html:not(.fonts-loaded) .material-symbols-outlined {
+  visibility: hidden;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Map pin animations */
+.fuel-pin {
+  cursor: pointer;
+  transform-origin: center bottom;
+  transition: transform 120ms ease;
+}
+.fuel-pin:hover {
+  transform: scale(1.06);
+}
+.fuel-pin-selected {
+  z-index: 1000 !important;
+  animation: fuel-pin-pop 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.fuel-pin-selected .fuel-pin-body {
+  transform: scale(1.18);
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--color-primary) 25%, transparent),
+    0 4px 12px rgba(0, 0, 0, 0.5);
+}
+.fuel-pin-selected .fuel-pin-pulse {
   position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 1.5rem;
-  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.85));
-  border-radius: 0 0.75rem 0.75rem 0;
+  inset: -8px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--color-primary) 35%, transparent);
+  animation: fuel-pin-pulse 1.6s ease-out infinite;
   pointer-events: none;
-  z-index: 1;
+  z-index: -1;
 }
-
-/* Custom scrollbar */
-.panel-scroll::-webkit-scrollbar {
-  width: 4px;
+@keyframes fuel-pin-pop {
+  0% { transform: scale(0.6); }
+  60% { transform: scale(1.15); }
+  100% { transform: scale(1); }
 }
-.panel-scroll::-webkit-scrollbar-track {
-  background: transparent;
-}
-.panel-scroll::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 2px;
-}
-
-/* Marker cluster overrides — count-based signaling (small/medium/large),
-   not fuel-related. Aligned to the same 600-saturation register as
-   FUEL_COLORS for visual coherence. */
-.marker-cluster-small {
-  background-color: rgba(22, 163, 74, 0.3) !important;   /* green-600 */
-}
-.marker-cluster-small div {
-  background-color: rgba(22, 163, 74, 0.6) !important;
-}
-.marker-cluster-medium {
-  background-color: rgba(234, 88, 12, 0.3) !important;   /* orange-600 */
-}
-.marker-cluster-medium div {
-  background-color: rgba(234, 88, 12, 0.6) !important;
-}
-.marker-cluster-large {
-  background-color: rgba(220, 38, 38, 0.3) !important;   /* red-600 */
-}
-.marker-cluster-large div {
-  background-color: rgba(220, 38, 38, 0.6) !important;
+@keyframes fuel-pin-pulse {
+  0%   { transform: scale(0.9); opacity: 0.8; }
+  100% { transform: scale(1.8); opacity: 0; }
 }

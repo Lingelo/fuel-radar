@@ -1,21 +1,20 @@
 {
-  "id": "/carburants-france/",
-  "name": "Carburants France — Prix des stations-service",
+  "name": "Carburants France",
   "short_name": "Carburants",
-  "description": "Trouvez le carburant le moins cher près de chez vous. Comparez les prix sur une carte interactive.",
+  "description": "Prix des carburants en France en temps réel — données prix-carburants.gouv.fr.",
   "lang": "fr",
-  "dir": "ltr",
-  "theme_color": "#171717",
-  "background_color": "#ffffff",
+  "scope": "./",
+  "start_url": "./",
   "display": "standalone",
   "orientation": "any",
-  "scope": "/carburants-france/",
-  "start_url": "/carburants-france/",
-  "categories": ["navigation", "travel", "utilities"],
+  "background_color": "#f9f9ff",
+  "theme_color": "#a33900",
   "icons": [
-    { "src": "pwa-64x64.png", "sizes": "64x64", "type": "image/png" },
-    { "src": "pwa-192x192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "pwa-512x512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "maskable-icon-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
   ]
 }

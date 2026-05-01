@@ -234,6 +234,19 @@ function parseXML(xmlPath) {
           currentStation.city = decodeXMLEntities(cityMatch[1].trim());
         }
 
+        // 24/7 automate attribute on <horaires>
+        const horairesMatch = line.match(/<horaires\s[^>]*automate-24-24="(\d?)"/i);
+        if (horairesMatch && horairesMatch[1] === '1') {
+          currentStation.h24 = true;
+        }
+
+        // Services (one per line)
+        const serviceMatch = line.match(/<service>(.*?)<\/service>/i);
+        if (serviceMatch) {
+          if (!currentStation.services) currentStation.services = [];
+          currentStation.services.push(decodeXMLEntities(serviceMatch[1].trim()));
+        }
+
         // Fuel prices
         const priceMatch = line.match(/<prix\s+nom="([^"]*?)"\s+id="(\d+)"\s+maj="([^"]*?)"\s+valeur="([^"]*?)"/);
         if (priceMatch) {
@@ -337,6 +350,8 @@ function groupByDepartment(stations, brandMap) {
     };
     const brand = brandMap.get(station.id);
     if (brand) entry.brand = brand;
+    if (station.h24) entry.h24 = true;
+    if (station.services && station.services.length > 0) entry.services = station.services;
     groups[dept].push(entry);
   }
   return groups;

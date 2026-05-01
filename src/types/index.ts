@@ -1,9 +1,11 @@
 export type FuelType = 'Gazole' | 'SP95' | 'SP98' | 'E10' | 'E85' | 'GPLc';
 
+export const FUEL_TYPES: FuelType[] = ['Gazole', 'SP95', 'E10', 'SP98', 'E85', 'GPLc'];
+
 export interface FuelPrice {
   /** Price in euros */
   p: number;
-  /** Last update date ISO string */
+  /** Last update date (YYYY-MM-DD) */
   d: string;
 }
 
@@ -15,34 +17,29 @@ export interface Station {
   city: string;
   cp: string;
   brand?: string;
+  /** Open 24/7 via automatic dispenser (from XML automate-24-24 attribute). */
+  h24?: boolean;
+  /** Free-form service labels straight from the gov XML (e.g. "Lavage automatique"). */
+  services?: string[];
   fuels: Partial<Record<FuelType, FuelPrice>>;
-}
-
-export interface CityResult {
-  name: string;
-  postcode: string;
-  departmentCode: string;
-  lat: number;
-  lng: number;
 }
 
 export interface MetaData {
   lastUpdate: string;
 }
 
-/** Per-station price history: stationId → fuel → [epoch, price][] */
+/** Per-station price history: stationId -> fuel -> [epoch, price][] */
 export type StationHistoryData = Record<string, Record<string, [number, number][]>>;
 
-/** Runtime install affordance available to the user. */
-export type InstallContext =
-  | 'native-prompt'    // beforeinstallprompt event captured, can call prompt() directly
-  | 'ios-safari'       // iOS Safari (no beforeinstallprompt) — show Share + Add to Home Screen
-  | 'in-app-webview'   // Facebook/Instagram/Gmail/etc WebView — instruct to reopen in real browser
-  | 'generic';         // Firefox / desktop without prompt / unknown — point at browser menu
+export type View =
+  | { kind: 'map' }
+  | { kind: 'stations' }
+  | { kind: 'favorites' }
+  | { kind: 'trends' }
+  | { kind: 'settings' }
+  | { kind: 'details'; stationId: number };
 
-/** Subset of the BeforeInstallPromptEvent we use. Native browser type. */
-export interface BeforeInstallPromptEvent extends Event {
-  readonly platforms: ReadonlyArray<string>;
-  readonly userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
-  prompt(): Promise<void>;
+export interface Coords {
+  lat: number;
+  lng: number;
 }

@@ -235,6 +235,18 @@ function saveStationHistory(stationPrices) {
 }
 
 /**
+ * Retention window: drop history points older than this many days at every
+ * merge/save. Keeps file sizes bounded so per-dept JSONs don't grow forever.
+ * 730 days = 2 years, comfortably covers the "1 an" view in TrendsScreen.
+ */
+const RETENTION_DAYS = 730;
+
+function pruneOldEntries(entries) {
+  const cutoff = Date.now() - RETENTION_DAYS * 86400_000;
+  return entries.filter(([epoch]) => epoch >= cutoff);
+}
+
+/**
  * Merge new station prices into existing per-department history files.
  */
 function mergeStationHistory(stationPrices) {
@@ -249,6 +261,7 @@ function mergeStationHistory(stationPrices) {
   }
 
   let addedTotal = 0;
+  let prunedTotal = 0;
   for (const [dept, newStations] of deptNew) {
     const filePath = join(STATION_HISTORY_DIR, `${dept}.json`);
     let existing = {};
@@ -271,13 +284,16 @@ function mergeStationHistory(stationPrices) {
           }
         }
         existing[stationId][fuelName].sort((a, b) => a[0] - b[0]);
+        const before = existing[stationId][fuelName].length;
+        existing[stationId][fuelName] = pruneOldEntries(existing[stationId][fuelName]);
+        prunedTotal += before - existing[stationId][fuelName].length;
       }
     }
 
     writeFileSync(filePath, JSON.stringify(existing));
   }
 
-  console.log(`Merged ${addedTotal} new station-level data points.`);
+  console.log(`Merged ${addedTotal} new station-level data points (pruned ${prunedTotal} stale points beyond ${RETENTION_DAYS} days).`);
 }
 
 /**
@@ -320,6 +336,14 @@ function loadExistingHistory() {
 
 function saveHistory(history) {
   mkdirSync(DATA_DIR, { recursive: true });
+  // Apply the same retention window to the national daily averages so the
+  // top-of-app history.json stays bounded (currently ~16 KB; without
+  // pruning it would cross 100 KB after a few years).
+  if (history && history.fuels) {
+    for (const fuel of Object.keys(history.fuels)) {
+      history.fuels[fuel] = pruneOldEntries(history.fuels[fuel]);
+    }
+  }
   writeFileSync(HISTORY_PATH, JSON.stringify(history));
   const sizeKB = (Buffer.byteLength(JSON.stringify(history)) / 1024).toFixed(1);
   console.log(`Saved history.json (${sizeKB} KB)`);

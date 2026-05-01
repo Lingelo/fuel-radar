@@ -1,48 +1,18 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { registerSW } from 'virtual:pwa-register';
 import './index.css';
-import App from './App';
-import {
-  capturePrompt,
-  consumePrompt,
-  markInstalled,
-  syncFromStorage,
-} from './utils/installState';
-import type { BeforeInstallPromptEvent } from './types';
+import { App } from './App';
 
-// Listeners attached at module scope before React mounts so we don't miss
-// `beforeinstallprompt`, which fires once and early in the page lifecycle.
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  capturePrompt(e as BeforeInstallPromptEvent);
-});
-
-window.addEventListener('appinstalled', () => {
-  markInstalled();
-  consumePrompt();
-});
-
-window.addEventListener('storage', (e) => {
-  // Re-sync on any change to the install flag (set or clear) — the value
-  // check happens inside syncFromStorage by re-reading localStorage.
-  if (e.key === 'pwa_installed') {
-    syncFromStorage();
-  }
-});
-
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') {
-    syncFromStorage();
-  }
-});
-
-registerSW({
-  immediate: true,
-  onRegisterError(err) {
-    console.error('SW registration failed', err);
-  },
-});
+// Add `fonts-loaded` to <html> once Material Symbols + Inter are ready.
+// This unhides icons (which would otherwise show their literal name briefly).
+const fonts = (document as Document & { fonts?: { ready: Promise<unknown> } }).fonts;
+if (fonts) {
+  fonts.ready.then(() => {
+    document.documentElement.classList.add('fonts-loaded');
+  });
+} else {
+  document.documentElement.classList.add('fonts-loaded');
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

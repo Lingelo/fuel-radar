@@ -1,54 +1,52 @@
 # Carburants France
 
-Comparez les prix des carburants station par station sur l'ensemble du territoire français. Trouvez la station la moins chère dans un rayon de 15 km autour de votre ville.
+PWA de comparaison des prix carburants en France, alimentée par les données ouvertes de [prix-carburants.gouv.fr](https://prix-carburants.gouv.fr).
 
-**[Accéder à l'application](https://angelolima.github.io/carburants-france/)**
+Live : <https://angelolima.github.io/carburants-france/>
 
-## Fonctionnalités
+## Stack
 
-- Recherche par ville avec autocomplétion (API Adresse data.gouv.fr)
-- Géolocalisation pour trouver les stations autour de vous
-- Filtrage par type de carburant : Gazole, SP95, SP98, E10, E85, GPLc
-- Carte interactive avec clustering des stations et affichage des prix
-- Itinéraire vers la station via Google Maps
-- Interface responsive (desktop + mobile)
+- **React 19** + **TypeScript** + **Vite 7**
+- **Tailwind CSS v4** (tokens Material 3)
+- **Leaflet** + Marker Cluster (carte + pins par tier de prix)
+- **vite-plugin-pwa** (installable, offline runtime caching)
 
-## Source des données
+## Données
 
-Les prix proviennent de l'open data du gouvernement : [prix-carburants.gouv.fr](https://www.prix-carburants.gouv.fr/). Un pipeline automatisé (GitHub Actions) télécharge et traite les données **toutes les 2 heures**.
+Pipeline automatique lancé toutes les 2 h via GitHub Actions :
 
-## Stack technique
+- `npm run data` télécharge l'archive instantanée du gouvernement, parse le XML, et écrit `public/data/departments/{dept}.json` + `public/data/meta.json`. Les marques (TotalEnergies, Leclerc, etc.) sont enrichies via Overpass / OpenStreetMap.
+- `npm run history:bootstrap` génère l'historique national `public/data/history.json` et l'historique par station `public/data/history/{dept}.json`.
+- `npm run history:daily` met à jour incrémentalement l'historique avec les prix du jour.
 
-- **React 19** + TypeScript
-- **Vite** (build + dev server)
-- **Leaflet** + react-leaflet + leaflet.markercluster
-- **Tailwind CSS v4**
+## Commandes
 
-## Développement
-
-```bash
-# Installer les dépendances
+```sh
 npm install
-
-# Lancer le serveur de dev
-npm run dev
-# → http://localhost:5173/carburants-france/
-
-# Build de production
-npm run build
-
-# Lint
+npm run dev            # dev server
+npm run build          # build prod (TS check + vite build + PWA)
+npm run data           # rafraîchit les prix
+npm run history:daily  # ajoute les prix du jour à l'historique
 npm run lint
 ```
 
-### Mettre à jour les données localement
+## Déploiement
 
-```bash
-node scripts/process-data.mjs
-```
+Push sur `main` → GitHub Actions :
+1. `process-data.mjs` (prix instantanés)
+2. `generate-history.mjs --bootstrap` (historique)
+3. `vite build`
+4. `actions/deploy-pages` vers GitHub Pages
 
-Télécharge le XML depuis `donnees.roulez-eco.fr`, le parse et génère un fichier JSON par département dans `public/data/departments/`.
+`vite.config.ts` configure `base: '/carburants-france/'` pour le sous-chemin Pages.
 
-## Licence
+## Écrans
 
-MIT
+- **Carte** — Leaflet + pins colorés par tier de prix (vert→rouge), cluster, panneau latéral desktop / bottom sheet mobile, recherche d'adresse via `api-adresse.data.gouv.fr`.
+- **Stations** — liste triable par prix/distance, chips de carburant, badge « Le moins cher ».
+- **Détail** — header carte, prix par carburant avec tendance 7 j, graphe en barres, deeplink Google Maps.
+- **Favoris** — persistés en `localStorage`.
+- **Tendances** — moyennes journalières nationales, multi-courbes 30 j / 90 j / 1 an.
+- **Réglages** — écran de démarrage, unité, avertissement données anciennes.
+
+Les filtres (carburant, rayon, tri, marques) sont également persistés en `localStorage`.
