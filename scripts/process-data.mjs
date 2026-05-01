@@ -389,12 +389,35 @@ async function main() {
   mkdirSync(DEPT_DIR, { recursive: true });
 
   let totalStations = 0;
+  // While iterating, also build a tiny lookup index of [minLat,maxLat,minLng,maxLng]
+  // per department so the client can pick which depts to load *without*
+  // calling the reverse-geocode API for every map move.
+  const deptBbox = {};
   for (const [dept, deptStations] of Object.entries(groups)) {
     const filePath = join(DEPT_DIR, `${dept}.json`);
     writeFileSync(filePath, JSON.stringify(deptStations));
     totalStations += deptStations.length;
     console.log(`  ${dept}.json → ${deptStations.length} stations`);
+
+    let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
+    for (const s of deptStations) {
+      if (s.lat < minLat) minLat = s.lat;
+      if (s.lat > maxLat) maxLat = s.lat;
+      if (s.lng < minLng) minLng = s.lng;
+      if (s.lng > maxLng) maxLng = s.lng;
+    }
+    if (isFinite(minLat)) {
+      deptBbox[dept] = [
+        Math.round(minLat * 1000) / 1000,
+        Math.round(maxLat * 1000) / 1000,
+        Math.round(minLng * 1000) / 1000,
+        Math.round(maxLng * 1000) / 1000,
+      ];
+    }
   }
+
+  writeFileSync(join(DATA_DIR, 'dept-bbox.json'), JSON.stringify(deptBbox));
+  console.log(`Wrote dept-bbox.json (${Object.keys(deptBbox).length} departments).`);
 
   // 6. Write meta.json
   const meta = { lastUpdate: new Date().toISOString() };

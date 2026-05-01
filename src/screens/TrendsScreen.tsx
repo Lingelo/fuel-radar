@@ -232,8 +232,8 @@ export function TrendsScreen() {
               </button>
             </div>
           </header>
-          <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4">
-            <div className="flex flex-wrap gap-2">
+          <div className="flex-1 min-h-0 px-4 py-4 flex flex-col gap-3">
+            <div className="flex flex-wrap gap-2 shrink-0">
               {FUEL_TYPES.filter((f) => latest(f) !== null).map((f) => (
                 <button
                   key={f}
@@ -253,11 +253,11 @@ export function TrendsScreen() {
                 </button>
               ))}
             </div>
-            <div className="bg-surface-container-lowest rounded-xl p-4 border border-surface-variant flex-1 flex flex-col">
-              <div className="flex-1 flex items-center">
+            <div className="bg-surface-container-lowest rounded-xl p-3 border border-surface-variant flex-1 min-h-0 flex flex-col">
+              <div className="flex-1 min-h-0">
                 <PriceChart series={series} fuelColors={FUEL_COLORS} size="fullscreen" />
               </div>
-              <p className="text-body-sm text-on-surface-variant text-center mt-2">
+              <p className="text-body-sm text-on-surface-variant text-center mt-2 shrink-0">
                 Glisse le doigt ou la souris sur le graphique pour lire les prix à une date donnée.
               </p>
             </div>

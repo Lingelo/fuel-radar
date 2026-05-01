@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { FuelType } from '../types';
 import { formatPrice } from '../lib/format';
 
@@ -17,13 +17,34 @@ interface Props {
 /**
  * Multi-line price chart with a vertical cursor that follows the user's
  * pointer (mouse or finger). Reports the closest data point per series.
+ *
+ * In fullscreen mode the SVG viewBox is sized to the container so the
+ * chart fills the available area without distorting axis labels.
  */
 export function PriceChart({ series, fuelColors, size = 'inline' }: Props) {
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
   const ref = useRef<SVGSVGElement | null>(null);
   const [cursorT, setCursorT] = useState<number | null>(null);
+  const [box, setBox] = useState<{ w: number; h: number } | null>(null);
 
-  const W = 1000;
-  const H = size === 'fullscreen' ? 480 : 320;
+  // Measure the wrapper for fullscreen mode so the SVG fills it without
+  // distortion. Inline mode keeps a fixed 1000×320 viewBox.
+  useLayoutEffect(() => {
+    if (size !== 'fullscreen') return;
+    const el = wrapperRef.current;
+    if (!el) return;
+    const measure = () => {
+      const rect = el.getBoundingClientRect();
+      setBox({ w: Math.max(320, rect.width), h: Math.max(240, rect.height) });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [size]);
+
+  const W = size === 'fullscreen' && box ? box.w : 1000;
+  const H = size === 'fullscreen' && box ? box.h : 320;
   const PAD = size === 'fullscreen'
     ? { top: 28, right: 28, bottom: 36, left: 60 }
     : { top: 20, right: 20, bottom: 28, left: 50 };
@@ -71,7 +92,6 @@ export function PriceChart({ series, fuelColors, size = 'inline' }: Props) {
     setCursorT(t);
   };
 
-  // For each series, snap to the closest available data point relative to cursorT.
   const snapped = useMemo(() => {
     if (cursorT === null) return null;
     const out: { fuel: FuelType; t: number; p: number }[] = [];
@@ -88,10 +108,13 @@ export function PriceChart({ series, fuelColors, size = 'inline' }: Props) {
       if (best) out.push({ fuel: s.fuel, t: best[0], p: best[1] });
     }
     if (out.length === 0) return null;
-    // All series share roughly the same x — use the first one for the
-    // cursor anchor (they're sampled daily so divergence is minimal).
     return { ts: out[0].t, points: out };
   }, [cursorT, series]);
+
+  // Re-render when box changes (already triggered via state).
+  useEffect(() => {
+    // no-op: useEffect kept to silence eslint about unused box dependency
+  }, [box]);
 
   if (series.length === 0) {
     return (
@@ -101,12 +124,19 @@ export function PriceChart({ series, fuelColors, size = 'inline' }: Props) {
     );
   }
 
+  const labelFontSize = size === 'fullscreen' ? 13 : 11;
+
   return (
-    <div className="relative">
+    <div
+      ref={wrapperRef}
+      className={size === 'fullscreen' ? 'relative w-full h-full min-h-0' : 'relative w-full'}
+    >
       <svg
         ref={ref}
         viewBox={`0 0 ${W} ${H}`}
-        className="w-full h-auto select-none touch-none"
+        preserveAspectRatio="xMidYMid meet"
+        style={size === 'fullscreen' ? { position: 'absolute', inset: 0, width: '100%', height: '100%' } : undefined}
+        className={size === 'fullscreen' ? 'select-none touch-none block' : 'w-full h-auto select-none touch-none block'}
         onMouseMove={(e) => onMove(e.clientX)}
         onMouseLeave={() => setCursorT(null)}
         onTouchStart={(e) => e.touches[0] && onMove(e.touches[0].clientX)}
@@ -128,7 +158,7 @@ export function PriceChart({ series, fuelColors, size = 'inline' }: Props) {
               x={PAD.left - 8}
               y={y(p) + 4}
               textAnchor="end"
-              fontSize={size === 'fullscreen' ? 13 : 11}
+              fontSize={labelFontSize}
               fill="var(--color-on-surface-variant)"
             >
               {formatPrice(p, 2)} €
@@ -140,7 +170,7 @@ export function PriceChart({ series, fuelColors, size = 'inline' }: Props) {
         <text
           x={PAD.left}
           y={H - 8}
-          fontSize={size === 'fullscreen' ? 13 : 11}
+          fontSize={labelFontSize}
           fill="var(--color-on-surface-variant)"
         >
           {new Date(tStart).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
@@ -149,7 +179,7 @@ export function PriceChart({ series, fuelColors, size = 'inline' }: Props) {
           x={(PAD.left + (W - PAD.right)) / 2}
           y={H - 8}
           textAnchor="middle"
-          fontSize={size === 'fullscreen' ? 13 : 11}
+          fontSize={labelFontSize}
           fill="var(--color-on-surface-variant)"
         >
           {new Date((tStart + tEnd) / 2).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
@@ -158,7 +188,7 @@ export function PriceChart({ series, fuelColors, size = 'inline' }: Props) {
           x={W - PAD.right}
           y={H - 8}
           textAnchor="end"
-          fontSize={size === 'fullscreen' ? 13 : 11}
+          fontSize={labelFontSize}
           fill="var(--color-on-surface-variant)"
         >
           {new Date(tEnd).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}

@@ -36,6 +36,35 @@ export function SettingsScreen() {
       ? `${f.userLocation.lat.toFixed(3)}, ${f.userLocation.lng.toFixed(3)}`
       : 'Indéterminée');
 
+  const APP_URL = 'https://lingelo.github.io/carburants-france/';
+  const [shareToast, setShareToast] = useState<string | null>(null);
+  useEffect(() => {
+    if (!shareToast) return;
+    const t = setTimeout(() => setShareToast(null), 2500);
+    return () => clearTimeout(t);
+  }, [shareToast]);
+  const shareApp = async () => {
+    const payload = {
+      title: 'Carburants France',
+      text: 'Compare les prix carburants en France en temps réel — données prix-carburants.gouv.fr.',
+      url: APP_URL,
+    };
+    if (navigator.share) {
+      try {
+        await navigator.share(payload);
+        return;
+      } catch {
+        // user cancelled → silent
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(APP_URL);
+      setShareToast('Lien copié dans le presse-papier');
+    } catch {
+      window.prompt('Copier ce lien :', APP_URL);
+    }
+  };
+
   return (
     <div className="h-full overflow-y-auto">
       <main className="max-w-2xl mx-auto px-md py-lg space-y-lg">
@@ -101,6 +130,23 @@ export function SettingsScreen() {
         </section>
 
         <section className="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05)] border border-surface-container-highest">
+          <h2 className="text-headline-md font-semibold text-on-surface mb-sm flex items-center gap-2">
+            <Icon name="share" className="text-primary" />
+            Partager l'application
+          </h2>
+          <p className="text-body-sm text-on-surface-variant mb-3">
+            Aide tes proches à comparer les prix carburants : envoie-leur le lien direct vers l'app.
+          </p>
+          <button
+            onClick={shareApp}
+            className="bg-primary text-on-primary px-4 py-2 rounded-lg text-body-sm font-semibold flex items-center gap-2 active:scale-95 transition-transform"
+          >
+            <Icon name={'share' in navigator ? 'share' : 'content_copy'} size={18} />
+            {'share' in navigator ? 'Partager' : 'Copier le lien'}
+          </button>
+        </section>
+
+        <section className="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05)] border border-surface-container-highest">
           <h2 className="text-headline-md font-semibold text-on-surface mb-sm">Données</h2>
           <div className="flex items-center justify-between p-2">
             <span className="text-body-lg text-on-surface">Dernière mise à jour</span>
@@ -145,6 +191,17 @@ export function SettingsScreen() {
           </a>
         </section>
       </main>
+
+      {shareToast && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 z-[1200] bg-inverse-surface text-inverse-on-surface px-4 py-2.5 rounded-full shadow-[0_8px_24px_rgba(20,27,43,0.25)] flex items-center gap-2 text-body-sm font-medium animate-[slideUp_220ms_ease-out]"
+        >
+          <Icon name="check_circle" filled size={18} />
+          {shareToast}
+        </div>
+      )}
     </div>
   );
 }
