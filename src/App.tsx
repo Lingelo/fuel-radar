@@ -28,26 +28,36 @@ function Bootstrap() {
   }, []);
 
   useEffect(() => {
-    if (userLocation) return;
     let cancelled = false;
     (async () => {
+      // Always re-query the browser geolocation in the background so the
+      // user lands on a fresh position. The FiltersProvider already seeds
+      // userLocation with the last-known persisted value at boot, so the
+      // UI never starts blank — it just gets refined when GPS resolves.
       const coords = await getBrowserLocation();
       if (cancelled) return;
-      if (coords) {
-        setUserLocation(coords);
-        const addr = await reverseGeocode(coords);
-        if (cancelled) return;
-        if (addr) setSearchLabel(`${addr.postcode} ${addr.city}`);
-        else setSearchLabel(`${coords.lat.toFixed(3)}, ${coords.lng.toFixed(3)}`);
-      } else {
-        setUserLocation({ lat: 48.8566, lng: 2.3522 });
-        setSearchLabel('Paris');
+      if (!coords) {
+        // No coords + no previous value → fall back to Paris.
+        if (!userLocation) {
+          setUserLocation({ lat: 48.8566, lng: 2.3522 });
+          setSearchLabel('Paris');
+        }
+        return;
       }
+      const addr = await reverseGeocode(coords);
+      if (cancelled) return;
+      const label = addr
+        ? `${addr.postcode} ${addr.city}`
+        : `${coords.lat.toFixed(3)}, ${coords.lng.toFixed(3)}`;
+      setUserLocation(coords);
+      setSearchLabel(label);
     })();
     return () => {
       cancelled = true;
     };
-  }, [userLocation, setUserLocation, setSearchLabel]);
+    // Run exactly once on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return null;
 }
