@@ -318,35 +318,42 @@ export function MapScreen() {
 
   if (!f.userLocation) {
     return (
-      <div className="h-full flex items-start justify-center bg-background">
-        <div className="w-full max-w-md mx-auto px-4 pt-12 pb-6 flex flex-col items-center gap-5 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-primary text-on-primary flex items-center justify-center shadow-lg">
-            <Icon name="location_searching" size={36} />
+      <div className="absolute inset-0 overflow-y-auto bg-background">
+        <div className="min-h-full w-full flex items-center justify-center px-4 py-8">
+          <div className="w-full max-w-2xl bg-surface-container-lowest rounded-2xl shadow-[0_4px_24px_rgba(20,27,43,0.08)] border border-surface-variant p-6 md:p-10 flex flex-col items-center gap-6 text-center">
+            <div className="w-20 h-20 rounded-2xl bg-primary text-on-primary flex items-center justify-center shadow-lg shrink-0">
+              <Icon name="location_searching" size={44} />
+            </div>
+            <div className="space-y-2 max-w-md">
+              <h2 className="text-headline-lg font-semibold text-on-surface">
+                Où cherches-tu ?
+              </h2>
+              <p className="text-body-lg text-on-surface-variant">
+                Saisis ta ville ou ton code postal, ou autorise la géolocalisation pour voir les prix carburants autour de toi.
+              </p>
+            </div>
+            <div className="w-full max-w-md">
+              <SearchBar
+                initialLabel={null}
+                onResult={(r) => {
+                  f.setUserLocation({ lat: r.lat, lng: r.lng });
+                  f.setSearchLabel(`${r.postcode} ${r.city}`);
+                }}
+              />
+            </div>
+            <div className="flex items-center gap-3 text-body-sm text-on-surface-variant w-full max-w-md">
+              <span className="flex-1 h-px bg-outline-variant" />
+              ou
+              <span className="flex-1 h-px bg-outline-variant" />
+            </div>
+            <button
+              onClick={onLocateMe}
+              className="bg-primary text-on-primary px-6 py-3 rounded-xl text-body-lg font-semibold flex items-center gap-2 active:scale-95 transition-transform shadow-md"
+            >
+              <Icon name="my_location" filled size={20} />
+              Utiliser ma position
+            </button>
           </div>
-          <div>
-            <h2 className="text-headline-lg font-semibold text-on-surface">
-              Où cherches-tu ?
-            </h2>
-            <p className="text-body-sm text-on-surface-variant mt-1">
-              Saisis ta ville ou ton code postal, ou autorise la géolocalisation pour voir les prix carburants autour de toi.
-            </p>
-          </div>
-          <div className="w-full">
-            <SearchBar
-              initialLabel={null}
-              onResult={(r) => {
-                f.setUserLocation({ lat: r.lat, lng: r.lng });
-                f.setSearchLabel(`${r.postcode} ${r.city}`);
-              }}
-            />
-          </div>
-          <button
-            onClick={onLocateMe}
-            className="bg-surface-container-lowest border border-outline-variant text-primary px-4 py-2 rounded-full text-body-sm font-semibold flex items-center gap-2 active:scale-95 transition-transform"
-          >
-            <Icon name="my_location" filled size={18} />
-            Utiliser ma position
-          </button>
         </div>
       </div>
     );
