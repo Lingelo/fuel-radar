@@ -19,7 +19,7 @@ export function BottomNavBar() {
   const isSettings = view.kind === 'settings';
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 w-full flex justify-around items-center px-2 pb-safe h-16 bg-surface-container-lowest z-50 border-t border-outline-variant shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+    <nav className="md:hidden fixed bottom-0 left-0 w-full flex justify-around items-center px-2 pb-safe h-16 bg-surface-container-lowest z-[500] border-t border-outline-variant shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
       <button onClick={() => goMap()} className={tabClass(isMap)}>
         <Icon name="map" filled={isMap} />
         <span className="text-[10px] font-medium mt-1">Carte</span>
