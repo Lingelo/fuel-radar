@@ -108,7 +108,7 @@ export function ViewProvider({ children }: { children: ReactNode }) {
   const goSettings = useCallback(() => replaceRoot({ kind: 'settings' }), [replaceRoot]);
   const goDetails = useCallback((stationId: number) => push({ kind: 'details', stationId }), [push]);
   const goBack = useCallback(() => {
-    setStack((s) => (s.length > 1 ? s.slice(0, -1) : s));
+    setStack((s) => (s.length > 1 ? s.slice(0, -1) : [{ kind: 'map' }]));
   }, []);
 
   const value = useMemo(
