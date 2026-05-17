@@ -84,7 +84,7 @@ export function App() {
             <Bootstrap />
             <div className="h-screen w-screen overflow-hidden flex flex-col bg-background text-on-background">
               <TopAppBar />
-              <main className="flex-grow relative mt-16 mb-16 md:mb-0 overflow-hidden">
+              <main className="flex-grow relative mt-16 mb-[calc(4rem+env(safe-area-inset-bottom))] md:mb-0 overflow-hidden">
                 <Router />
               </main>
               <BottomNavBar />
