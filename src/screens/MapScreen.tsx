@@ -372,8 +372,10 @@ export function MapScreen() {
         />
       </MapContainer>
 
-      {/* Search overlay */}
-      <div className="absolute top-3 left-3 right-3 md:w-[420px] md:left-4 md:right-auto z-[400] flex flex-col gap-2">
+      {/* Search overlay — anchored to the viewport (fixed) just below the
+          TopAppBar so a layout hiccup on `main` (e.g. mobile URL bar
+          collapse, briefly missing `mt-16`) can't tuck it under the bar. */}
+      <div className="fixed top-[calc(4rem+0.75rem)] left-3 right-3 md:w-[420px] md:left-4 md:right-auto z-[400] flex flex-col gap-2">
         <SearchBar
           initialLabel={f.searchLabel}
           onResult={(r) => {
