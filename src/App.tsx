@@ -13,9 +13,10 @@ import { FavoritesScreen } from './screens/FavoritesScreen';
 import { TrendsScreen } from './screens/TrendsScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 import { getBrowserLocation, reverseGeocodeLabel } from './lib/geocode';
+import { clearZoneShareFromUrl } from './lib/shareUrl';
 
 function Bootstrap() {
-  const { setUserLocation, setSearchLabel } = useFilters();
+  const { setUserLocation, setSearchLabel, hydratedFromShare, userLocation } = useFilters();
   const settings = useSettings();
   const nav = useViewNav();
 
@@ -30,6 +31,18 @@ function Bootstrap() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      // If we hydrated from a shared zone URL, resolve a human-readable
+      // label for the shared coords (so the search bar shows "75001 Paris"
+      // instead of staying blank) and skip the GPS lookup — the share
+      // explicitly points to a zone the user wants to inspect.
+      if (hydratedFromShare) {
+        clearZoneShareFromUrl();
+        if (userLocation) {
+          const label = await reverseGeocodeLabel(userLocation);
+          if (!cancelled) setSearchLabel(label);
+        }
+        return;
+      }
       // Always re-query the browser geolocation in the background so the
       // user lands on a fresh position. The FiltersProvider already seeds
       // userLocation with the last-known persisted value at boot, so the

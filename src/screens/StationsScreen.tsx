@@ -44,7 +44,8 @@ export function StationsScreen() {
     if (!f.userLocation) return [];
     const filtered = stations
       .filter((s) => s.fuels[f.selectedFuel])
-      .filter((s) => f.selectedBrands.size === 0 || (s.brand && f.selectedBrands.has(s.brand)));
+      .filter((s) => f.selectedBrands.size === 0 || (s.brand && f.selectedBrands.has(s.brand)))
+      .filter((s) => !f.openH24Only || s.h24 === true);
     const prices = filtered.map((s) => s.fuels[f.selectedFuel]!.p);
     const { pMin, pMax } = getPriceBounds(prices);
     let list = filtered.map((s) => {
@@ -62,7 +63,7 @@ export function StationsScreen() {
       list.sort((a, b) => a.distance - b.distance);
     }
     return list;
-  }, [stations, f.selectedFuel, f.selectedBrands, f.sortBy, f.userLocation]);
+  }, [stations, f.selectedFuel, f.selectedBrands, f.openH24Only, f.sortBy, f.userLocation]);
 
   return (
     <>
@@ -173,7 +174,9 @@ export function StationsScreen() {
             )}
             {hasLocation && !loading && sorted.length === 0 && (
               <p className="text-center text-body-sm text-on-surface-variant py-lg">
-                Aucune station {f.selectedFuel} dans ce rayon. Ajustez les filtres.
+                {f.openH24Only
+                  ? `Aucune station ${f.selectedFuel} ouverte 24/7 dans ce rayon. Ajustez les filtres.`
+                  : `Aucune station ${f.selectedFuel} dans ce rayon. Ajustez les filtres.`}
               </p>
             )}
             {sorted.map(({ station, distance, color }, idx) => (

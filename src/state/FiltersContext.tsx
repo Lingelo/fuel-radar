@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Coords, FuelType } from '../types';
 import { FUEL_TYPES } from '../types';
+import { parseZoneShare, type ZoneShareState } from '../lib/shareUrl';
 
 export type SortBy = 'price' | 'distance';
 
@@ -12,6 +13,7 @@ interface PersistedFilters {
   radiusKm: number;
   selectedBrands: string[];
   sortBy: SortBy;
+  openH24Only: boolean;
 }
 
 interface PersistedLocation {
@@ -25,6 +27,7 @@ const DEFAULTS: PersistedFilters = {
   radiusKm: 10,
   selectedBrands: [],
   sortBy: 'price',
+  openH24Only: false,
 };
 
 function loadPersisted(): PersistedFilters {
@@ -38,7 +41,14 @@ function loadPersisted(): PersistedFilters {
     const radius = Math.min(30, Math.max(1, Number(parsed.radiusKm) || DEFAULTS.radiusKm));
     const sort: SortBy = parsed.sortBy === 'distance' ? 'distance' : 'price';
     const brands = Array.isArray(parsed.selectedBrands) ? parsed.selectedBrands : [];
-    return { selectedFuel: fuel, radiusKm: radius, selectedBrands: brands, sortBy: sort };
+    const openH24Only = parsed.openH24Only === true;
+    return {
+      selectedFuel: fuel,
+      radiusKm: radius,
+      selectedBrands: brands,
+      sortBy: sort,
+      openH24Only,
+    };
   } catch {
     return DEFAULTS;
   }
@@ -74,12 +84,20 @@ export interface FiltersState {
   setSelectedBrands: (brands: Set<string>) => void;
   sortBy: SortBy;
   setSortBy: (s: SortBy) => void;
+  openH24Only: boolean;
+  setOpenH24Only: (v: boolean) => void;
   /** Reset filters to factory defaults (does not touch user location). */
   resetFilters: () => void;
   userLocation: Coords | null;
   setUserLocation: (c: Coords | null) => void;
   searchLabel: string | null;
   setSearchLabel: (s: string | null) => void;
+  /**
+   * `true` when the initial state was hydrated from a `?lat&lng…` share URL.
+   * Consumed by the Bootstrap effect to skip the background GPS lookup that
+   * would otherwise overwrite the shared zone.
+   */
+  hydratedFromShare: boolean;
 }
 
 const FiltersContext = createContext<FiltersState | null>(null);
@@ -87,16 +105,31 @@ const FiltersContext = createContext<FiltersState | null>(null);
 export function FiltersProvider({ children }: { children: ReactNode }) {
   const initial = loadPersisted();
   const lastLoc = loadLastLocation();
-  const [selectedFuel, setSelectedFuel] = useState<FuelType>(initial.selectedFuel);
-  const [radiusKm, setRadiusKm] = useState(initial.radiusKm);
-  const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set(initial.selectedBrands));
-  const [sortBy, setSortBy] = useState<SortBy>(initial.sortBy);
-  // Initialise from last-known location for instant UI; Bootstrap will
-  // refresh it in the background.
-  const [userLocation, setUserLocation] = useState<Coords | null>(
-    lastLoc ? { lat: lastLoc.lat, lng: lastLoc.lng } : null,
+  // A shared zone URL takes precedence over both persisted state and GPS.
+  const shared: ZoneShareState | null =
+    typeof window !== 'undefined' ? parseZoneShare(window.location.search) : null;
+  const hydratedFromShare = shared !== null;
+
+  const [selectedFuel, setSelectedFuel] = useState<FuelType>(
+    shared?.fuel ?? initial.selectedFuel,
   );
-  const [searchLabel, setSearchLabel] = useState<string | null>(lastLoc?.label ?? null);
+  const [radiusKm, setRadiusKm] = useState(shared?.radiusKm ?? initial.radiusKm);
+  const [selectedBrands, setSelectedBrands] = useState<Set<string>>(
+    new Set(shared?.brands ?? initial.selectedBrands),
+  );
+  const [sortBy, setSortBy] = useState<SortBy>(initial.sortBy);
+  const [openH24Only, setOpenH24Only] = useState<boolean>(
+    shared?.openH24Only ?? initial.openH24Only,
+  );
+  // Initialise from share URL if present, otherwise last-known location for
+  // instant UI; Bootstrap will refresh it in the background unless a shared
+  // zone is active.
+  const [userLocation, setUserLocation] = useState<Coords | null>(
+    shared?.coords ?? (lastLoc ? { lat: lastLoc.lat, lng: lastLoc.lng } : null),
+  );
+  const [searchLabel, setSearchLabel] = useState<string | null>(
+    shared ? null : lastLoc?.label ?? null,
+  );
 
   // Persist filters whenever they change.
   useEffect(() => {
@@ -106,12 +139,13 @@ export function FiltersProvider({ children }: { children: ReactNode }) {
         radiusKm,
         selectedBrands: [...selectedBrands],
         sortBy,
+        openH24Only,
       };
       localStorage.setItem(KEY, JSON.stringify(payload));
     } catch {
       // ignore quota / sandboxed storage errors
     }
-  }, [selectedFuel, radiusKm, selectedBrands, sortBy]);
+  }, [selectedFuel, radiusKm, selectedBrands, sortBy, openH24Only]);
 
   // Persist last-known location whenever it resolves to real coords.
   useEffect(() => {
@@ -133,6 +167,7 @@ export function FiltersProvider({ children }: { children: ReactNode }) {
     setRadiusKm(DEFAULTS.radiusKm);
     setSelectedBrands(new Set());
     setSortBy(DEFAULTS.sortBy);
+    setOpenH24Only(DEFAULTS.openH24Only);
   };
 
   const value = useMemo<FiltersState>(
@@ -145,13 +180,16 @@ export function FiltersProvider({ children }: { children: ReactNode }) {
       setSelectedBrands,
       sortBy,
       setSortBy,
+      openH24Only,
+      setOpenH24Only,
       resetFilters,
       userLocation,
       setUserLocation,
       searchLabel,
       setSearchLabel,
+      hydratedFromShare,
     }),
-    [selectedFuel, radiusKm, selectedBrands, sortBy, userLocation, searchLabel],
+    [selectedFuel, radiusKm, selectedBrands, sortBy, openH24Only, userLocation, searchLabel, hydratedFromShare],
   );
 
   return <FiltersContext.Provider value={value}>{children}</FiltersContext.Provider>;

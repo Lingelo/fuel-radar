@@ -13,6 +13,7 @@ import { timeAgo } from '../lib/data';
 import { formatPrice } from '../lib/format';
 import { getBrowserLocation, reverseGeocodeLabel } from '../lib/geocode';
 import { getPriceBounds, getPriceColor } from '../lib/priceColor';
+import { buildZoneShareUrl } from '../lib/shareUrl';
 import { SearchBar } from '../components/SearchBar';
 import { FilterSheet } from '../components/FilterSheet';
 import { StationPopup } from '../components/StationPopup';
@@ -266,7 +267,8 @@ export function MapScreen() {
     if (!f.userLocation) return [];
     const filtered = stations
       .filter((s) => s.fuels[f.selectedFuel])
-      .filter((s) => f.selectedBrands.size === 0 || (s.brand && f.selectedBrands.has(s.brand)));
+      .filter((s) => f.selectedBrands.size === 0 || (s.brand && f.selectedBrands.has(s.brand)))
+      .filter((s) => !f.openH24Only || s.h24 === true);
     const prices = filtered.map((s) => s.fuels[f.selectedFuel]!.p);
     const { pMin, pMax } = getPriceBounds(prices);
     return filtered
@@ -280,7 +282,7 @@ export function MapScreen() {
         };
       })
       .sort((a, b) => a.price - b.price);
-  }, [stations, f.selectedFuel, f.selectedBrands, f.userLocation]);
+  }, [stations, f.selectedFuel, f.selectedBrands, f.openH24Only, f.userLocation]);
 
   // Stations in the visible map viewport. Distance stays anchored to the
   // user's position — pan/zoom only filters which stations show in the list,
@@ -309,7 +311,45 @@ export function MapScreen() {
     if (sidePanelRef.current) {
       sidePanelRef.current.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  }, [f.selectedFuel, f.selectedBrands, f.radiusKm, f.userLocation, bounds]);
+  }, [f.selectedFuel, f.selectedBrands, f.radiusKm, f.openH24Only, f.userLocation, bounds]);
+
+  const [shareToast, setShareToast] = useState<string | null>(null);
+  useEffect(() => {
+    if (!shareToast) return;
+    const t = setTimeout(() => setShareToast(null), 2500);
+    return () => clearTimeout(t);
+  }, [shareToast]);
+
+  const onShareZone = async () => {
+    if (!f.userLocation) return;
+    const url = buildZoneShareUrl({
+      coords: f.userLocation,
+      fuel: f.selectedFuel,
+      radiusKm: f.radiusKm,
+      brands: [...f.selectedBrands],
+      openH24Only: f.openH24Only,
+    });
+    const zoneLabel = f.searchLabel ?? `${f.userLocation.lat.toFixed(3)}, ${f.userLocation.lng.toFixed(3)}`;
+    const payload = {
+      title: 'Carburants France — zone partagée',
+      text: `Prix ${f.selectedFuel} dans un rayon de ${f.radiusKm} km autour de ${zoneLabel}.`,
+      url,
+    };
+    if (navigator.share) {
+      try {
+        await navigator.share(payload);
+        return;
+      } catch {
+        // user cancelled → fall through to clipboard
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareToast('Lien copié dans le presse-papier');
+    } catch {
+      window.prompt('Copier ce lien :', url);
+    }
+  };
 
   const onLocateMe = async () => {
     setLocating(true);
@@ -417,6 +457,22 @@ export function MapScreen() {
                   {f.selectedBrands.size} enseigne{f.selectedBrands.size > 1 ? 's' : ''}
                 </span>
               )}
+              {f.openH24Only && (
+                <span className="bg-tertiary-container text-on-tertiary-container border border-tertiary-fixed-dim/40 px-3 py-1 rounded-full text-label-caps font-bold tracking-wider whitespace-nowrap flex items-center gap-1">
+                  <Icon name="schedule" size={12} filled /> 24/7
+                </span>
+              )}
+              {hasLocation && (
+                <button
+                  type="button"
+                  onClick={onShareZone}
+                  className="bg-surface-container-lowest text-primary border border-outline-variant hover:border-primary px-3 py-1 rounded-full text-label-caps font-bold tracking-wider whitespace-nowrap flex items-center gap-1 active:scale-95 transition-transform shadow-sm"
+                  aria-label="Partager cette zone"
+                  title="Partager cette zone"
+                >
+                  <Icon name="share" size={12} /> Partager
+                </button>
+              )}
             </div>
           );
         })()}
@@ -430,7 +486,9 @@ export function MapScreen() {
 
       {!loading && stations.length > 0 && priced.length === 0 && hasLocation && (
         <div className="absolute top-32 md:top-24 left-1/2 -translate-x-1/2 z-[400] bg-surface-container-lowest text-on-surface px-4 py-2 rounded-full shadow-md text-body-sm border border-outline-variant">
-          Aucune station avec {f.selectedFuel} dans ce rayon.
+          {f.openH24Only
+            ? `Aucune station ${f.selectedFuel} ouverte 24/7 dans ce rayon.`
+            : `Aucune station avec ${f.selectedFuel} dans ce rayon.`}
         </div>
       )}
 
@@ -749,6 +807,17 @@ export function MapScreen() {
       )}
 
       <FilterSheet open={filterOpen} onClose={() => setFilterOpen(false)} />
+
+      {shareToast && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 z-[1200] bg-inverse-surface text-inverse-on-surface px-4 py-2.5 rounded-full shadow-[0_8px_24px_rgba(20,27,43,0.25)] flex items-center gap-2 text-body-sm font-medium animate-[slideUp_220ms_ease-out]"
+        >
+          <Icon name="check_circle" filled size={18} />
+          {shareToast}
+        </div>
+      )}
     </div>
   );
 }

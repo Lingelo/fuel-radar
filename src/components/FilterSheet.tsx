@@ -28,6 +28,7 @@ export function FilterSheet({ open, onClose }: Props) {
   const [localRadius, setLocalRadius] = useState(f.radiusKm);
   const [localSort, setLocalSort] = useState(f.sortBy);
   const [localBrands, setLocalBrands] = useState<Set<string>>(new Set(f.selectedBrands));
+  const [localH24, setLocalH24] = useState(f.openH24Only);
 
   if (!open) return null;
 
@@ -36,6 +37,7 @@ export function FilterSheet({ open, onClose }: Props) {
     f.setRadiusKm(localRadius);
     f.setSortBy(localSort);
     f.setSelectedBrands(localBrands);
+    f.setOpenH24Only(localH24);
     onClose();
   };
 
@@ -44,6 +46,7 @@ export function FilterSheet({ open, onClose }: Props) {
     setLocalRadius(10);
     setLocalSort('price');
     setLocalBrands(new Set());
+    setLocalH24(false);
   };
 
   const toggleBrand = (b: string) => {
@@ -139,6 +142,31 @@ export function FilterSheet({ open, onClose }: Props) {
                 </label>
               ))}
             </div>
+          </section>
+
+          {/* Availability */}
+          <section className="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05)] border border-surface-container-highest">
+            <h2 className="text-headline-md font-semibold text-on-surface mb-sm">
+              Disponibilité
+            </h2>
+            <label className="flex items-start justify-between gap-3 p-2 cursor-pointer">
+              <div className="min-w-0 flex-1">
+                <div className="text-body-lg text-on-surface flex items-center gap-2">
+                  <Icon name="schedule" size={18} className="text-tertiary" filled />
+                  Ouvert 24/7 uniquement
+                </div>
+                <div className="text-body-sm text-on-surface-variant">
+                  N'affiche que les stations équipées d'un automate accessible jour
+                  et nuit (champ <code>automate-24-24</code> du gouvernement).
+                </div>
+              </div>
+              <input
+                type="checkbox"
+                checked={localH24}
+                onChange={(e) => setLocalH24(e.target.checked)}
+                className="w-5 h-5 accent-secondary mt-1 shrink-0"
+              />
+            </label>
           </section>
 
           {/* Search Radius */}
