@@ -52,14 +52,22 @@ const userIcon = L.divIcon({
   iconAnchor: [9, 9],
 });
 
-function MapRecenter({ lat, lng }: { lat: number; lng: number }) {
+function MapRecenter({
+  lat,
+  lng,
+  trigger,
+}: {
+  lat: number;
+  lng: number;
+  trigger: number;
+}) {
   const map = useMap();
   useEffect(() => {
-    // Always animate to the new position. The reference-equality guard
-    // we had previously caused the second search in a row to silently
-    // no-op when the user picked the same coords pair twice.
+    // `trigger` lets callers force a re-center even when lat/lng are
+    // numerically identical to the previous render — e.g. tapping "Me
+    // localiser" again after the user panned away.
     map.flyTo([lat, lng], Math.max(13, map.getZoom()), { duration: 0.6 });
-  }, [lat, lng, map]);
+  }, [lat, lng, trigger, map]);
   return null;
 }
 
@@ -241,6 +249,10 @@ export function MapScreen() {
   const [pendingFocusId, setPendingFocusId] = useState<number | null>(null);
   const [locationDenied, setLocationDenied] = useState(false);
   const [locating, setLocating] = useState(false);
+  // Bumped to force a fly-to on the user's position even when coords didn't
+  // change (e.g. tapping "Me localiser" after panning away, or returning to
+  // the map after refreshing the location from Settings).
+  const [recenterKey, setRecenterKey] = useState(0);
   const sidePanelRef = useRef<HTMLDivElement>(null);
 
   // On mount, pick up any focus-station id passed by the previous screen.
@@ -359,6 +371,7 @@ export function MapScreen() {
         f.setUserLocation(coords);
         f.setSearchLabel(await reverseGeocodeLabel(coords));
         setLocationDenied(false);
+        setRecenterKey((k) => k + 1);
       } else {
         setLocationDenied(denied);
       }
@@ -390,7 +403,11 @@ export function MapScreen() {
         />
         {hasLocation && (
           <>
-            <MapRecenter lat={f.userLocation!.lat} lng={f.userLocation!.lng} />
+            <MapRecenter
+              lat={f.userLocation!.lat}
+              lng={f.userLocation!.lng}
+              trigger={recenterKey}
+            />
             <SearchRadiusCircle
               lat={f.userLocation!.lat}
               lng={f.userLocation!.lng}
