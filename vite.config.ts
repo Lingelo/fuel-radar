@@ -63,9 +63,10 @@ export default defineConfig(({ command }) => ({
             urlPattern: ({ url }) =>
               url.pathname.includes('/data/history/') ||
               url.pathname.endsWith('/data/history.json'),
-            handler: 'StaleWhileRevalidate',
+            handler: 'NetworkFirst',
             options: {
               cacheName: 'history-data',
+              networkTimeoutSeconds: 5,
               expiration: { maxEntries: 100, maxAgeSeconds: 7 * 24 * 60 * 60 },
             },
           },
