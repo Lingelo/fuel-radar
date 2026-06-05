@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { invalidateStations } from '../lib/data';
+import { invalidateHistory, invalidateStations } from '../lib/data';
 
 /**
  * Bumps an integer whenever the document becomes visible again after at
@@ -22,7 +22,9 @@ export function useForegroundRefresh(staleAfterMs = 60_000): number {
       hiddenSince = null;
       if (elapsed < staleAfterMs) return;
       // Foreground after being away long enough — wipe caches and bump.
-      invalidateStations().finally(() => setVersion((v) => v + 1));
+      Promise.all([invalidateStations(), invalidateHistory()]).finally(() =>
+        setVersion((v) => v + 1),
+      );
     };
     document.addEventListener('visibilitychange', onVisibility);
     return () => document.removeEventListener('visibilitychange', onVisibility);

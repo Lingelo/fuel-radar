@@ -23,6 +23,18 @@ export async function invalidateStations(): Promise<void> {
   }
 }
 
+export async function invalidateHistory(): Promise<void> {
+  historyCache.clear();
+  nationalPromise = null;
+  if ('caches' in window) {
+    try {
+      await caches.delete('history-data');
+    } catch {
+      // ignore
+    }
+  }
+}
+
 export async function fetchDepartment(dept: string): Promise<Station[]> {
   if (deptCache.has(dept)) return deptCache.get(dept)!;
   try {
