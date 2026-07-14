@@ -1,6 +1,9 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
-const KEY = 'carburants-france-settings-v1';
+const KEY = 'fuel-radar-settings-v1';
+// Pre-rename key — same origin (lingelo.github.io), so existing users still
+// have their settings under it. Read it as a fallback and clean it up.
+const LEGACY_KEY = 'carburants-france-settings-v1';
 
 export type DefaultStartScreen = 'map' | 'stations';
 
@@ -24,7 +27,7 @@ const Ctx = createContext<State | null>(null);
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<Settings>(() => {
     try {
-      const raw = localStorage.getItem(KEY);
+      const raw = localStorage.getItem(KEY) ?? localStorage.getItem(LEGACY_KEY);
       return raw ? { ...DEFAULTS, ...(JSON.parse(raw) as Settings) } : DEFAULTS;
     } catch {
       return DEFAULTS;
@@ -34,6 +37,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       localStorage.setItem(KEY, JSON.stringify(settings));
+      localStorage.removeItem(LEGACY_KEY);
     } catch {
       // ignore
     }
