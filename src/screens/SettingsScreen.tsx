@@ -51,7 +51,7 @@ export function SettingsScreen() {
       ? `${f.userLocation.lat.toFixed(3)}, ${f.userLocation.lng.toFixed(3)}`
       : t('settings.positionUnknown'));
 
-  const APP_URL = 'https://lingelo.github.io/carburants-france/';
+  const APP_URL = 'https://lingelo.github.io/fuel-radar/';
   const [shareToast, setShareToast] = useState<string | null>(null);
   useEffect(() => {
     if (!shareToast) return;
@@ -275,7 +275,7 @@ export function SettingsScreen() {
             </span>
           </div>
           <a
-            href="https://github.com/Lingelo/carburants-france"
+            href="https://github.com/Lingelo/fuel-radar"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 text-body-sm text-on-surface-variant hover:text-primary"
