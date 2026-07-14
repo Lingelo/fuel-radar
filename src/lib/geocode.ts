@@ -26,6 +26,8 @@ interface PhotonFeature {
   geometry: { coordinates: [number, number] };
   properties: {
     name?: string;
+    street?: string;
+    housenumber?: string;
     city?: string;
     postcode?: string;
     countrycode?: string;
@@ -39,11 +41,18 @@ const PHOTON_COUNTRIES = new Set(['ES', 'PT']);
 
 function photonToResult(f: PhotonFeature): AddressResult | null {
   const p = f.properties ?? {};
+  // Street-level entries have street/housenumber instead of a name.
+  const street = [p.street, p.housenumber].filter(Boolean).join(' ');
+  const name = p.name ?? street;
   const city = p.city ?? p.name ?? '';
-  if (!city) return null;
+  if (!name && !city) return null;
+  const parts: string[] = [];
+  for (const part of [name, city, p.state, p.country]) {
+    if (part && !parts.includes(part)) parts.push(part);
+  }
   return {
-    label: [p.name, p.state, p.country].filter(Boolean).join(', '),
-    city,
+    label: parts.join(', '),
+    city: city || name,
     postcode: p.postcode ?? '',
     lng: f.geometry.coordinates[0],
     lat: f.geometry.coordinates[1],
@@ -51,12 +60,12 @@ function photonToResult(f: PhotonFeature): AddressResult | null {
 }
 
 /**
- * Forward-geocode Spanish/Portuguese cities via photon.komoot.io (free, no
- * key). City layer only — French street-level search stays on the BAN.
+ * Forward-geocode Spanish/Portuguese places via photon.komoot.io (free, no
+ * key) — cities down to street/house level, like the BAN does for France.
  */
 async function searchIberia(query: string, limit = 4): Promise<AddressResult[]> {
   try {
-    const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=${limit * 3}&lang=fr&layer=city`;
+    const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=${limit * 3}&lang=fr`;
     const res = await fetch(url);
     if (!res.ok) return [];
     const data: { features: PhotonFeature[] } = await res.json();
@@ -66,8 +75,9 @@ async function searchIberia(query: string, limit = 4): Promise<AddressResult[]> 
       if (!PHOTON_COUNTRIES.has((f.properties.countrycode ?? '').toUpperCase())) continue;
       const r = photonToResult(f);
       if (!r) continue;
-      // Photon often returns several nearly identical entries for one place.
-      const key = `${r.label}|${r.city}|${r.postcode}`;
+      // Photon often returns several nearly identical entries for one place
+      // (e.g. one per street segment) — keep only the first of each label.
+      const key = r.label;
       if (seen.has(key)) continue;
       seen.add(key);
       out.push(r);
