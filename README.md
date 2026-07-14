@@ -2,7 +2,7 @@
 
 PWA de comparaison des prix carburants en France, en Espagne et au Portugal, alimentée par les données ouvertes de [prix-carburants.gouv.fr](https://prix-carburants.gouv.fr), du [Ministerio para la Transición Ecológica](https://geoportalgasolineras.es) (Espagne) et de la [DGEG](https://precoscombustiveis.dgeg.gov.pt) (Portugal).
 
-Live : <https://lingelo.github.io/carburants-france/>
+Live : <https://lingelo.github.io/fuel-radar/>
 
 ## Stack
 
@@ -40,7 +40,7 @@ Push sur `main` → GitHub Actions :
 4. `vite build`
 5. `actions/deploy-pages` vers GitHub Pages
 
-`vite.config.ts` configure `base: '/carburants-france/'` pour le sous-chemin Pages.
+`vite.config.ts` configure `base: '/fuel-radar/'` pour le sous-chemin Pages.
 
 ## Écrans
 

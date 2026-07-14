@@ -3,10 +3,9 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
-// Same base path as the original `carburants-france` project so the
-// existing GitHub Pages deployment URL keeps working. In dev we keep
+// GitHub Pages serves the site under the repository name. In dev we keep
 // the root path so `npm run dev` opens at http://localhost:5174/.
-const BASE = '/carburants-france/';
+const BASE = '/fuel-radar/';
 
 export default defineConfig(({ command }) => ({
   base: command === 'build' ? BASE : '/',
