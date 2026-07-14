@@ -18,6 +18,8 @@ export interface AddressResult {
   postcode: string;
   lat: number;
   lng: number;
+  /** BAN relevance score (0..1) — only set on French results. */
+  score?: number;
 }
 
 interface PhotonFeature {
@@ -48,10 +50,13 @@ function photonToResult(f: PhotonFeature): AddressResult | null {
   };
 }
 
-/** Forward-geocode Spanish/Portuguese places via photon.komoot.io (free, no key). */
+/**
+ * Forward-geocode Spanish/Portuguese cities via photon.komoot.io (free, no
+ * key). City layer only — French street-level search stays on the BAN.
+ */
 async function searchIberia(query: string, limit = 4): Promise<AddressResult[]> {
   try {
-    const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=${limit * 3}&lang=fr`;
+    const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=${limit * 3}&lang=fr&layer=city`;
     const res = await fetch(url);
     if (!res.ok) return [];
     const data: { features: PhotonFeature[] } = await res.json();
@@ -85,6 +90,7 @@ async function searchFrance(query: string, limit = 8): Promise<AddressResult[]> 
       label: f.properties.label,
       city: f.properties.city,
       postcode: f.properties.postcode,
+      score: (f.properties as { score?: number }).score,
       lng: f.geometry.coordinates[0],
       lat: f.geometry.coordinates[1],
     }));
@@ -93,15 +99,30 @@ async function searchFrance(query: string, limit = 8): Promise<AddressResult[]> 
   }
 }
 
+/** Accent/case-insensitive comparison key. */
+function norm(s: string): string {
+  return s
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
 /**
- * Forward-geocode: French results first (BAN), then Spanish/Portuguese
- * matches (photon) so cities like "Lisboa" or "Madrid" are reachable.
+ * Forward-geocode France (BAN) + Spanish/Portuguese cities (photon).
+ * Iberian matches come first when the query names one of them exactly
+ * ("Madrid", "Faro") or when the BAN only has low-confidence fuzzy
+ * matches — otherwise they are appended after the French results.
  */
 export async function searchAddress(query: string, limit = 8): Promise<AddressResult[]> {
   const q = query.trim();
   if (q.length < 2) return [];
   const [fr, iberia] = await Promise.all([searchFrance(q, limit), searchIberia(q)]);
-  return [...fr, ...iberia];
+  if (iberia.length === 0) return fr;
+  const qn = norm(q);
+  const exactIberia = iberia.some((r) => norm(r.city) === qn);
+  const bestFrScore = fr[0]?.score ?? 0;
+  return exactIberia || bestFrScore < 0.8 ? [...iberia, ...fr] : [...fr, ...iberia];
 }
 
 /** Reverse-geocode lat/lng to a postal code + city (France, then ES/PT fallback). */
