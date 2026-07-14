@@ -31,7 +31,7 @@ export function UpdateBanner() {
   if (!needRefresh) return null;
 
   return (
-    <div className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[1100] bg-surface-container-lowest border border-outline-variant rounded-full shadow-[0_4px_24px_rgba(20,27,43,0.18)] px-4 py-2 flex items-center gap-2 animate-[slideUp_280ms_ease-out]">
+    <div className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[1100] bg-surface-container-lowest border border-outline-variant rounded-full shadow-[0_4px_24px_rgba(22,29,27,0.18)] px-4 py-2 flex items-center gap-2 animate-[slideUp_280ms_ease-out]">
       <Icon name="system_update" className="text-primary" />
       <span className="text-body-sm text-on-surface">{t('update.newVersion')}</span>
       <button

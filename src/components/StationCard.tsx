@@ -44,8 +44,8 @@ export function StationCard({
       className={[
         'bg-surface-container-lowest rounded-xl p-md text-left w-full',
         isCheapest
-          ? 'shadow-[0_4px_12px_rgba(20,27,43,0.05)] border border-tertiary-fixed-dim/30 relative overflow-hidden'
-          : 'shadow-[0_2px_8px_rgba(20,27,43,0.03)] border border-surface-variant',
+          ? 'shadow-[0_4px_12px_rgba(22,29,27,0.05)] border border-tertiary-fixed-dim/30 relative overflow-hidden'
+          : 'shadow-[0_2px_8px_rgba(22,29,27,0.03)] border border-surface-variant',
         onClick ? 'cursor-pointer hover:border-primary transition-colors' : '',
       ].join(' ')}
     >

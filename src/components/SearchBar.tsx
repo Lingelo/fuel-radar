@@ -38,7 +38,7 @@ export function SearchBar({ initialLabel, onResult, onOpenFilters }: Props) {
 
   return (
     <div className="relative">
-      <div className="bg-surface-container-lowest rounded-xl shadow-[0_4px_12px_rgba(20,27,43,0.1)] p-1 flex items-center border border-outline-variant focus-within:border-primary transition-colors">
+      <div className="bg-surface-container-lowest rounded-xl shadow-[0_4px_12px_rgba(22,29,27,0.1)] p-1 flex items-center border border-outline-variant focus-within:border-primary transition-colors">
         <Icon name="search" className="text-on-surface-variant pl-3" />
         <input
           ref={inputRef}
@@ -81,7 +81,7 @@ export function SearchBar({ initialLabel, onResult, onOpenFilters }: Props) {
       </div>
 
       {open && results.length > 0 && (
-        <ul className="absolute left-0 right-0 top-full mt-1 bg-surface-container-lowest rounded-xl shadow-[0_8px_24px_rgba(20,27,43,0.15)] border border-outline-variant overflow-hidden z-50 max-h-80 overflow-y-auto overscroll-contain">
+        <ul className="absolute left-0 right-0 top-full mt-1 bg-surface-container-lowest rounded-xl shadow-[0_8px_24px_rgba(22,29,27,0.15)] border border-outline-variant overflow-hidden z-50 max-h-80 overflow-y-auto overscroll-contain">
           {results.map((r) => (
             <li
               key={r.label + r.lat + r.lng}

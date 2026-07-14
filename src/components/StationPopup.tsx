@@ -46,7 +46,7 @@ export function StationPopup({
   return (
     <div className="fixed inset-0 z-[1100] flex items-end md:items-center justify-center p-0 md:p-4">
       <div className="absolute inset-0 bg-on-surface/40" onClick={onClose} />
-      <div className="relative bg-surface-container-lowest w-full md:w-[480px] md:max-w-[480px] md:rounded-xl rounded-t-xl p-6 shadow-[0_-12px_32px_rgba(20,27,43,0.18)] max-h-[85vh] overflow-y-auto">
+      <div className="relative bg-surface-container-lowest w-full md:w-[480px] md:max-w-[480px] md:rounded-xl rounded-t-xl p-6 shadow-[0_-12px_32px_rgba(22,29,27,0.18)] max-h-[85vh] overflow-y-auto">
         <div className="flex items-start justify-between gap-md mb-md">
           <div className="min-w-0">
             <h2 className="text-headline-lg font-semibold text-on-surface truncate">

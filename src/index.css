@@ -6,33 +6,33 @@
 @import '@fontsource/inter/700.css';
 
 @theme {
-  /* === Material 3 colors from Stitch DESIGN.md === */
-  --color-surface: #f9f9ff;
-  --color-surface-dim: #d3daef;
-  --color-surface-bright: #f9f9ff;
+  /* === Material 3 colors — "Radar teal" identity (FuelRadar) === */
+  --color-surface: #f4fbf8;
+  --color-surface-dim: #d5dbd9;
+  --color-surface-bright: #f4fbf8;
   --color-surface-container-lowest: #ffffff;
-  --color-surface-container-low: #f1f3ff;
-  --color-surface-container: #e9edff;
-  --color-surface-container-high: #e1e8fd;
-  --color-surface-container-highest: #dce2f7;
-  --color-on-surface: #141b2b;
-  --color-on-surface-variant: #5a4138;
-  --color-inverse-surface: #293040;
-  --color-inverse-on-surface: #edf0ff;
-  --color-outline: #8e7166;
-  --color-outline-variant: #e2bfb2;
-  --color-surface-tint: #a73a00;
-  --color-surface-variant: #dce2f7;
+  --color-surface-container-low: #eff5f2;
+  --color-surface-container: #e9efec;
+  --color-surface-container-high: #e3eae7;
+  --color-surface-container-highest: #dde4e1;
+  --color-on-surface: #161d1b;
+  --color-on-surface-variant: #3f4947;
+  --color-inverse-surface: #2b3230;
+  --color-inverse-on-surface: #ecf2ef;
+  --color-outline: #6f7977;
+  --color-outline-variant: #bec9c6;
+  --color-surface-tint: #006a60;
+  --color-surface-variant: #dbe5e1;
 
-  --color-primary: #a33900;
+  --color-primary: #006a60;
   --color-on-primary: #ffffff;
-  --color-primary-container: #cc4900;
-  --color-on-primary-container: #fffbff;
-  --color-inverse-primary: #ffb599;
-  --color-primary-fixed: #ffdbce;
-  --color-primary-fixed-dim: #ffb599;
-  --color-on-primary-fixed: #370e00;
-  --color-on-primary-fixed-variant: #7f2b00;
+  --color-primary-container: #00857a;
+  --color-on-primary-container: #f4fffb;
+  --color-inverse-primary: #54dbc8;
+  --color-primary-fixed: #a2f2e4;
+  --color-primary-fixed-dim: #54dbc8;
+  --color-on-primary-fixed: #00201c;
+  --color-on-primary-fixed-variant: #005048;
 
   --color-secondary: #006399;
   --color-on-secondary: #ffffff;
@@ -57,8 +57,8 @@
   --color-error-container: #ffdad6;
   --color-on-error-container: #93000a;
 
-  --color-background: #f9f9ff;
-  --color-on-background: #141b2b;
+  --color-background: #f4fbf8;
+  --color-on-background: #161d1b;
 
   /* === Typography (Inter, custom scale) === */
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;

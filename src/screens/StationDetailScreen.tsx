@@ -23,10 +23,10 @@ interface Props {
 const detailPin = L.divIcon({
   html: `
     <div style="display:flex;flex-direction:column;align-items:center;">
-      <div style="background:#a33900;color:#fff;padding:4px 8px;border-radius:8px;border:2px solid white;font-weight:700;font-size:13px;line-height:1;box-shadow:0 2px 8px rgba(0,0,0,0.4);">
+      <div style="background:#006a60;color:#fff;padding:4px 8px;border-radius:8px;border:2px solid white;font-weight:700;font-size:13px;line-height:1;box-shadow:0 2px 8px rgba(0,0,0,0.4);">
         <span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">local_gas_station</span>
       </div>
-      <div style="width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:8px solid #a33900;margin-top:-1px;"></div>
+      <div style="width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:8px solid #006a60;margin-top:-1px;"></div>
     </div>
   `,
   className: '',
@@ -223,7 +223,7 @@ export function StationDetailScreen({ stationId }: Props) {
 
       <main className="w-full max-w-3xl mx-auto px-md pb-lg pt-md space-y-lg relative z-10">
         {/* Identity card */}
-        <section className="bg-surface-container-lowest p-lg rounded-xl shadow-[0_4px_12px_rgba(20,27,43,0.1)]">
+        <section className="bg-surface-container-lowest p-lg rounded-xl shadow-[0_4px_12px_rgba(22,29,27,0.1)]">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-md">
             <div className="min-w-0">
               <h1 className="text-headline-lg font-semibold text-on-surface truncate">
@@ -251,7 +251,7 @@ export function StationDetailScreen({ stationId }: Props) {
 
         <div className="grid md:grid-cols-2 gap-gutter items-start">
           {/* Prices */}
-          <section className="bg-surface-container-lowest p-lg rounded-xl shadow-[0_4px_6px_-1px_rgba(20,27,43,0.1)]">
+          <section className="bg-surface-container-lowest p-lg rounded-xl shadow-[0_4px_6px_-1px_rgba(22,29,27,0.1)]">
             <h2 className="text-headline-md font-semibold text-on-surface mb-md flex items-center gap-2 border-b border-surface-variant pb-2">
               <Icon name="local_gas_station" className="text-primary" />
               {t('station.currentPrices')}
@@ -322,7 +322,7 @@ export function StationDetailScreen({ stationId }: Props) {
           </section>
 
           {/* Trend chart */}
-          <section className="bg-surface-container-lowest p-lg rounded-xl shadow-[0_4px_6px_-1px_rgba(20,27,43,0.1)]">
+          <section className="bg-surface-container-lowest p-lg rounded-xl shadow-[0_4px_6px_-1px_rgba(22,29,27,0.1)]">
             <h2 className="text-headline-md font-semibold text-on-surface mb-md flex items-center gap-2 border-b border-surface-variant pb-2">
               <Icon name="insights" className="text-secondary" />
               {t('station.trend7d', { fuel: f.selectedFuel })}
@@ -332,7 +332,7 @@ export function StationDetailScreen({ stationId }: Props) {
         </div>
 
         {(station.h24 || (station.services && station.services.length > 0)) && (
-          <section className="bg-surface-container-lowest p-lg rounded-xl shadow-[0_4px_6px_-1px_rgba(20,27,43,0.1)]">
+          <section className="bg-surface-container-lowest p-lg rounded-xl shadow-[0_4px_6px_-1px_rgba(22,29,27,0.1)]">
             <h2 className="text-headline-md font-semibold text-on-surface mb-md flex items-center gap-2 border-b border-surface-variant pb-2">
               <Icon name="handyman" className="text-secondary" />
               {t('station.services')}
@@ -362,7 +362,7 @@ export function StationDetailScreen({ stationId }: Props) {
         <div
           role="status"
           aria-live="polite"
-          className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 z-[1200] bg-inverse-surface text-inverse-on-surface px-4 py-2.5 rounded-full shadow-[0_8px_24px_rgba(20,27,43,0.25)] flex items-center gap-2 text-body-sm font-medium animate-[slideUp_220ms_ease-out]"
+          className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 z-[1200] bg-inverse-surface text-inverse-on-surface px-4 py-2.5 rounded-full shadow-[0_8px_24px_rgba(22,29,27,0.25)] flex items-center gap-2 text-body-sm font-medium animate-[slideUp_220ms_ease-out]"
         >
           <Icon name="check_circle" filled size={18} />
           {toast}

@@ -104,10 +104,10 @@ function SearchRadiusCircle({ lat, lng, radiusKm }: { lat: number; lng: number; 
     }
     const circle = L.circle([lat, lng], {
       radius: radiusKm * 1000,
-      color: '#a33900',
+      color: '#006a60',
       weight: 2,
       opacity: 0.5,
-      fillColor: '#a33900',
+      fillColor: '#006a60',
       fillOpacity: 0.06,
       interactive: false,
     });
@@ -179,7 +179,7 @@ function StationsCluster({
           html: `
             <div style="position:relative;background:${minColor};color:#fff;padding:3px 8px;border-radius:12px;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.35);font-weight:700;font-size:12px;line-height:1;white-space:nowrap;">
               ${formatPrice(minPrice)} €
-              <span style="position:absolute;top:-7px;right:-7px;background:#141b2b;color:white;font-size:10px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 4px;border:1.5px solid white;">${count}</span>
+              <span style="position:absolute;top:-7px;right:-7px;background:#161d1b;color:white;font-size:10px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 4px;border:1.5px solid white;">${count}</span>
             </div>`,
           className: '',
           iconSize: [60, 28],
@@ -522,7 +522,7 @@ export function MapScreen() {
         onClick={onLocateMe}
         disabled={locating}
         className={[
-          'absolute right-4 md:bottom-6 p-md rounded-full shadow-[0_4px_12px_rgba(20,27,43,0.15)] active:scale-95 transition-all z-[400] flex items-center justify-center border',
+          'absolute right-4 md:bottom-6 p-md rounded-full shadow-[0_4px_12px_rgba(22,29,27,0.15)] active:scale-95 transition-all z-[400] flex items-center justify-center border',
           locationDenied
             ? 'bg-error-container text-on-error-container border-error'
             : 'bg-surface-container-lowest text-primary border-outline-variant',
@@ -547,7 +547,7 @@ export function MapScreen() {
           role="status"
           aria-live="polite"
           className={[
-            'absolute right-4 z-[400] max-w-[280px] bg-error-container text-on-error-container px-3 py-2 rounded-lg shadow-[0_4px_12px_rgba(20,27,43,0.18)] border border-error text-body-sm flex items-start gap-2',
+            'absolute right-4 z-[400] max-w-[280px] bg-error-container text-on-error-container px-3 py-2 rounded-lg shadow-[0_4px_12px_rgba(22,29,27,0.18)] border border-error text-body-sm flex items-start gap-2',
             sheetExpanded
               ? 'bottom-[calc(60vh+72px)]'
               : sheetHidden
@@ -566,7 +566,7 @@ export function MapScreen() {
       {sheetHidden && (
         <button
           onClick={() => setSheetState('collapsed')}
-          className="md:hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-[450] bg-primary text-on-primary rounded-full shadow-[0_4px_12px_rgba(20,27,43,0.25)] px-4 py-2.5 flex items-center gap-2 text-body-sm font-semibold active:scale-95 transition-transform"
+          className="md:hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-[450] bg-primary text-on-primary rounded-full shadow-[0_4px_12px_rgba(22,29,27,0.25)] px-4 py-2.5 flex items-center gap-2 text-body-sm font-semibold active:scale-95 transition-transform"
           aria-label={t('map.showList')}
         >
           <Icon name="expand_less" size={18} />
@@ -577,7 +577,7 @@ export function MapScreen() {
       {/* Mobile: bottom sheet with drag handle, collapsible */}
       <div
         className={[
-          'md:hidden fixed left-0 right-0 bottom-16 z-[450] bg-surface-container-lowest rounded-t-2xl shadow-[0_-8px_24px_rgba(20,27,43,0.18)] border-t border-outline-variant transition-[height] duration-300 ease-out flex flex-col overflow-hidden',
+          'md:hidden fixed left-0 right-0 bottom-16 z-[450] bg-surface-container-lowest rounded-t-2xl shadow-[0_-8px_24px_rgba(22,29,27,0.18)] border-t border-outline-variant transition-[height] duration-300 ease-out flex flex-col overflow-hidden',
           sheetHidden ? 'h-0 border-t-0 shadow-none' : sheetExpanded ? 'h-[60vh]' : 'h-[200px]',
         ].join(' ')}
         aria-hidden={sheetHidden}
@@ -634,7 +634,7 @@ export function MapScreen() {
                 className={[
                   sheetExpanded
                     ? 'w-full p-3 rounded-lg'
-                    : 'snap-center shrink-0 w-[85%] max-w-[340px] p-md rounded-xl shadow-[0_4px_12px_rgba(20,27,43,0.1)]',
+                    : 'snap-center shrink-0 w-[85%] max-w-[340px] p-md rounded-xl shadow-[0_4px_12px_rgba(22,29,27,0.1)]',
                   'bg-surface-container-lowest text-left transition-colors',
                   selected
                     ? 'border-2 border-primary'
@@ -689,7 +689,7 @@ export function MapScreen() {
       {!panelOpen && (
         <button
           onClick={() => setPanelOpen(true)}
-          className="hidden md:flex absolute top-32 right-0 z-[401] bg-primary text-on-primary rounded-l-full pl-3 pr-4 py-2.5 shadow-[0_4px_12px_rgba(20,27,43,0.25)] active:scale-95 transition-transform items-center gap-2 text-body-sm font-semibold"
+          className="hidden md:flex absolute top-32 right-0 z-[401] bg-primary text-on-primary rounded-l-full pl-3 pr-4 py-2.5 shadow-[0_4px_12px_rgba(22,29,27,0.25)] active:scale-95 transition-transform items-center gap-2 text-body-sm font-semibold"
           aria-label={t('map.showList')}
         >
           <Icon name="chevron_left" size={18} />
@@ -699,7 +699,7 @@ export function MapScreen() {
 
       {/* Desktop: right side panel with vertical scrollable list */}
       {panelOpen && (
-        <aside className="hidden md:flex absolute top-32 right-4 bottom-4 w-[360px] flex-col bg-surface-container-lowest rounded-xl shadow-[0_4px_24px_rgba(20,27,43,0.12)] border border-outline-variant z-[400] overflow-hidden">
+        <aside className="hidden md:flex absolute top-32 right-4 bottom-4 w-[360px] flex-col bg-surface-container-lowest rounded-xl shadow-[0_4px_24px_rgba(22,29,27,0.12)] border border-outline-variant z-[400] overflow-hidden">
           <header className="flex items-start justify-between gap-2 px-4 py-3 border-b border-outline-variant shrink-0">
             <div className="min-w-0">
               <h2 className="text-headline-md font-semibold text-on-surface">
@@ -818,7 +818,7 @@ export function MapScreen() {
         <div
           role="status"
           aria-live="polite"
-          className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 z-[1200] bg-inverse-surface text-inverse-on-surface px-4 py-2.5 rounded-full shadow-[0_8px_24px_rgba(20,27,43,0.25)] flex items-center gap-2 text-body-sm font-medium animate-[slideUp_220ms_ease-out]"
+          className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 z-[1200] bg-inverse-surface text-inverse-on-surface px-4 py-2.5 rounded-full shadow-[0_8px_24px_rgba(22,29,27,0.25)] flex items-center gap-2 text-body-sm font-medium animate-[slideUp_220ms_ease-out]"
         >
           <Icon name="check_circle" filled size={18} />
           {shareToast}
