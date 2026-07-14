@@ -3,9 +3,10 @@ import { useFavorites } from '../state/FavoritesContext';
 import { useFilters } from '../state/FiltersContext';
 import { useViewNav } from '../state/ViewContext';
 import { fetchDepartment } from '../lib/data';
-import { getDepartment } from '../lib/department';
+import { deptsAround } from '../lib/deptIndex';
 import { haversineKm } from '../lib/distance';
 import { useNearbyStations } from '../hooks/useNearbyStations';
+import { useI18n } from '../i18n';
 import { StationCard } from '../components/StationCard';
 import { Icon } from '../components/Icon';
 import type { Station } from '../types';
@@ -18,6 +19,7 @@ import type { Station } from '../types';
  */
 export function FavoritesScreen() {
   const fav = useFavorites();
+  const { t } = useI18n();
   const f = useFilters();
   const nav = useViewNav();
   const { stations: nearby } = useNearbyStations();
@@ -37,19 +39,12 @@ export function FavoritesScreen() {
       }
       const missing = ids.filter((id) => !fromNearby.has(id));
       if (missing.length > 0 && f.userLocation) {
-        // Try the user's current dept as a best-effort lookup
-        const tryDepts = new Set<string>();
-        try {
-          const url = `https://api-adresse.data.gouv.fr/reverse/?lat=${f.userLocation.lat}&lon=${f.userLocation.lng}&limit=1`;
-          const res = await fetch(url);
-          if (res.ok) {
-            const data = await res.json();
-            const cp = data.features?.[0]?.properties?.postcode;
-            if (cp) tryDepts.add(getDepartment(cp));
-          }
-        } catch {
-          // ignore
-        }
+        // Best-effort lookup: scan the departments around the user
+        // (bbox index covers France + Spain + Portugal).
+        const tryDepts = new Set<string>(
+          (await deptsAround(f.userLocation.lat, f.userLocation.lng, Math.max(f.radiusKm, 15))) ??
+            [],
+        );
         for (const dept of tryDepts) {
           const list = await fetchDepartment(dept);
           for (const s of list) {
@@ -63,7 +58,7 @@ export function FavoritesScreen() {
     return () => {
       cancelled = true;
     };
-  }, [fav.favorites, nearby, f.userLocation]);
+  }, [fav.favorites, nearby, f.userLocation, f.radiusKm]);
 
   const enriched = resolved
     .map((s) => ({
@@ -78,18 +73,18 @@ export function FavoritesScreen() {
     <div className="h-full overflow-y-auto">
       <main className="max-w-3xl mx-auto px-md py-lg space-y-lg">
         <header className="flex items-center justify-between">
-          <h1 className="text-headline-lg font-semibold text-on-surface">Mes favoris</h1>
+          <h1 className="text-headline-lg font-semibold text-on-surface">{t('fav.title')}</h1>
           <span className="text-body-sm text-on-surface-variant">
-            {fav.favorites.size} station(s)
+            {t('common.stationsCount', { n: fav.favorites.size })}
           </span>
         </header>
 
         {fav.favorites.size === 0 && (
           <div className="bg-surface-container-lowest border border-surface-variant rounded-xl p-lg text-center">
             <Icon name="star" size={48} className="text-on-surface-variant mb-sm" />
-            <p className="text-body-lg text-on-surface mb-1">Aucun favori pour le moment</p>
+            <p className="text-body-lg text-on-surface mb-1">{t('fav.empty')}</p>
             <p className="text-body-sm text-on-surface-variant">
-              Touche l'étoile sur une station pour l'ajouter ici.
+              {t('fav.emptyHint')}
             </p>
           </div>
         )}
@@ -97,7 +92,7 @@ export function FavoritesScreen() {
         {fav.favorites.size > 0 && enriched.length === 0 && (
           <div className="bg-surface-container-lowest border border-surface-variant rounded-xl p-lg text-center">
             <p className="text-body-sm text-on-surface-variant">
-              Chargement des favoris hors du rayon courant…
+              {t('fav.loadingOutside')}
             </p>
           </div>
         )}

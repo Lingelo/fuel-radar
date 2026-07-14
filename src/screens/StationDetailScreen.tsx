@@ -5,8 +5,9 @@ import { useFilters } from '../state/FiltersContext';
 import { useViewNav } from '../state/ViewContext';
 import { useFavorites } from '../state/FavoritesContext';
 import { fetchDepartment, fetchDeptHistory, timeAgo } from '../lib/data';
-import { getDepartment } from '../lib/department';
+import { deptsAround } from '../lib/deptIndex';
 import { haversineKm, formatDistance } from '../lib/distance';
+import { useI18n } from '../i18n';
 import { Icon } from '../components/Icon';
 import { PriceTrendBars } from '../components/PriceTrendBars';
 import { formatPrice, formatPriceDelta } from '../lib/format';
@@ -45,6 +46,7 @@ function MapInvalidator() {
 
 export function StationDetailScreen({ stationId }: Props) {
   const f = useFilters();
+  const { t } = useI18n();
   const nav = useViewNav();
   const fav = useFavorites();
   const [station, setStation] = useState<Station | null>(null);
@@ -63,28 +65,23 @@ export function StationDetailScreen({ stationId }: Props) {
     let cancelled = false;
     setLoading(true);
     (async () => {
-      // Try to find station by scanning loaded departments;
-      // if not found, attempt to load nearby ones via cp prefix scan.
-      // Cheap strategy: walk all known departments lazily via fetchDepartment call.
-      // Better: keep an index in FiltersContext, but for now scan dept by dept.
+      // Try to find the station by scanning departments around the user —
+      // the bbox index covers France plus the Spanish/Portuguese datasets,
+      // so foreign stations resolve through the exact same path.
       const tryDepts = new Set<string>();
       if (f.userLocation) {
-        // load user's department first
-        const url = `https://api-adresse.data.gouv.fr/reverse/?lat=${f.userLocation.lat}&lon=${f.userLocation.lng}&limit=1`;
-        try {
-          const res = await fetch(url);
-          if (res.ok) {
-            const data = await res.json();
-            const cp = data.features?.[0]?.properties?.postcode;
-            if (cp) tryDepts.add(getDepartment(cp));
-          }
-        } catch {
-          // ignore
-        }
+        const around = await deptsAround(
+          f.userLocation.lat,
+          f.userLocation.lng,
+          Math.max(f.radiusKm, 15),
+        );
+        for (const d of around ?? []) tryDepts.add(d);
       }
-      // Also add all 2-digit dept codes as fallback (only triggers on cache misses, but JSON is small per dept)
-      const allDepts = ['75', '92', '93', '94', '77', '78', '91', '95'];
-      for (const d of allDepts) tryDepts.add(d);
+      // Fallback when the index is unavailable or the location is unset:
+      // Île-de-France dept codes (small JSONs, served from cache after first hit).
+      if (tryDepts.size === 0) {
+        for (const d of ['75', '92', '93', '94', '77', '78', '91', '95']) tryDepts.add(d);
+      }
 
       let found: Station | null = null;
       for (const dept of tryDepts) {
@@ -106,12 +103,12 @@ export function StationDetailScreen({ stationId }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [stationId, f.userLocation]);
+  }, [stationId, f.userLocation, f.radiusKm]);
 
   if (loading) {
     return (
       <div className="absolute inset-0 flex items-center justify-center text-on-surface-variant">
-        Chargement…
+        {t('common.loading')}
       </div>
     );
   }
@@ -119,9 +116,9 @@ export function StationDetailScreen({ stationId }: Props) {
   if (!station) {
     return (
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-on-surface-variant">
-        <p>Station introuvable.</p>
+        <p>{t('station.notFound')}</p>
         <button onClick={() => nav.goBack()} className="text-primary underline">
-          Retour
+          {t('common.back')}
         </button>
       </div>
     );
@@ -156,8 +153,8 @@ export function StationDetailScreen({ stationId }: Props) {
 
   const share = async () => {
     const url = window.location.href;
-    const title = `${station.brand ?? `Station ${station.id}`} — Carburants France`;
-    const text = `${station.brand ?? `Station ${station.id}`} • ${station.cp} ${station.city}`;
+    const title = `${station.brand ?? t('station.fallbackNameId', { id: station.id })} — FuelRadar`;
+    const text = `${station.brand ?? t('station.fallbackNameId', { id: station.id })} • ${station.cp} ${station.city}`;
     if (navigator.share) {
       try {
         await navigator.share({ title, text, url });
@@ -168,9 +165,9 @@ export function StationDetailScreen({ stationId }: Props) {
     }
     try {
       await navigator.clipboard.writeText(url);
-      setToast('Lien copié dans le presse-papier');
+      setToast(t('common.linkCopied'));
     } catch {
-      window.prompt('Copier ce lien :', url);
+      window.prompt(t('common.copyLink'), url);
     }
   };
 
@@ -197,7 +194,7 @@ export function StationDetailScreen({ stationId }: Props) {
         <button
           onClick={() => nav.goBack()}
           className="absolute top-4 left-4 bg-surface-container-lowest text-on-surface p-2 rounded-full shadow-md active:scale-95 transition-transform z-[400]"
-          aria-label="Retour"
+          aria-label={t('common.back')}
         >
           <Icon name="arrow_back" />
         </button>
@@ -205,15 +202,15 @@ export function StationDetailScreen({ stationId }: Props) {
           <button
             onClick={share}
             className="bg-surface-container-lowest border border-outline-variant p-2 rounded-full shadow-md active:scale-95 transition-transform"
-            aria-label="Partager cette station"
-            title="Partager"
+            aria-label={t('station.shareStation')}
+            title={t('common.share')}
           >
             <Icon name="share" className="text-on-surface" />
           </button>
           <button
             onClick={() => fav.toggle(station.id)}
             className="bg-surface-container-lowest border border-outline-variant p-2 rounded-full shadow-md active:scale-95 transition-transform"
-            aria-label={fav.isFavorite(station.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+            aria-label={fav.isFavorite(station.id) ? t('station.removeFav') : t('station.addFav')}
           >
             <Icon
               name="star"
@@ -230,7 +227,7 @@ export function StationDetailScreen({ stationId }: Props) {
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-md">
             <div className="min-w-0">
               <h1 className="text-headline-lg font-semibold text-on-surface truncate">
-                {station.brand ?? `Station ${station.id}`}
+                {station.brand ?? t('station.fallbackNameId', { id: station.id })}
               </h1>
               <p className="text-body-sm text-on-surface-variant mt-1 flex items-start gap-1">
                 <Icon name="location_on" size={16} />
@@ -247,7 +244,7 @@ export function StationDetailScreen({ stationId }: Props) {
               rel="noopener noreferrer"
               className="bg-primary text-on-primary px-4 py-2 rounded-xl text-body-sm font-semibold flex items-center justify-center gap-2 active:scale-95 transition-transform"
             >
-              <Icon name="directions" size={20} /> Itinéraire
+              <Icon name="directions" size={20} /> {t('common.directions')}
             </a>
           </div>
         </section>
@@ -257,7 +254,7 @@ export function StationDetailScreen({ stationId }: Props) {
           <section className="bg-surface-container-lowest p-lg rounded-xl shadow-[0_4px_6px_-1px_rgba(20,27,43,0.1)]">
             <h2 className="text-headline-md font-semibold text-on-surface mb-md flex items-center gap-2 border-b border-surface-variant pb-2">
               <Icon name="local_gas_station" className="text-primary" />
-              Prix actuels
+              {t('station.currentPrices')}
             </h2>
             <div className="space-y-sm">
               {(() => {
@@ -309,7 +306,7 @@ export function StationDetailScreen({ stationId }: Props) {
                             name={delta < 0 ? 'trending_down' : 'trending_up'}
                             size={12}
                           />
-                          {formatPriceDelta(delta)} / 7 j
+                          {t('station.perWeek', { delta: formatPriceDelta(delta) })}
                         </div>
                       ) : (
                         <div className="text-body-sm text-on-surface-variant">
@@ -328,7 +325,7 @@ export function StationDetailScreen({ stationId }: Props) {
           <section className="bg-surface-container-lowest p-lg rounded-xl shadow-[0_4px_6px_-1px_rgba(20,27,43,0.1)]">
             <h2 className="text-headline-md font-semibold text-on-surface mb-md flex items-center gap-2 border-b border-surface-variant pb-2">
               <Icon name="insights" className="text-secondary" />
-              Tendance 7 jours ({f.selectedFuel})
+              {t('station.trend7d', { fuel: f.selectedFuel })}
             </h2>
             <PriceTrendBars points={sevenDayPoints(f.selectedFuel)} />
           </section>
@@ -338,13 +335,13 @@ export function StationDetailScreen({ stationId }: Props) {
           <section className="bg-surface-container-lowest p-lg rounded-xl shadow-[0_4px_6px_-1px_rgba(20,27,43,0.1)]">
             <h2 className="text-headline-md font-semibold text-on-surface mb-md flex items-center gap-2 border-b border-surface-variant pb-2">
               <Icon name="handyman" className="text-secondary" />
-              Services
+              {t('station.services')}
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-sm">
               {station.h24 && (
                 <div className="flex items-center gap-sm text-body-sm text-on-surface bg-tertiary-container/40 border border-tertiary-fixed-dim/40 px-3 py-2 rounded-lg">
                   <Icon name="schedule" filled className="text-tertiary" />
-                  <span>Automate 24/7</span>
+                  <span>{t('station.h24')}</span>
                 </div>
               )}
               {station.services?.map((svc) => (

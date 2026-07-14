@@ -18,47 +18,162 @@ export interface AddressResult {
   postcode: string;
   lat: number;
   lng: number;
+  /** BAN relevance score (0..1) — only set on French results. */
+  score?: number;
 }
 
-/** Forward-geocode via api-adresse.data.gouv.fr (free, no key). */
-export async function searchAddress(query: string, limit = 8): Promise<AddressResult[]> {
-  const q = query.trim();
-  if (q.length < 2) return [];
-  const url = `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(q)}&limit=${limit}`;
-  const res = await fetch(url);
-  if (!res.ok) return [];
-  const data: { features: Feature[] } = await res.json();
-  return data.features.map((f) => ({
-    label: f.properties.label,
-    city: f.properties.city,
-    postcode: f.properties.postcode,
-    lng: f.geometry.coordinates[0],
-    lat: f.geometry.coordinates[1],
-  }));
+interface PhotonFeature {
+  geometry: { coordinates: [number, number] };
+  properties: {
+    name?: string;
+    street?: string;
+    housenumber?: string;
+    city?: string;
+    postcode?: string;
+    countrycode?: string;
+    state?: string;
+    country?: string;
+  };
 }
 
-/** Reverse-geocode lat/lng to a postal code + city. */
-export async function reverseGeocode(coords: Coords): Promise<AddressResult | null> {
-  const url = `https://api-adresse.data.gouv.fr/reverse/?lat=${coords.lat}&lon=${coords.lng}&limit=1`;
-  const res = await fetch(url);
-  if (!res.ok) return null;
-  const data: { features: Feature[] } = await res.json();
-  const f = data.features[0];
-  if (!f) return null;
+/** Countries covered by the Spanish/Portuguese datasets. */
+const PHOTON_COUNTRIES = new Set(['ES', 'PT']);
+
+function photonToResult(f: PhotonFeature): AddressResult | null {
+  const p = f.properties ?? {};
+  // Street-level entries have street/housenumber instead of a name.
+  const street = [p.street, p.housenumber].filter(Boolean).join(' ');
+  const name = p.name ?? street;
+  const city = p.city ?? p.name ?? '';
+  if (!name && !city) return null;
+  const parts: string[] = [];
+  for (const part of [name, city, p.state, p.country]) {
+    if (part && !parts.includes(part)) parts.push(part);
+  }
   return {
-    label: f.properties.label,
-    city: f.properties.city,
-    postcode: f.properties.postcode,
+    label: parts.join(', '),
+    city: city || name,
+    postcode: p.postcode ?? '',
     lng: f.geometry.coordinates[0],
     lat: f.geometry.coordinates[1],
   };
+}
+
+/**
+ * Forward-geocode Spanish/Portuguese places via photon.komoot.io (free, no
+ * key) — cities down to street/house level, like the BAN does for France.
+ */
+async function searchIberia(query: string, limit = 4): Promise<AddressResult[]> {
+  try {
+    const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=${limit * 3}&lang=fr`;
+    const res = await fetch(url);
+    if (!res.ok) return [];
+    const data: { features: PhotonFeature[] } = await res.json();
+    const out: AddressResult[] = [];
+    const seen = new Set<string>();
+    for (const f of data.features ?? []) {
+      if (!PHOTON_COUNTRIES.has((f.properties.countrycode ?? '').toUpperCase())) continue;
+      const r = photonToResult(f);
+      if (!r) continue;
+      // Photon often returns several nearly identical entries for one place
+      // (e.g. one per street segment) — keep only the first of each label.
+      const key = r.label;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(r);
+      if (out.length >= limit) break;
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
+/** Forward-geocode French addresses via api-adresse.data.gouv.fr (free, no key). */
+async function searchFrance(query: string, limit = 8): Promise<AddressResult[]> {
+  try {
+    const url = `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&limit=${limit}`;
+    const res = await fetch(url);
+    if (!res.ok) return [];
+    const data: { features: Feature[] } = await res.json();
+    return data.features.map((f) => ({
+      label: f.properties.label,
+      city: f.properties.city,
+      postcode: f.properties.postcode,
+      score: (f.properties as { score?: number }).score,
+      lng: f.geometry.coordinates[0],
+      lat: f.geometry.coordinates[1],
+    }));
+  } catch {
+    return [];
+  }
+}
+
+/** Accent/case-insensitive comparison key. */
+function norm(s: string): string {
+  return s
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+/**
+ * Forward-geocode France (BAN) + Spanish/Portuguese cities (photon).
+ * Iberian matches come first when the query names one of them exactly
+ * ("Madrid", "Faro") or when the BAN only has low-confidence fuzzy
+ * matches — otherwise they are appended after the French results.
+ */
+export async function searchAddress(query: string, limit = 8): Promise<AddressResult[]> {
+  const q = query.trim();
+  if (q.length < 2) return [];
+  const [fr, iberia] = await Promise.all([searchFrance(q, limit), searchIberia(q)]);
+  if (iberia.length === 0) return fr;
+  const qn = norm(q);
+  const exactIberia = iberia.some((r) => norm(r.city) === qn);
+  const bestFrScore = fr[0]?.score ?? 0;
+  return exactIberia || bestFrScore < 0.8 ? [...iberia, ...fr] : [...fr, ...iberia];
+}
+
+/** Reverse-geocode lat/lng to a postal code + city (France, then ES/PT fallback). */
+export async function reverseGeocode(coords: Coords): Promise<AddressResult | null> {
+  try {
+    const url = `https://api-adresse.data.gouv.fr/reverse/?lat=${coords.lat}&lon=${coords.lng}&limit=1`;
+    const res = await fetch(url);
+    if (res.ok) {
+      const data: { features: Feature[] } = await res.json();
+      const f = data.features[0];
+      if (f) {
+        return {
+          label: f.properties.label,
+          city: f.properties.city,
+          postcode: f.properties.postcode,
+          lng: f.geometry.coordinates[0],
+          lat: f.geometry.coordinates[1],
+        };
+      }
+    }
+  } catch {
+    // fall through to photon
+  }
+  // Outside France (or BAN down) — try photon, which covers Spain/Portugal.
+  try {
+    const url = `https://photon.komoot.io/reverse?lat=${coords.lat}&lon=${coords.lng}&lang=fr`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data: { features: PhotonFeature[] } = await res.json();
+    const f = data.features?.[0];
+    return f ? photonToResult(f) : null;
+  } catch {
+    return null;
+  }
 }
 
 /** Reverse-geocode coords to a SearchBar-friendly label, with lat/lng fallback. */
 export async function reverseGeocodeLabel(coords: Coords): Promise<string> {
   const addr = await reverseGeocode(coords);
   return addr
-    ? `${addr.postcode} ${addr.city}`
+    ? [addr.postcode, addr.city].filter(Boolean).join(' ')
     : `${coords.lat.toFixed(3)}, ${coords.lng.toFixed(3)}`;
 }
 

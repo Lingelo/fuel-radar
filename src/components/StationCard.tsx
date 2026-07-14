@@ -3,6 +3,7 @@ import { formatDistance } from '../lib/distance';
 import { isStale, timeAgo } from '../lib/data';
 import { formatPrice } from '../lib/format';
 import { useSettings } from '../state/SettingsContext';
+import { useI18n } from '../i18n';
 import { Icon } from './Icon';
 
 interface Props {
@@ -31,10 +32,11 @@ export function StationCard({
   onClick,
 }: Props) {
   const settings = useSettings();
+  const { t } = useI18n();
   const main = station.fuels[selectedFuel];
   const stale = settings.showStaleWarning && main ? isStale(main.d) : false;
   const otherFuels = (Object.keys(station.fuels) as FuelType[]).filter((f) => f !== selectedFuel);
-  const display = station.brand ?? 'Station';
+  const display = station.brand ?? t('station.fallbackName');
 
   return (
     <article
@@ -49,7 +51,7 @@ export function StationCard({
     >
       {isCheapest && (
         <div className="absolute top-0 right-0 bg-tertiary-container text-on-tertiary-container text-label-caps font-bold tracking-wider px-3 py-1 rounded-bl-lg">
-          Le Moins Cher
+          {t('station.cheapest')}
         </div>
       )}
       <div className="flex justify-between items-start gap-md">
@@ -97,7 +99,7 @@ export function StationCard({
             </div>
           ) : (
             <div className="text-body-sm text-on-surface-variant mt-1">
-              Pas de {selectedFuel}
+              {t('station.noFuel', { fuel: selectedFuel })}
             </div>
           )}
         </div>
@@ -105,7 +107,7 @@ export function StationCard({
       <div className="mt-md pt-sm border-t border-surface-variant flex justify-between items-center">
         <p className={`text-body-sm flex items-center gap-1 ${stale ? 'text-error' : 'text-on-surface-variant'}`}>
           {stale && <Icon name="warning" size={14} />}
-          {main ? `Mis à jour ${timeAgo(main.d)}` : '—'}
+          {main ? t('time.updated', { time: timeAgo(main.d) }) : '—'}
         </p>
         <div className="flex items-center gap-1">
           {onToggleFavorite && (
@@ -115,7 +117,7 @@ export function StationCard({
                 onToggleFavorite();
               }}
               className="p-1 rounded-full hover:bg-surface-container active:scale-90 transition-transform"
-              aria-label={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+              aria-label={isFavorite ? t('station.removeFav') : t('station.addFav')}
             >
               <Icon
                 name="star"
@@ -133,7 +135,7 @@ export function StationCard({
             }}
             className="text-primary text-label-caps font-bold tracking-wider flex items-center gap-1 hover:bg-surface-container px-2 py-1 rounded transition-colors"
           >
-              VOIR SUR LA CARTE <Icon name="map" size={16} />
+              {t('station.viewOnMap')} <Icon name="map" size={16} />
             </button>
           )}
         </div>

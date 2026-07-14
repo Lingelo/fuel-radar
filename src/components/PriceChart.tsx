@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useI18n } from '../i18n';
 import type { FuelType } from '../types';
 import { formatPrice } from '../lib/format';
 
@@ -22,6 +23,7 @@ interface Props {
  * chart fills the available area without distorting axis labels.
  */
 export function PriceChart({ series, fuelColors, size = 'inline' }: Props) {
+  const { localeTag } = useI18n();
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const ref = useRef<SVGSVGElement | null>(null);
   const [cursorT, setCursorT] = useState<number | null>(null);
@@ -173,7 +175,7 @@ export function PriceChart({ series, fuelColors, size = 'inline' }: Props) {
           fontSize={labelFontSize}
           fill="var(--color-on-surface-variant)"
         >
-          {new Date(tStart).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
+          {new Date(tStart).toLocaleDateString(localeTag, { day: '2-digit', month: 'short' })}
         </text>
         <text
           x={(PAD.left + (W - PAD.right)) / 2}
@@ -182,7 +184,7 @@ export function PriceChart({ series, fuelColors, size = 'inline' }: Props) {
           fontSize={labelFontSize}
           fill="var(--color-on-surface-variant)"
         >
-          {new Date((tStart + tEnd) / 2).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
+          {new Date((tStart + tEnd) / 2).toLocaleDateString(localeTag, { day: '2-digit', month: 'short' })}
         </text>
         <text
           x={W - PAD.right}
@@ -191,7 +193,7 @@ export function PriceChart({ series, fuelColors, size = 'inline' }: Props) {
           fontSize={labelFontSize}
           fill="var(--color-on-surface-variant)"
         >
-          {new Date(tEnd).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
+          {new Date(tEnd).toLocaleDateString(localeTag, { day: '2-digit', month: 'short' })}
         </text>
 
         {/* Lines */}
@@ -247,7 +249,7 @@ export function PriceChart({ series, fuelColors, size = 'inline' }: Props) {
           style={{ fontSize: size === 'fullscreen' ? 14 : 12 }}
         >
           <div className="font-semibold mb-1">
-            {new Date(snapped.ts).toLocaleDateString('fr-FR', {
+            {new Date(snapped.ts).toLocaleDateString(localeTag, {
               day: 'numeric',
               month: 'short',
               year: 'numeric',

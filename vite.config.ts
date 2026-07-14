@@ -17,10 +17,10 @@ export default defineConfig(({ command }) => ({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg', 'icon-192.png.svg'],
       manifest: {
-        name: 'Carburants France',
-        short_name: 'Carburants',
+        name: 'FuelRadar',
+        short_name: 'FuelRadar',
         description:
-          'Prix des carburants en France en temps réel — données prix-carburants.gouv.fr.',
+          'Prix des carburants en France, en Espagne et au Portugal — données ouvertes officielles.',
         lang: 'fr',
         scope: BASE,
         start_url: BASE,
@@ -51,12 +51,14 @@ export default defineConfig(({ command }) => ({
           {
             urlPattern: ({ url }) =>
               url.pathname.includes('/data/departments/') ||
-              url.pathname.endsWith('/data/meta.json'),
+              url.pathname.endsWith('/data/meta.json') ||
+              url.pathname.endsWith('/data/dept-bbox.json'),
             handler: 'NetworkFirst',
             options: {
               cacheName: 'station-data',
               networkTimeoutSeconds: 5,
-              expiration: { maxEntries: 200, maxAgeSeconds: 24 * 60 * 60 },
+              // ~170 department files (France + Espagne + Portugal) + meta + bbox
+              expiration: { maxEntries: 250, maxAgeSeconds: 24 * 60 * 60 },
             },
           },
           {

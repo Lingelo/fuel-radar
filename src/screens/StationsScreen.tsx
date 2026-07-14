@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useFilters } from '../state/FiltersContext';
 import { useViewNav } from '../state/ViewContext';
 import { useFavorites } from '../state/FavoritesContext';
+import { useI18n } from '../i18n';
 import { useNearbyStations } from '../hooks/useNearbyStations';
 import { FUEL_TYPES, type FuelType } from '../types';
 import { haversineKm } from '../lib/distance';
@@ -15,6 +16,7 @@ import { Icon } from '../components/Icon';
 
 export function StationsScreen() {
   const f = useFilters();
+  const { t } = useI18n();
   const nav = useViewNav();
   const fav = useFavorites();
   const { stations, loading } = useNearbyStations();
@@ -72,7 +74,7 @@ export function StationsScreen() {
           <section className="flex flex-col gap-sm">
             <div className="flex items-center justify-between gap-sm">
               <h2 className="text-headline-lg font-semibold text-on-surface">
-                Stations à proximité
+                {t('stations.title')}
               </h2>
               <div className="flex items-center gap-1 bg-surface-container-lowest rounded-lg p-1 border border-surface-variant">
                 <button
@@ -84,7 +86,7 @@ export function StationsScreen() {
                       : 'text-on-surface hover:bg-surface-container',
                   ].join(' ')}
                 >
-                  Prix
+                  {t('stations.sortPrice')}
                 </button>
                 <button
                   onClick={() => f.setSortBy('distance')}
@@ -95,7 +97,7 @@ export function StationsScreen() {
                       : 'text-on-surface hover:bg-surface-container',
                   ].join(' ')}
                 >
-                  Distance
+                  {t('stations.sortDistance')}
                 </button>
               </div>
             </div>
@@ -118,18 +120,16 @@ export function StationsScreen() {
                     ? 'bg-error-container text-on-error-container border-error'
                     : 'bg-primary text-on-primary border-transparent',
                 ].join(' ')}
-                aria-label="Me localiser"
+                aria-label={t('map.locate')}
               >
                 <Icon name={locating ? 'sync' : locationDenied ? 'location_disabled' : 'my_location'} filled size={16} />
-                {locating ? 'Localisation…' : locationDenied ? 'Réessayer' : 'Me localiser'}
+                {locating ? t('stations.locating') : locationDenied ? t('common.retry') : t('map.locate')}
               </button>
             </div>
             {locationDenied && (
               <p className="text-body-sm text-error flex items-start gap-2">
                 <Icon name="info" size={16} />
-                <span>
-                  Localisation refusée. Saisis une ville ou un code postal ci-dessus.
-                </span>
+                <span>{t('stations.deniedHint')}</span>
               </p>
             )}
             <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
@@ -145,12 +145,13 @@ export function StationsScreen() {
                 onClick={() => setFilterOpen(true)}
                 className="shrink-0 px-3 py-2 rounded-full bg-surface-container-lowest border border-outline-variant text-on-surface text-label-caps font-bold tracking-wider flex items-center gap-1"
               >
-                <Icon name="tune" size={14} /> Filtres
+                <Icon name="tune" size={14} /> {t('common.filters')}
               </button>
             </div>
             {hasLocation && (
               <p className="text-body-sm text-on-surface-variant">
-                Rayon : {f.radiusKm} km {f.searchLabel ? `autour de ${f.searchLabel}` : ''}
+                {t('stations.radius', { r: f.radiusKm })}{' '}
+                {f.searchLabel ? t('stations.around', { label: f.searchLabel }) : ''}
               </p>
             )}
           </section>
@@ -160,23 +161,23 @@ export function StationsScreen() {
               <div className="text-center py-xl space-y-2">
                 <Icon name="location_searching" size={32} className="text-primary mx-auto" />
                 <p className="text-body-lg text-on-surface">
-                  Indique ta position pour voir les stations.
+                  {t('stations.needLocation')}
                 </p>
                 <p className="text-body-sm text-on-surface-variant">
-                  Saisis une ville ou utilise le bouton « Me localiser ».
+                  {t('stations.needLocationHint')}
                 </p>
               </div>
             )}
             {hasLocation && loading && sorted.length === 0 && (
               <p className="text-center text-body-sm text-on-surface-variant py-lg">
-                Chargement des stations…
+                {t('map.loadingStations')}
               </p>
             )}
             {hasLocation && !loading && sorted.length === 0 && (
               <p className="text-center text-body-sm text-on-surface-variant py-lg">
                 {f.openH24Only
-                  ? `Aucune station ${f.selectedFuel} ouverte 24/7 dans ce rayon. Ajustez les filtres.`
-                  : `Aucune station ${f.selectedFuel} dans ce rayon. Ajustez les filtres.`}
+                  ? t('stations.noneH24', { fuel: f.selectedFuel })
+                  : t('stations.none', { fuel: f.selectedFuel })}
               </p>
             )}
             {sorted.map(({ station, distance, color }, idx) => (

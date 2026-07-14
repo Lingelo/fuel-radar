@@ -5,10 +5,12 @@ import { fetchMeta, timeAgo } from '../lib/data';
 import { getBrowserLocation, reverseGeocode } from '../lib/geocode';
 import { useForegroundRefresh } from '../hooks/useForegroundRefresh';
 import { useGeolocationPermission } from '../hooks/useGeolocationPermission';
+import { useI18n, LOCALES } from '../i18n';
 import { Icon } from '../components/Icon';
 
 export function SettingsScreen() {
   const s = useSettings();
+  const { t, locale, setLocale } = useI18n();
   const f = useFilters();
   const foregroundVersion = useForegroundRefresh();
   const permission = useGeolocationPermission();
@@ -35,7 +37,7 @@ export function SettingsScreen() {
       if (coords) {
         f.setUserLocation(coords);
         const addr = await reverseGeocode(coords);
-        if (addr) f.setSearchLabel(`${addr.postcode} ${addr.city}`);
+        if (addr) f.setSearchLabel([addr.postcode, addr.city].filter(Boolean).join(' '));
         else f.setSearchLabel(`${coords.lat.toFixed(3)}, ${coords.lng.toFixed(3)}`);
       }
     } finally {
@@ -47,7 +49,7 @@ export function SettingsScreen() {
     f.searchLabel ??
     (f.userLocation
       ? `${f.userLocation.lat.toFixed(3)}, ${f.userLocation.lng.toFixed(3)}`
-      : 'Indéterminée');
+      : t('settings.positionUnknown'));
 
   const APP_URL = 'https://lingelo.github.io/carburants-france/';
   const [shareToast, setShareToast] = useState<string | null>(null);
@@ -58,8 +60,8 @@ export function SettingsScreen() {
   }, [shareToast]);
   const shareApp = async () => {
     const payload = {
-      title: 'Carburants France',
-      text: 'Compare les prix carburants en France en temps réel — données prix-carburants.gouv.fr.',
+      title: 'FuelRadar',
+      text: t('settings.shareText'),
       url: APP_URL,
     };
     if (navigator.share) {
@@ -72,24 +74,24 @@ export function SettingsScreen() {
     }
     try {
       await navigator.clipboard.writeText(APP_URL);
-      setShareToast('Lien copié dans le presse-papier');
+      setShareToast(t('common.linkCopied'));
     } catch {
-      window.prompt('Copier ce lien :', APP_URL);
+      window.prompt(t('common.copyLink'), APP_URL);
     }
   };
 
   return (
     <div className="h-full overflow-y-auto">
       <main className="max-w-2xl mx-auto px-md py-lg space-y-lg">
-        <h1 className="text-headline-lg font-semibold text-on-surface">Réglages</h1>
+        <h1 className="text-headline-lg font-semibold text-on-surface">{t('settings.title')}</h1>
 
         <section className="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05)] border border-surface-container-highest">
-          <h2 className="text-headline-md font-semibold text-on-surface mb-sm">Écran de démarrage</h2>
+          <h2 className="text-headline-md font-semibold text-on-surface mb-sm">{t('settings.startScreen')}</h2>
           <div className="grid grid-cols-2 gap-2">
             {(
               [
-                { v: 'map', label: 'Carte' },
-                { v: 'stations', label: 'Liste' },
+                { v: 'map', label: t('nav.map') },
+                { v: 'stations', label: t('settings.startList') },
               ] as const
             ).map(({ v, label }) => (
               <button
@@ -109,12 +111,35 @@ export function SettingsScreen() {
         </section>
 
         <section className="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05)] border border-surface-container-highest">
-          <h2 className="text-headline-md font-semibold text-on-surface mb-sm">Recherche</h2>
+          <h2 className="text-headline-md font-semibold text-on-surface mb-sm flex items-center gap-2">
+            <Icon name="language" size={20} className="text-primary" />
+            {t('settings.language')}
+          </h2>
+          <div className="grid grid-cols-2 gap-2">
+            {LOCALES.map(({ code, label }) => (
+              <button
+                key={code}
+                onClick={() => setLocale(code)}
+                className={[
+                  'p-3 rounded-lg border text-body-sm transition-colors',
+                  locale === code
+                    ? 'bg-secondary text-on-secondary border-secondary'
+                    : 'bg-surface-container border-outline text-on-surface',
+                ].join(' ')}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05)] border border-surface-container-highest">
+          <h2 className="text-headline-md font-semibold text-on-surface mb-sm">{t('settings.search')}</h2>
           <label className="flex items-start justify-between gap-2 p-2 cursor-pointer">
             <div className="flex-1">
-              <div className="text-body-lg text-on-surface">Avertir si données &gt; 72 h</div>
+              <div className="text-body-lg text-on-surface">{t('settings.staleWarn')}</div>
               <div className="text-body-sm text-on-surface-variant">
-                Affiche une icône d'alerte rouge à côté du prix d'une station si la dernière mise à jour gouvernementale a plus de 72 h.
+                {t('settings.staleWarnDesc')}
               </div>
             </div>
             <input
@@ -127,7 +152,7 @@ export function SettingsScreen() {
           <div className="p-2 space-y-2">
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0 flex-1">
-                <div className="text-body-lg text-on-surface">Position actuelle</div>
+                <div className="text-body-lg text-on-surface">{t('settings.currentPosition')}</div>
                 <div className="text-body-sm text-on-surface-variant truncate">
                   {positionLabel}
                 </div>
@@ -140,7 +165,7 @@ export function SettingsScreen() {
                 className="bg-secondary-container text-on-secondary-container px-3 py-2 rounded-lg text-label-caps font-bold tracking-wider flex items-center gap-1 active:scale-95 transition-transform disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <Icon name={refreshing ? 'sync' : 'my_location'} size={16} />
-                {refreshing ? 'Localisation…' : 'Actualiser'}
+                {refreshing ? t('stations.locating') : t('settings.refresh')}
               </button>
             </div>
             {permission !== 'unknown' && (
@@ -168,11 +193,10 @@ export function SettingsScreen() {
                   filled={permission === 'granted'}
                 />
                 <span>
-                  {permission === 'granted' && 'Géolocalisation activée'}
-                  {permission === 'prompt' && 'Géolocalisation non demandée'}
-                  {permission === 'denied' && 'Géolocalisation désactivée'}
-                  {permission === 'unsupported' &&
-                    'Géolocalisation non disponible sur ce navigateur'}
+                  {permission === 'granted' && t('settings.geoGranted')}
+                  {permission === 'prompt' && t('settings.geoPrompt')}
+                  {permission === 'denied' && t('settings.geoDenied')}
+                  {permission === 'unsupported' && t('settings.geoUnsupported')}
                 </span>
               </div>
             )}
@@ -181,7 +205,7 @@ export function SettingsScreen() {
                 <summary className="cursor-pointer list-none flex items-center justify-between gap-2 px-3 py-2 font-medium">
                   <span className="flex items-center gap-1.5">
                     <Icon name="info" size={16} />
-                    Comment réactiver ?
+                    {t('settings.howReenable')}
                   </span>
                   <Icon
                     name="expand_more"
@@ -190,9 +214,9 @@ export function SettingsScreen() {
                   />
                 </summary>
                 <ol className="list-decimal pl-8 pr-3 pb-3 space-y-1">
-                  <li>Touche le cadenas (ou l'icône d'info) à gauche de l'adresse du site.</li>
-                  <li>Ouvre les autorisations du site, puis « Localisation ».</li>
-                  <li>Choisis « Autoriser », puis recharge la page.</li>
+                  <li>{t('settings.step1')}</li>
+                  <li>{t('settings.step2')}</li>
+                  <li>{t('settings.step3')}</li>
                 </ol>
               </details>
             )}
@@ -202,43 +226,43 @@ export function SettingsScreen() {
         <section className="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05)] border border-surface-container-highest">
           <h2 className="text-headline-md font-semibold text-on-surface mb-sm flex items-center gap-2">
             <Icon name="share" className="text-primary" />
-            Partager l'application
+            {t('settings.shareApp')}
           </h2>
           <p className="text-body-sm text-on-surface-variant mb-3">
-            Aide tes proches à comparer les prix carburants : envoie-leur le lien direct vers l'app.
+            {t('settings.shareAppDesc')}
           </p>
           <button
             onClick={shareApp}
             className="bg-primary text-on-primary px-4 py-2 rounded-lg text-body-sm font-semibold flex items-center gap-2 active:scale-95 transition-transform"
           >
             <Icon name={'share' in navigator ? 'share' : 'content_copy'} size={18} />
-            {'share' in navigator ? 'Partager' : 'Copier le lien'}
+            {'share' in navigator ? t('common.share') : t('common.copyLinkBtn')}
           </button>
         </section>
 
         <section className="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05)] border border-surface-container-highest">
-          <h2 className="text-headline-md font-semibold text-on-surface mb-sm">Données</h2>
+          <h2 className="text-headline-md font-semibold text-on-surface mb-sm">{t('settings.data')}</h2>
           <div className="flex items-center justify-between p-2">
-            <span className="text-body-lg text-on-surface">Dernière mise à jour</span>
+            <span className="text-body-lg text-on-surface">{t('settings.lastUpdate')}</span>
             <span className="text-body-sm text-on-surface-variant">
               {lastUpdate ? timeAgo(lastUpdate) : '—'}
             </span>
           </div>
           <p className="text-body-sm text-on-surface-variant px-2 pt-1">
-            Source : prix-carburants.gouv.fr (rafraîchissement toutes les 2 h).
+            {t('settings.sources')}
           </p>
         </section>
 
         <section className="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05)] border border-surface-container-highest space-y-2">
-          <h2 className="text-headline-md font-semibold text-on-surface mb-sm">À propos</h2>
+          <h2 className="text-headline-md font-semibold text-on-surface mb-sm">{t('settings.about')}</h2>
           <p className="text-body-sm text-on-surface-variant flex items-start gap-2">
             <Icon name="info" size={18} />
-            <span>Carburants France — données ouvertes du gouvernement français + OpenStreetMap.</span>
+            <span>{t('settings.aboutText')}</span>
           </p>
           <div className="flex items-start gap-2 text-body-sm text-on-surface-variant pt-2 border-t border-surface-variant">
             <Icon name="code" size={18} />
             <span>
-              Conçu et développé par{' '}
+              {t('settings.designedBy')}{' '}
               <a
                 href="https://angelo-lima.fr"
                 target="_blank"
@@ -257,7 +281,7 @@ export function SettingsScreen() {
             className="flex items-center gap-2 text-body-sm text-on-surface-variant hover:text-primary"
           >
             <Icon name="open_in_new" size={16} />
-            Code source sur GitHub
+            {t('settings.sourceCode')}
           </a>
         </section>
       </main>
