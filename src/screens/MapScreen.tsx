@@ -19,7 +19,7 @@ import { SearchBar } from '../components/SearchBar';
 import { FilterSheet } from '../components/FilterSheet';
 import { StationPopup } from '../components/StationPopup';
 import { Icon } from '../components/Icon';
-import { FUEL_TYPES, type Station } from '../types';
+import { FUEL_LABELS, FUEL_TYPES, type Station } from '../types';
 
 interface PricedStation {
   station: Station;
@@ -346,7 +346,7 @@ export function MapScreen() {
     const zoneLabel = f.searchLabel ?? `${f.userLocation.lat.toFixed(3)}, ${f.userLocation.lng.toFixed(3)}`;
     const payload = {
       title: t('map.shareZoneTitle'),
-      text: t('map.shareZoneText', { fuel: f.selectedFuel, radius: f.radiusKm, label: zoneLabel }),
+      text: t('map.shareZoneText', { fuel: FUEL_LABELS[f.selectedFuel], radius: f.radiusKm, label: zoneLabel }),
       url,
     };
     if (navigator.share) {
@@ -445,7 +445,7 @@ export function MapScreen() {
           onOpenFilters={() => setFilterOpen(true)}
         />
         {(() => {
-          const QUICK: typeof FUEL_TYPES = ['Gazole', 'E10', 'SP98'];
+          const QUICK: typeof FUEL_TYPES = ['Gazole', 'SP95', 'E10', 'SP98'];
           const quickList = QUICK.includes(f.selectedFuel)
             ? QUICK
             : [f.selectedFuel, ...QUICK];
@@ -464,7 +464,7 @@ export function MapScreen() {
                         : 'bg-surface-container-lowest text-on-surface border border-outline-variant hover:border-secondary',
                     ].join(' ')}
                   >
-                    {fuel}
+                    {FUEL_LABELS[fuel]}
                   </button>
                 );
               })}
@@ -506,8 +506,8 @@ export function MapScreen() {
       {!loading && stations.length > 0 && priced.length === 0 && hasLocation && (
         <div className="absolute top-32 md:top-24 left-1/2 -translate-x-1/2 z-[400] bg-surface-container-lowest text-on-surface px-4 py-2 rounded-full shadow-md text-body-sm border border-outline-variant">
           {f.openH24Only
-            ? t('map.noStationsH24', { fuel: f.selectedFuel })
-            : t('map.noStationsFuel', { fuel: f.selectedFuel })}
+            ? t('map.noStationsH24', { fuel: FUEL_LABELS[f.selectedFuel] })
+            : t('map.noStationsFuel', { fuel: FUEL_LABELS[f.selectedFuel] })}
         </div>
       )}
 
@@ -712,7 +712,7 @@ export function MapScreen() {
             <div className="flex items-start gap-2">
               <div className="text-right">
                 <div className="text-label-caps font-bold tracking-wider text-on-surface-variant">
-                  {f.selectedFuel}
+                  {FUEL_LABELS[f.selectedFuel]}
                 </div>
                 <div className="text-body-sm text-primary">{f.radiusKm} km</div>
               </div>

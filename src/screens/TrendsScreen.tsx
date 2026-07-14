@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { fetchNationalHistory, timeAgo, type NationalHistory } from '../lib/data';
-import { FUEL_TYPES, type FuelType } from '../types';
+import { FUEL_LABELS, FUEL_TYPES, type FuelType } from '../types';
 import { useI18n } from '../i18n';
 import { Icon } from '../components/Icon';
 import { PriceChart } from '../components/PriceChart';
@@ -119,7 +119,7 @@ export function TrendsScreen() {
             className="w-3 h-3 rounded-full inline-block"
             style={{ background: FUEL_COLORS[s.fuel] }}
           />
-          {s.fuel}
+          {FUEL_LABELS[s.fuel]}
         </span>
       ))}
     </div>
@@ -161,7 +161,7 @@ export function TrendsScreen() {
                       className="w-3 h-3 rounded-full inline-block"
                       style={{ background: FUEL_COLORS[f] }}
                     />
-                    <span className="text-label-caps font-bold tracking-wider text-on-surface">{f}</span>
+                    <span className="text-label-caps font-bold tracking-wider text-on-surface">{FUEL_LABELS[f]}</span>
                   </div>
                   <div className="text-headline-lg font-bold text-on-surface whitespace-nowrap">
                     {formatPrice(lat.price)} €
@@ -250,7 +250,7 @@ export function TrendsScreen() {
                     className="w-2 h-2 rounded-full"
                     style={{ background: FUEL_COLORS[f] }}
                   />
-                  {f}
+                  {FUEL_LABELS[f]}
                 </button>
               ))}
             </div>

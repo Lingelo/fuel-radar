@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FUEL_TYPES, type FuelType } from '../types';
+import { FUEL_LABELS, FUEL_TYPES, type FuelType } from '../types';
 import { useFilters } from '../state/FiltersContext';
 import { useI18n } from '../i18n';
 import { Icon } from './Icon';
@@ -116,7 +116,7 @@ export function FilterSheet({ open, onClose }: Props) {
                       : 'bg-surface-container-low text-on-surface border-outline',
                   ].join(' ')}
                 >
-                  {fuel}
+                  {FUEL_LABELS[fuel]}
                 </button>
               ))}
             </div>
