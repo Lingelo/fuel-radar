@@ -12,11 +12,11 @@ Plan: `docs/plans/2026-04-30-003-feat-pwa-install-invitation-plan.md`
 - [ ] `dist/sw.js` and `dist/workbox-*.js` exist
 - [ ] `dist/unregister-sw.html` exists and is reachable from the build output
 - [ ] `dist/manifest.webmanifest` is byte-identical to `public/manifest.webmanifest` (no plugin regeneration)
-- [ ] `npm run preview` serves the app on `http://localhost:4173/carburants-france/`
-- [ ] Chrome DevTools → Application → Service Workers shows an active SW at scope `/carburants-france/`
+- [ ] `npm run preview` serves the app on `http://localhost:4173/fuel-radar/`
+- [ ] Chrome DevTools → Application → Service Workers shows an active SW at scope `/fuel-radar/`
 - [ ] Chrome DevTools → Application → Manifest reports the app as **Installable** (manifest valid + SW active)
 - [ ] Lighthouse PWA audit (Chrome DevTools) passes the **Web app manifest and service worker meet the installability requirements** check
-- [ ] After deploying to GH Pages, `curl -I https://lingelo.github.io/carburants-france/sw.js` reports a `Cache-Control` header. Record the measured value here: `_______________` (sanity check the plan's 600s assumption)
+- [ ] After deploying to GH Pages, `curl -I https://lingelo.github.io/fuel-radar/sw.js` reports a `Cache-Control` header. Record the measured value here: `_______________` (sanity check the plan's 600s assumption)
 
 ## 2. Capability Detection — UA Fixtures
 
@@ -75,15 +75,15 @@ For each platform below, run the full sub-checklist. Record screenshots of the w
 
 ## 4. Recovery Page
 
-- [ ] Visit `https://lingelo.github.io/carburants-france/unregister-sw.html` while the SW is active
+- [ ] Visit `https://lingelo.github.io/fuel-radar/unregister-sw.html` while the SW is active
 - [ ] Page renders the "Réinitialisation du service worker…" message
-- [ ] After ~500ms the page redirects to `/carburants-france/`
+- [ ] After ~500ms the page redirects to `/fuel-radar/`
 - [ ] Chrome DevTools → Application → Service Workers shows no registration after redirect
 - [ ] Cache Storage is empty for the origin
 
 ## 5. Data freshness invariants
 
-- [ ] DevTools → Application → Cache Storage: no `/carburants-france/data/**.json` URLs are cached (NetworkOnly rule)
+- [ ] DevTools → Application → Cache Storage: no `/fuel-radar/data/**.json` URLs are cached (NetworkOnly rule)
 - [ ] Force-reload the app, then check Network tab: department JSON requests go to network every time (no `(ServiceWorker)` source)
 - [ ] After ~10 minutes (or by changing `meta.json` server-side), reload the app: the new data appears without a manual SW update
 
