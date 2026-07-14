@@ -1,4 +1,4 @@
-# Carburants
+# FuelRadar
 
 PWA de comparaison des prix carburants en France, en Espagne et au Portugal, alimentée par les données ouvertes de [prix-carburants.gouv.fr](https://prix-carburants.gouv.fr), du [Ministerio para la Transición Ecológica](https://geoportalgasolineras.es) (Espagne) et de la [DGEG](https://precoscombustiveis.dgeg.gov.pt) (Portugal).
 

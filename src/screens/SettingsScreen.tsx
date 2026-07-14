@@ -60,7 +60,7 @@ export function SettingsScreen() {
   }, [shareToast]);
   const shareApp = async () => {
     const payload = {
-      title: 'Carburants',
+      title: 'FuelRadar',
       text: t('settings.shareText'),
       url: APP_URL,
     };

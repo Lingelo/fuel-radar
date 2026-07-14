@@ -358,7 +358,7 @@ function groupByDepartment(stations, brandMap) {
 }
 
 async function main() {
-  console.log('=== Carburants France — Data Pipeline ===\n');
+  console.log('=== FuelRadar — France Data Pipeline ===\n');
 
   // 1. Download
   await downloadFile(SOURCE_URL, ZIP_PATH);

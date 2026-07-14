@@ -75,7 +75,7 @@ const fr = {
   'search.placeholder': 'Ville ou code postal',
   'search.clear': 'Effacer la recherche',
 
-  'map.shareZoneTitle': 'Carburants — zone partagée',
+  'map.shareZoneTitle': 'FuelRadar — zone partagée',
   'map.shareZoneText': 'Prix {fuel} dans un rayon de {radius} km autour de {label}.',
   'map.shareZone': 'Partager cette zone',
   'map.brandsCount': '{n} enseigne|{n} enseignes',
@@ -186,13 +186,13 @@ const fr = {
     'Sources : prix-carburants.gouv.fr (France), Ministerio para la Transición Ecológica (Espagne) et DGEG (Portugal) — rafraîchissement toutes les 2 h.',
   'settings.about': 'À propos',
   'settings.aboutText':
-    'Carburants — données ouvertes des gouvernements français, espagnol et portugais + OpenStreetMap.',
+    'FuelRadar — données ouvertes des gouvernements français, espagnol et portugais + OpenStreetMap.',
   'settings.designedBy': 'Conçu et développé par',
   'settings.sourceCode': 'Code source sur GitHub',
 
   'install.button': 'Installer',
   'install.aria': "Installer l'application",
-  'install.title': 'Installer Carburants',
+  'install.title': 'Installer FuelRadar',
   'install.webview1':
     "Tu utilises un navigateur intégré (Facebook, Instagram, Gmail, LinkedIn…). Il ne permet pas l'installation.",
   'install.webview2':
@@ -200,7 +200,7 @@ const fr = {
   'install.generic1':
     "Sur ton navigateur, ouvre le menu (icône ⋮ en haut à droite, ou dans la barre d'adresse).",
   'install.generic2':
-    'Cherche « Installer Carburants » ou « Ajouter à l’écran d’accueil », et confirme.',
+    'Cherche « Installer FuelRadar » ou « Ajouter à l’écran d’accueil », et confirme.',
 
   'update.newVersion': 'Nouvelle version disponible',
   'update.reload': 'Recharger',
@@ -261,7 +261,7 @@ const es: Messages = {
   'search.placeholder': 'Ciudad o código postal',
   'search.clear': 'Borrar la búsqueda',
 
-  'map.shareZoneTitle': 'Carburants — zona compartida',
+  'map.shareZoneTitle': 'FuelRadar — zona compartida',
   'map.shareZoneText': 'Precios de {fuel} en un radio de {radius} km alrededor de {label}.',
   'map.shareZone': 'Compartir esta zona',
   'map.brandsCount': '{n} marca|{n} marcas',
@@ -372,20 +372,20 @@ const es: Messages = {
     'Fuentes: prix-carburants.gouv.fr (Francia), Ministerio para la Transición Ecológica (España) y DGEG (Portugal) — actualización cada 2 h.',
   'settings.about': 'Acerca de',
   'settings.aboutText':
-    'Carburants — datos abiertos de los gobiernos francés, español y portugués + OpenStreetMap.',
+    'FuelRadar — datos abiertos de los gobiernos francés, español y portugués + OpenStreetMap.',
   'settings.designedBy': 'Diseñado y desarrollado por',
   'settings.sourceCode': 'Código fuente en GitHub',
 
   'install.button': 'Instalar',
   'install.aria': 'Instalar la aplicación',
-  'install.title': 'Instalar Carburants',
+  'install.title': 'Instalar FuelRadar',
   'install.webview1':
     'Estás usando un navegador integrado (Facebook, Instagram, Gmail, LinkedIn…). No permite la instalación.',
   'install.webview2':
     'Toca ⋮ y luego «Abrir en el navegador» (Chrome o Safari), y vuelve aquí para instalar la aplicación.',
   'install.generic1':
     'En tu navegador, abre el menú (icono ⋮ arriba a la derecha o en la barra de direcciones).',
-  'install.generic2': 'Busca «Instalar Carburants» o «Añadir a pantalla de inicio» y confirma.',
+  'install.generic2': 'Busca «Instalar FuelRadar» o «Añadir a pantalla de inicio» y confirma.',
 
   'update.newVersion': 'Nueva versión disponible',
   'update.reload': 'Recargar',
@@ -443,7 +443,7 @@ const pt: Messages = {
   'search.placeholder': 'Cidade ou código postal',
   'search.clear': 'Limpar a pesquisa',
 
-  'map.shareZoneTitle': 'Carburants — zona partilhada',
+  'map.shareZoneTitle': 'FuelRadar — zona partilhada',
   'map.shareZoneText': 'Preços de {fuel} num raio de {radius} km à volta de {label}.',
   'map.shareZone': 'Partilhar esta zona',
   'map.brandsCount': '{n} marca|{n} marcas',
@@ -554,13 +554,13 @@ const pt: Messages = {
     'Fontes: prix-carburants.gouv.fr (França), Ministerio para la Transición Ecológica (Espanha) e DGEG (Portugal) — atualização a cada 2 h.',
   'settings.about': 'Sobre',
   'settings.aboutText':
-    'Carburants — dados abertos dos governos francês, espanhol e português + OpenStreetMap.',
+    'FuelRadar — dados abertos dos governos francês, espanhol e português + OpenStreetMap.',
   'settings.designedBy': 'Concebido e desenvolvido por',
   'settings.sourceCode': 'Código-fonte no GitHub',
 
   'install.button': 'Instalar',
   'install.aria': 'Instalar a aplicação',
-  'install.title': 'Instalar Carburants',
+  'install.title': 'Instalar FuelRadar',
   'install.webview1':
     'Estás a usar um navegador integrado (Facebook, Instagram, Gmail, LinkedIn…). Não permite a instalação.',
   'install.webview2':
@@ -568,7 +568,7 @@ const pt: Messages = {
   'install.generic1':
     'No teu navegador, abre o menu (ícone ⋮ no canto superior direito ou na barra de endereço).',
   'install.generic2':
-    'Procura «Instalar Carburants» ou «Adicionar ao ecrã principal» e confirma.',
+    'Procura «Instalar FuelRadar» ou «Adicionar ao ecrã principal» e confirma.',
 
   'update.newVersion': 'Nova versão disponível',
   'update.reload': 'Recarregar',
@@ -626,7 +626,7 @@ const en: Messages = {
   'search.placeholder': 'City or postcode',
   'search.clear': 'Clear search',
 
-  'map.shareZoneTitle': 'Carburants — shared area',
+  'map.shareZoneTitle': 'FuelRadar — shared area',
   'map.shareZoneText': '{fuel} prices within {radius} km of {label}.',
   'map.shareZone': 'Share this area',
   'map.brandsCount': '{n} brand|{n} brands',
@@ -732,19 +732,19 @@ const en: Messages = {
     'Sources: prix-carburants.gouv.fr (France), Ministerio para la Transición Ecológica (Spain) and DGEG (Portugal) — refreshed every 2 h.',
   'settings.about': 'About',
   'settings.aboutText':
-    'Carburants — open data from the French, Spanish and Portuguese governments + OpenStreetMap.',
+    'FuelRadar — open data from the French, Spanish and Portuguese governments + OpenStreetMap.',
   'settings.designedBy': 'Designed and developed by',
   'settings.sourceCode': 'Source code on GitHub',
 
   'install.button': 'Install',
   'install.aria': 'Install the app',
-  'install.title': 'Install Carburants',
+  'install.title': 'Install FuelRadar',
   'install.webview1':
     "You're using an in-app browser (Facebook, Instagram, Gmail, LinkedIn…). It doesn't allow installation.",
   'install.webview2':
     'Tap ⋮ then "Open in browser" (Chrome or Safari), then come back here to install the app.',
   'install.generic1': 'In your browser, open the menu (⋮ icon top right, or in the address bar).',
-  'install.generic2': 'Look for "Install Carburants" or "Add to Home screen", and confirm.',
+  'install.generic2': 'Look for "Install FuelRadar" or "Add to Home screen", and confirm.',
 
   'update.newVersion': 'New version available',
   'update.reload': 'Reload',

@@ -20,7 +20,7 @@ export function TopAppBar() {
       <button onClick={() => goMap()} className="flex items-center gap-sm cursor-pointer active:scale-95 transition-transform min-w-0">
         <img src={`${import.meta.env.BASE_URL}icon.svg`} alt="" className="w-7 h-7 shrink-0" />
         <span className="flex items-baseline gap-2 min-w-0">
-          <h1 className="text-xl font-bold text-on-surface tracking-tight truncate">Carburants</h1>
+          <h1 className="text-xl font-bold text-on-surface tracking-tight truncate">FuelRadar</h1>
           <span className="hidden sm:inline text-body-sm text-on-surface-variant whitespace-nowrap">
             {t('app.subtitle')}
           </span>

@@ -336,7 +336,7 @@ function mergeBbox(entriesByPrefix) {
 }
 
 async function main() {
-  console.log('=== Carburants — Spain & Portugal Data Pipeline ===\n');
+  console.log('=== FuelRadar — Spain & Portugal Data Pipeline ===\n');
 
   const bboxUpdates = {};
   let failures = 0;

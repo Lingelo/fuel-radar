@@ -17,8 +17,8 @@ export default defineConfig(({ command }) => ({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg', 'icon-192.png.svg'],
       manifest: {
-        name: 'Carburants',
-        short_name: 'Carburants',
+        name: 'FuelRadar',
+        short_name: 'FuelRadar',
         description:
           'Prix des carburants en France, en Espagne et au Portugal — données ouvertes officielles.',
         lang: 'fr',
