@@ -44,7 +44,7 @@ export function InstallButton() {
       {hint && (
         <div className="fixed inset-0 z-[1100] flex items-end md:items-center justify-center p-0 md:p-4">
           <div className="absolute inset-0 bg-on-surface/40" onClick={() => setHint(null)} />
-          <div className="relative bg-surface-container-lowest w-full md:w-[480px] md:rounded-xl rounded-t-xl p-6 shadow-[0_-12px_32px_rgba(20,27,43,0.18)]">
+          <div className="relative bg-surface-container-lowest w-full md:w-[480px] md:rounded-xl rounded-t-xl p-6 shadow-[0_-12px_32px_rgba(22,29,27,0.18)]">
             <div className="flex items-start justify-between gap-2 mb-3">
               <h2 className="text-headline-md font-semibold text-on-surface">
                 {t('install.title')}
