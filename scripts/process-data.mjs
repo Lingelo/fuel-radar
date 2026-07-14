@@ -416,7 +416,20 @@ async function main() {
     }
   }
 
-  writeFileSync(join(DATA_DIR, 'dept-bbox.json'), JSON.stringify(deptBbox));
+  // Preserve foreign entries (ES-*/PT-*) written by process-data-iberia.mjs —
+  // this script only owns the French department keys.
+  const bboxPath = join(DATA_DIR, 'dept-bbox.json');
+  if (existsSync(bboxPath)) {
+    try {
+      const existing = JSON.parse(readFileSync(bboxPath, 'utf-8'));
+      for (const [key, bb] of Object.entries(existing)) {
+        if (key.startsWith('ES-') || key.startsWith('PT-')) deptBbox[key] = bb;
+      }
+    } catch {
+      // corrupt file — rewrite from scratch
+    }
+  }
+  writeFileSync(bboxPath, JSON.stringify(deptBbox));
   console.log(`Wrote dept-bbox.json (${Object.keys(deptBbox).length} departments).`);
 
   // 6. Write meta.json

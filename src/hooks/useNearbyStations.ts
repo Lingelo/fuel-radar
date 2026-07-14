@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { fetchDepartments } from '../lib/data';
-import { boundingBox, getDepartment } from '../lib/department';
+import { getDepartment } from '../lib/department';
+import { deptsAround } from '../lib/deptIndex';
 import { haversineKm } from '../lib/distance';
 import { useFilters } from '../state/FiltersContext';
 import { useForegroundRefresh } from './useForegroundRefresh';
@@ -13,8 +14,9 @@ interface Result {
 
 /**
  * Loads stations within the active radius around the user location.
- * Discovers involved French departments by reverse-geocoding a 5x5 grid
- * across the bounding box. Adds neighbour-of-user department safety net.
+ * Discovers involved data files (French departments, Spanish provinces,
+ * Portuguese districts) via the dept-bbox.json index; falls back to
+ * reverse-geocoding the user position (France only) if the index is missing.
  */
 export function useNearbyStations(): Result {
   const { userLocation, radiusKm } = useFilters();
@@ -31,48 +33,25 @@ export function useNearbyStations(): Result {
 
     (async () => {
       const expandKm = Math.max(radiusKm, 15);
-      const box = boundingBox(userLocation.lat, userLocation.lng, expandKm);
-      // Dense 7x7 grid (49 anchors) — required to reliably cover dense
-      // areas like Île-de-France where dept boundaries are tight.
-      const grid: [number, number][] = [];
-      const steps = 7;
-      for (let i = 0; i < steps; i++) {
-        for (let j = 0; j < steps; j++) {
-          const lat = box.minLat + ((box.maxLat - box.minLat) * i) / (steps - 1);
-          const lng = box.minLng + ((box.maxLng - box.minLng) * j) / (steps - 1);
-          grid.push([lat, lng]);
-        }
-      }
-
-      const deptCodes = new Set<string>();
-      await Promise.all(
-        grid.map(async ([lat, lng]) => {
-          try {
-            const url = `https://api-adresse.data.gouv.fr/reverse/?lat=${lat}&lon=${lng}&limit=1`;
-            const res = await fetch(url);
-            if (!res.ok) return;
-            const data = await res.json();
-            const cp = data.features?.[0]?.properties?.postcode;
-            if (cp) deptCodes.add(getDepartment(cp));
-          } catch {
-            // ignore
-          }
-        }),
+      const deptCodes = new Set<string>(
+        (await deptsAround(userLocation.lat, userLocation.lng, expandKm)) ?? [],
       );
 
-      // Always include the user's primary department in case the API
-      // refused some anchors (the central anchor sometimes fails).
-      try {
-        const r = await fetch(
-          `https://api-adresse.data.gouv.fr/reverse/?lat=${userLocation.lat}&lon=${userLocation.lng}&limit=1`,
-        );
-        if (r.ok) {
-          const d = await r.json();
-          const cp = d.features?.[0]?.properties?.postcode;
-          if (cp) deptCodes.add(getDepartment(cp));
+      // Index unavailable (e.g. first offline launch) — fall back to
+      // reverse-geocoding the user position. France only.
+      if (deptCodes.size === 0) {
+        try {
+          const r = await fetch(
+            `https://api-adresse.data.gouv.fr/reverse/?lat=${userLocation.lat}&lon=${userLocation.lng}&limit=1`,
+          );
+          if (r.ok) {
+            const d = await r.json();
+            const cp = d.features?.[0]?.properties?.postcode;
+            if (cp) deptCodes.add(getDepartment(cp));
+          }
+        } catch {
+          // ignore
         }
-      } catch {
-        // ignore
       }
 
       if (cancelled) return;

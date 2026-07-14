@@ -87,7 +87,7 @@ export function SearchBar({ initialLabel, onResult, onOpenFilters }: Props) {
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
                 onResult(r);
-                setQuery(`${r.postcode} ${r.city}`);
+                setQuery([r.postcode, r.city].filter(Boolean).join(' '));
                 setOpen(false);
                 inputRef.current?.blur();
               }}

@@ -51,12 +51,14 @@ export default defineConfig(({ command }) => ({
           {
             urlPattern: ({ url }) =>
               url.pathname.includes('/data/departments/') ||
-              url.pathname.endsWith('/data/meta.json'),
+              url.pathname.endsWith('/data/meta.json') ||
+              url.pathname.endsWith('/data/dept-bbox.json'),
             handler: 'NetworkFirst',
             options: {
               cacheName: 'station-data',
               networkTimeoutSeconds: 5,
-              expiration: { maxEntries: 200, maxAgeSeconds: 24 * 60 * 60 },
+              // ~170 department files (France + Espagne + Portugal) + meta + bbox
+              expiration: { maxEntries: 250, maxAgeSeconds: 24 * 60 * 60 },
             },
           },
           {

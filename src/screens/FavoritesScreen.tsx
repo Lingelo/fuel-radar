@@ -3,7 +3,7 @@ import { useFavorites } from '../state/FavoritesContext';
 import { useFilters } from '../state/FiltersContext';
 import { useViewNav } from '../state/ViewContext';
 import { fetchDepartment } from '../lib/data';
-import { getDepartment } from '../lib/department';
+import { deptsAround } from '../lib/deptIndex';
 import { haversineKm } from '../lib/distance';
 import { useNearbyStations } from '../hooks/useNearbyStations';
 import { StationCard } from '../components/StationCard';
@@ -37,19 +37,12 @@ export function FavoritesScreen() {
       }
       const missing = ids.filter((id) => !fromNearby.has(id));
       if (missing.length > 0 && f.userLocation) {
-        // Try the user's current dept as a best-effort lookup
-        const tryDepts = new Set<string>();
-        try {
-          const url = `https://api-adresse.data.gouv.fr/reverse/?lat=${f.userLocation.lat}&lon=${f.userLocation.lng}&limit=1`;
-          const res = await fetch(url);
-          if (res.ok) {
-            const data = await res.json();
-            const cp = data.features?.[0]?.properties?.postcode;
-            if (cp) tryDepts.add(getDepartment(cp));
-          }
-        } catch {
-          // ignore
-        }
+        // Best-effort lookup: scan the departments around the user
+        // (bbox index covers France + Spain + Portugal).
+        const tryDepts = new Set<string>(
+          (await deptsAround(f.userLocation.lat, f.userLocation.lng, Math.max(f.radiusKm, 15))) ??
+            [],
+        );
         for (const dept of tryDepts) {
           const list = await fetchDepartment(dept);
           for (const s of list) {
@@ -63,7 +56,7 @@ export function FavoritesScreen() {
     return () => {
       cancelled = true;
     };
-  }, [fav.favorites, nearby, f.userLocation]);
+  }, [fav.favorites, nearby, f.userLocation, f.radiusKm]);
 
   const enriched = resolved
     .map((s) => ({

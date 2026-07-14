@@ -42,6 +42,9 @@ jobs:
       - name: Generate fuel data
         run: node scripts/process-data.mjs
 
+      - name: Generate fuel data (Spain & Portugal)
+        run: node scripts/process-data-iberia.mjs
+
       - name: Generate price history
         run: node scripts/generate-history.mjs --bootstrap
 

@@ -5,7 +5,7 @@ import { useFilters } from '../state/FiltersContext';
 import { useViewNav } from '../state/ViewContext';
 import { useFavorites } from '../state/FavoritesContext';
 import { fetchDepartment, fetchDeptHistory, timeAgo } from '../lib/data';
-import { getDepartment } from '../lib/department';
+import { deptsAround } from '../lib/deptIndex';
 import { haversineKm, formatDistance } from '../lib/distance';
 import { Icon } from '../components/Icon';
 import { PriceTrendBars } from '../components/PriceTrendBars';
@@ -63,28 +63,23 @@ export function StationDetailScreen({ stationId }: Props) {
     let cancelled = false;
     setLoading(true);
     (async () => {
-      // Try to find station by scanning loaded departments;
-      // if not found, attempt to load nearby ones via cp prefix scan.
-      // Cheap strategy: walk all known departments lazily via fetchDepartment call.
-      // Better: keep an index in FiltersContext, but for now scan dept by dept.
+      // Try to find the station by scanning departments around the user —
+      // the bbox index covers France plus the Spanish/Portuguese datasets,
+      // so foreign stations resolve through the exact same path.
       const tryDepts = new Set<string>();
       if (f.userLocation) {
-        // load user's department first
-        const url = `https://api-adresse.data.gouv.fr/reverse/?lat=${f.userLocation.lat}&lon=${f.userLocation.lng}&limit=1`;
-        try {
-          const res = await fetch(url);
-          if (res.ok) {
-            const data = await res.json();
-            const cp = data.features?.[0]?.properties?.postcode;
-            if (cp) tryDepts.add(getDepartment(cp));
-          }
-        } catch {
-          // ignore
-        }
+        const around = await deptsAround(
+          f.userLocation.lat,
+          f.userLocation.lng,
+          Math.max(f.radiusKm, 15),
+        );
+        for (const d of around ?? []) tryDepts.add(d);
       }
-      // Also add all 2-digit dept codes as fallback (only triggers on cache misses, but JSON is small per dept)
-      const allDepts = ['75', '92', '93', '94', '77', '78', '91', '95'];
-      for (const d of allDepts) tryDepts.add(d);
+      // Fallback when the index is unavailable or the location is unset:
+      // Île-de-France dept codes (small JSONs, served from cache after first hit).
+      if (tryDepts.size === 0) {
+        for (const d of ['75', '92', '93', '94', '77', '78', '91', '95']) tryDepts.add(d);
+      }
 
       let found: Station | null = null;
       for (const dept of tryDepts) {
@@ -106,7 +101,7 @@ export function StationDetailScreen({ stationId }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [stationId, f.userLocation]);
+  }, [stationId, f.userLocation, f.radiusKm]);
 
   if (loading) {
     return (

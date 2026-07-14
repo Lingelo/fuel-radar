@@ -15,6 +15,14 @@ const KNOWN_BRANDS = [
   'Esso',
   'Casino',
   'Avia',
+  // Espagne / Portugal
+  'Repsol',
+  'Cepsa',
+  'Moeve',
+  'Galp',
+  'Prio',
+  'Ballenoil',
+  'Plenergy',
 ];
 
 interface Props {

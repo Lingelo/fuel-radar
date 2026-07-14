@@ -437,7 +437,7 @@ export function MapScreen() {
           initialLabel={f.searchLabel}
           onResult={(r) => {
             f.setUserLocation({ lat: r.lat, lng: r.lng });
-            f.setSearchLabel(`${r.postcode} ${r.city}`);
+            f.setSearchLabel([r.postcode, r.city].filter(Boolean).join(' '));
             setSelectedId(null);
           }}
           onOpenFilters={() => setFilterOpen(true)}

@@ -225,7 +225,9 @@ export function SettingsScreen() {
             </span>
           </div>
           <p className="text-body-sm text-on-surface-variant px-2 pt-1">
-            Source : prix-carburants.gouv.fr (rafraîchissement toutes les 2 h).
+            Sources : prix-carburants.gouv.fr (France), Ministerio para la
+            Transición Ecológica (Espagne) et DGEG (Portugal) — rafraîchissement
+            toutes les 2 h.
           </p>
         </section>
 
@@ -233,7 +235,10 @@ export function SettingsScreen() {
           <h2 className="text-headline-md font-semibold text-on-surface mb-sm">À propos</h2>
           <p className="text-body-sm text-on-surface-variant flex items-start gap-2">
             <Icon name="info" size={18} />
-            <span>Carburants France — données ouvertes du gouvernement français + OpenStreetMap.</span>
+            <span>
+              Carburants France — données ouvertes des gouvernements français,
+              espagnol et portugais + OpenStreetMap.
+            </span>
           </p>
           <div className="flex items-start gap-2 text-body-sm text-on-surface-variant pt-2 border-t border-surface-variant">
             <Icon name="code" size={18} />
