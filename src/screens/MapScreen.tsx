@@ -450,7 +450,9 @@ export function MapScreen() {
             ? QUICK
             : [f.selectedFuel, ...QUICK];
           return (
-            <div className="flex gap-2 flex-wrap">
+            // Mobile: one scrollable row so the chips never pile up over the
+            // map; desktop has room to wrap.
+            <div className="flex gap-2 overflow-x-auto no-scrollbar md:flex-wrap md:overflow-x-visible">
               {quickList.map((fuel) => {
                 const active = f.selectedFuel === fuel;
                 return (
@@ -458,7 +460,7 @@ export function MapScreen() {
                     key={fuel}
                     onClick={() => f.setSelectedFuel(fuel)}
                     className={[
-                      'px-3 py-1 rounded-full text-label-caps font-bold tracking-wider whitespace-nowrap transition-colors active:scale-95 shadow-sm',
+                      'shrink-0 px-3 py-1 rounded-full text-label-caps font-bold tracking-wider whitespace-nowrap transition-colors active:scale-95 shadow-sm',
                       active
                         ? 'bg-secondary text-on-secondary'
                         : 'bg-surface-container-lowest text-on-surface border border-outline-variant hover:border-secondary',
@@ -468,16 +470,16 @@ export function MapScreen() {
                   </button>
                 );
               })}
-              <span className="bg-surface-container-lowest text-on-surface border border-outline-variant px-3 py-1 rounded-full text-label-caps font-bold tracking-wider whitespace-nowrap">
+              <span className="shrink-0 bg-surface-container-lowest text-on-surface border border-outline-variant px-3 py-1 rounded-full text-label-caps font-bold tracking-wider whitespace-nowrap">
                 {f.radiusKm} km
               </span>
               {f.selectedBrands.size > 0 && (
-                <span className="bg-surface-container-lowest text-on-surface border border-outline-variant px-3 py-1 rounded-full text-label-caps font-bold tracking-wider whitespace-nowrap">
+                <span className="shrink-0 bg-surface-container-lowest text-on-surface border border-outline-variant px-3 py-1 rounded-full text-label-caps font-bold tracking-wider whitespace-nowrap">
                   {t('map.brandsCount', { n: f.selectedBrands.size })}
                 </span>
               )}
               {f.openH24Only && (
-                <span className="bg-tertiary-container text-on-tertiary-container border border-tertiary-fixed-dim/40 px-3 py-1 rounded-full text-label-caps font-bold tracking-wider whitespace-nowrap flex items-center gap-1">
+                <span className="shrink-0 bg-tertiary-container text-on-tertiary-container border border-tertiary-fixed-dim/40 px-3 py-1 rounded-full text-label-caps font-bold tracking-wider whitespace-nowrap flex items-center gap-1">
                   <Icon name="schedule" size={12} filled /> 24/7
                 </span>
               )}
@@ -485,7 +487,7 @@ export function MapScreen() {
                 <button
                   type="button"
                   onClick={onShareZone}
-                  className="bg-surface-container-lowest text-primary border border-outline-variant hover:border-primary px-3 py-1 rounded-full text-label-caps font-bold tracking-wider whitespace-nowrap flex items-center gap-1 active:scale-95 transition-transform shadow-sm"
+                  className="shrink-0 bg-surface-container-lowest text-primary border border-outline-variant hover:border-primary px-3 py-1 rounded-full text-label-caps font-bold tracking-wider whitespace-nowrap flex items-center gap-1 active:scale-95 transition-transform shadow-sm"
                   aria-label={t('map.shareZone')}
                   title={t('map.shareZone')}
                 >

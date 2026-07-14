@@ -64,7 +64,8 @@ export default defineConfig(({ command }) => ({
           {
             urlPattern: ({ url }) =>
               url.pathname.includes('/data/history/') ||
-              url.pathname.endsWith('/data/history.json'),
+              url.pathname.endsWith('/data/history.json') ||
+              url.pathname.endsWith('/data/history-countries.json'),
             handler: 'NetworkFirst',
             options: {
               cacheName: 'history-data',
