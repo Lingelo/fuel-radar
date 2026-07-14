@@ -17,10 +17,10 @@ export default defineConfig(({ command }) => ({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg', 'icon-192.png.svg'],
       manifest: {
-        name: 'Carburants France',
+        name: 'Carburants',
         short_name: 'Carburants',
         description:
-          'Prix des carburants en France en temps réel — données prix-carburants.gouv.fr.',
+          'Prix des carburants en France, en Espagne et au Portugal — données ouvertes officielles.',
         lang: 'fr',
         scope: BASE,
         start_url: BASE,

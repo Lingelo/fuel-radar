@@ -17,7 +17,12 @@ export function TopAppBar() {
     <header className="flex justify-between items-center gap-2 px-4 h-16 w-full top-0 left-0 bg-surface-container-lowest border-b border-outline-variant z-[500] fixed">
       <button onClick={() => goMap()} className="flex items-center gap-sm cursor-pointer active:scale-95 transition-transform min-w-0">
         <img src={`${import.meta.env.BASE_URL}icon.svg`} alt="" className="w-7 h-7 shrink-0" />
-        <h1 className="text-xl font-bold text-on-surface tracking-tight truncate">Carburants France</h1>
+        <span className="flex items-baseline gap-2 min-w-0">
+          <h1 className="text-xl font-bold text-on-surface tracking-tight truncate">Carburants</h1>
+          <span className="hidden sm:inline text-body-sm text-on-surface-variant whitespace-nowrap">
+            France · Espagne · Portugal
+          </span>
+        </span>
       </button>
 
       <nav className="hidden md:flex items-center gap-lg">

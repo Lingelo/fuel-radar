@@ -1,7 +1,7 @@
 {
-  "name": "Carburants France",
+  "name": "Carburants",
   "short_name": "Carburants",
-  "description": "Prix des carburants en France en temps réel — données prix-carburants.gouv.fr.",
+  "description": "Prix des carburants en France, en Espagne et au Portugal — données ouvertes officielles.",
   "lang": "fr",
   "scope": "./",
   "start_url": "./",

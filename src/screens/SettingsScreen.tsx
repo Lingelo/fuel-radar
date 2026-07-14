@@ -58,8 +58,8 @@ export function SettingsScreen() {
   }, [shareToast]);
   const shareApp = async () => {
     const payload = {
-      title: 'Carburants France',
-      text: 'Compare les prix carburants en France en temps réel — données prix-carburants.gouv.fr.',
+      title: 'Carburants',
+      text: 'Compare les prix des carburants en France, en Espagne et au Portugal — données ouvertes officielles.',
       url: APP_URL,
     };
     if (navigator.share) {
@@ -236,7 +236,7 @@ export function SettingsScreen() {
           <p className="text-body-sm text-on-surface-variant flex items-start gap-2">
             <Icon name="info" size={18} />
             <span>
-              Carburants France — données ouvertes des gouvernements français,
+              Carburants — données ouvertes des gouvernements français,
               espagnol et portugais + OpenStreetMap.
             </span>
           </p>

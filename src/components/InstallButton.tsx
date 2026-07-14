@@ -45,7 +45,7 @@ export function InstallButton() {
           <div className="relative bg-surface-container-lowest w-full md:w-[480px] md:rounded-xl rounded-t-xl p-6 shadow-[0_-12px_32px_rgba(20,27,43,0.18)]">
             <div className="flex items-start justify-between gap-2 mb-3">
               <h2 className="text-headline-md font-semibold text-on-surface">
-                Installer Carburants France
+                Installer Carburants
               </h2>
               <button
                 onClick={() => setHint(null)}
@@ -73,7 +73,7 @@ export function InstallButton() {
                   Sur ton navigateur, ouvre le menu (icône <strong>⋮</strong> en haut à droite, ou dans la barre d'adresse).
                 </p>
                 <p>
-                  Cherche <strong>« Installer Carburants France »</strong> ou <strong>« Ajouter à l'écran d'accueil »</strong>, et confirme.
+                  Cherche <strong>« Installer Carburants »</strong> ou <strong>« Ajouter à l'écran d'accueil »</strong>, et confirme.
                 </p>
               </div>
             )}

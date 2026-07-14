@@ -343,7 +343,7 @@ export function MapScreen() {
     });
     const zoneLabel = f.searchLabel ?? `${f.userLocation.lat.toFixed(3)}, ${f.userLocation.lng.toFixed(3)}`;
     const payload = {
-      title: 'Carburants France — zone partagée',
+      title: 'Carburants — zone partagée',
       text: `Prix ${f.selectedFuel} dans un rayon de ${f.radiusKm} km autour de ${zoneLabel}.`,
       url,
     };

@@ -151,7 +151,7 @@ export function StationDetailScreen({ stationId }: Props) {
 
   const share = async () => {
     const url = window.location.href;
-    const title = `${station.brand ?? `Station ${station.id}`} — Carburants France`;
+    const title = `${station.brand ?? `Station ${station.id}`} — Carburants`;
     const text = `${station.brand ?? `Station ${station.id}`} • ${station.cp} ${station.city}`;
     if (navigator.share) {
       try {
