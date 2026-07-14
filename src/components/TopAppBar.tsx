@@ -1,8 +1,10 @@
 import { useViewNav } from '../state/ViewContext';
+import { useI18n } from '../i18n';
 import { InstallButton } from './InstallButton';
 
 export function TopAppBar() {
   const { view, goMap, goStations, goFavorites, goTrends, goSettings } = useViewNav();
+  const { t } = useI18n();
 
   const linkClass = (active: boolean) =>
     [
@@ -20,26 +22,26 @@ export function TopAppBar() {
         <span className="flex items-baseline gap-2 min-w-0">
           <h1 className="text-xl font-bold text-on-surface tracking-tight truncate">Carburants</h1>
           <span className="hidden sm:inline text-body-sm text-on-surface-variant whitespace-nowrap">
-            France · Espagne · Portugal
+            {t('app.subtitle')}
           </span>
         </span>
       </button>
 
       <nav className="hidden md:flex items-center gap-lg">
         <button onClick={() => goMap()} className={linkClass(view.kind === 'map')}>
-          Carte
+          {t('nav.map')}
         </button>
         <button onClick={goStations} className={linkClass(view.kind === 'stations')}>
-          Stations
+          {t('nav.stations')}
         </button>
         <button onClick={goFavorites} className={linkClass(view.kind === 'favorites')}>
-          Favoris
+          {t('nav.favorites')}
         </button>
         <button onClick={goTrends} className={linkClass(view.kind === 'trends')}>
-          Tendances
+          {t('nav.trends')}
         </button>
         <button onClick={goSettings} className={linkClass(view.kind === 'settings')}>
-          Réglages
+          {t('nav.settings')}
         </button>
       </nav>
 

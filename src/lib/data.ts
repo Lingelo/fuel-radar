@@ -1,3 +1,4 @@
+import { activeLocaleTag, translate } from '../i18n';
 import type { MetaData, Station, StationHistoryData } from '../types';
 
 const BASE = import.meta.env.BASE_URL;
@@ -128,11 +129,11 @@ export function timeAgo(isoOrYmd: string): string {
   if (Number.isNaN(d.getTime())) return isoOrYmd;
   const diffMs = Date.now() - d.getTime();
   const mins = Math.round(diffMs / 60000);
-  if (mins < 1) return "à l'instant";
-  if (mins < 60) return `il y a ${mins} min`;
+  if (mins < 1) return translate('time.now');
+  if (mins < 60) return translate('time.minAgo', { n: mins });
   const hours = Math.round(mins / 60);
-  if (hours < 24) return `il y a ${hours} h`;
+  if (hours < 24) return translate('time.hoursAgo', { n: hours });
   const days = Math.round(hours / 24);
-  if (days < 7) return `il y a ${days} j`;
-  return d.toLocaleDateString('fr-FR');
+  if (days < 7) return translate('time.daysAgo', { n: days });
+  return d.toLocaleDateString(activeLocaleTag());
 }

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { searchAddress, type AddressResult } from '../lib/geocode';
+import { useI18n } from '../i18n';
 import { Icon } from './Icon';
 
 interface Props {
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export function SearchBar({ initialLabel, onResult, onOpenFilters }: Props) {
+  const { t } = useI18n();
   const [query, setQuery] = useState(initialLabel ?? '');
   const [results, setResults] = useState<AddressResult[]>([]);
   const [open, setOpen] = useState(false);
@@ -51,7 +53,7 @@ export function SearchBar({ initialLabel, onResult, onOpenFilters }: Props) {
             requestAnimationFrame(() => e.target.select());
           }}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
-          placeholder="Ville ou code postal"
+          placeholder={t('search.placeholder')}
           className="w-full bg-transparent border-none focus:outline-none text-body-lg text-on-surface py-2 px-3 placeholder:text-on-surface-variant"
         />
         {query && (
@@ -63,7 +65,7 @@ export function SearchBar({ initialLabel, onResult, onOpenFilters }: Props) {
               inputRef.current?.focus();
             }}
             className="p-1 mr-1 rounded-full text-on-surface-variant hover:bg-surface-container active:scale-95 transition-transform"
-            aria-label="Effacer la recherche"
+            aria-label={t('search.clear')}
           >
             <Icon name="close" size={18} />
           </button>
@@ -73,7 +75,7 @@ export function SearchBar({ initialLabel, onResult, onOpenFilters }: Props) {
             onClick={onOpenFilters}
             className="bg-secondary-container text-on-secondary-container px-3 py-1.5 rounded-lg text-label-caps font-bold tracking-wider active:scale-95 transition-transform flex items-center gap-1 mr-1"
           >
-            <Icon name="tune" size={16} /> Filtres
+            <Icon name="tune" size={16} /> {t('common.filters')}
           </button>
         )}
       </div>

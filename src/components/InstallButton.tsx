@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
+import { useI18n } from '../i18n';
 import { Icon } from './Icon';
 
 /**
@@ -14,6 +15,7 @@ import { Icon } from './Icon';
  */
 export function InstallButton() {
   const inst = useInstallPrompt();
+  const { t } = useI18n();
   const [hint, setHint] = useState<null | 'webview' | 'generic'>(null);
 
   if (inst.installed || inst.platform === 'unsupported') return null;
@@ -32,11 +34,11 @@ export function InstallButton() {
       <button
         onClick={onClick}
         className="bg-primary text-on-primary px-3 py-1.5 rounded-full text-label-caps font-bold tracking-wider flex items-center gap-1 active:scale-95 transition-transform shadow-sm"
-        aria-label="Installer l'application"
-        title="Installer l'application"
+        aria-label={t('install.aria')}
+        title={t('install.aria')}
       >
         <Icon name="install_mobile" size={16} />
-        Installer
+        {t('install.button')}
       </button>
 
       {hint && (
@@ -45,12 +47,12 @@ export function InstallButton() {
           <div className="relative bg-surface-container-lowest w-full md:w-[480px] md:rounded-xl rounded-t-xl p-6 shadow-[0_-12px_32px_rgba(20,27,43,0.18)]">
             <div className="flex items-start justify-between gap-2 mb-3">
               <h2 className="text-headline-md font-semibold text-on-surface">
-                Installer Carburants
+                {t('install.title')}
               </h2>
               <button
                 onClick={() => setHint(null)}
                 className="p-1 rounded-full hover:bg-surface-container"
-                aria-label="Fermer"
+                aria-label={t('common.close')}
               >
                 <Icon name="close" />
               </button>
@@ -58,23 +60,15 @@ export function InstallButton() {
 
             {hint === 'webview' && (
               <div className="text-body-lg text-on-surface space-y-2">
-                <p>
-                  Tu utilises un navigateur intégré (Facebook, Instagram, Gmail, LinkedIn…). Il ne permet pas l'installation.
-                </p>
-                <p>
-                  Touche les <strong>⋮</strong> puis <strong>Ouvrir dans le navigateur</strong> (Chrome ou Safari), puis reviens ici pour installer l'application.
-                </p>
+                <p>{t('install.webview1')}</p>
+                <p>{t('install.webview2')}</p>
               </div>
             )}
 
             {hint === 'generic' && (
               <div className="text-body-lg text-on-surface space-y-2">
-                <p>
-                  Sur ton navigateur, ouvre le menu (icône <strong>⋮</strong> en haut à droite, ou dans la barre d'adresse).
-                </p>
-                <p>
-                  Cherche <strong>« Installer Carburants »</strong> ou <strong>« Ajouter à l'écran d'accueil »</strong>, et confirme.
-                </p>
+                <p>{t('install.generic1')}</p>
+                <p>{t('install.generic2')}</p>
               </div>
             )}
 
@@ -82,7 +76,7 @@ export function InstallButton() {
               onClick={() => setHint(null)}
               className="w-full mt-5 bg-primary text-on-primary py-3 rounded-xl text-body-lg font-semibold active:scale-[0.98] transition-transform"
             >
-              Compris
+              {t('common.understood')}
             </button>
           </div>
         </div>

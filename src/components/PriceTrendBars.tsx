@@ -1,3 +1,5 @@
+import { useI18n } from '../i18n';
+
 interface Point {
   date: string;
   price: number;
@@ -8,10 +10,11 @@ interface Props {
 }
 
 export function PriceTrendBars({ points }: Props) {
+  const { t, localeTag } = useI18n();
   if (points.length === 0) {
     return (
       <div className="h-32 flex items-center justify-center text-body-sm text-on-surface-variant">
-        Pas d'historique disponible
+        {t('station.noHistory')}
       </div>
     );
   }
@@ -45,15 +48,15 @@ export function PriceTrendBars({ points }: Props) {
         })}
       </div>
       <div className="flex justify-between mt-2 text-label-caps font-bold tracking-wider text-on-surface-variant">
-        <span>{formatLabel(points[0].date)}</span>
-        <span>Aujourd'hui</span>
+        <span>{formatLabel(points[0].date, localeTag)}</span>
+        <span>{t('time.today')}</span>
       </div>
     </div>
   );
 }
 
-function formatLabel(iso: string): string {
+function formatLabel(iso: string, localeTag: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString('fr-FR', { weekday: 'short' });
+  return d.toLocaleDateString(localeTag, { weekday: 'short' });
 }

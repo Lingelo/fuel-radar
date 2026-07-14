@@ -5,6 +5,7 @@ import { isStale, timeAgo } from '../lib/data';
 import { formatPriceEuro } from '../lib/format';
 import { getPriceBounds, getPriceColor } from '../lib/priceColor';
 import { useSettings } from '../state/SettingsContext';
+import { useI18n } from '../i18n';
 import { Icon } from './Icon';
 
 interface Props {
@@ -30,6 +31,7 @@ export function StationPopup({
   onClose,
 }: Props) {
   const settings = useSettings();
+  const { t } = useI18n();
   const directions = `https://www.google.com/maps/dir/?api=1&destination=${station.lat},${station.lng}`;
   const fuels = FUEL_TYPES.filter((f) => station.fuels[f]);
   // Build per-fuel bounds: if external reference prices were supplied
@@ -48,7 +50,7 @@ export function StationPopup({
         <div className="flex items-start justify-between gap-md mb-md">
           <div className="min-w-0">
             <h2 className="text-headline-lg font-semibold text-on-surface truncate">
-              {station.brand ?? `Station ${station.id}`}
+              {station.brand ?? t('station.fallbackNameId', { id: station.id })}
             </h2>
             <p className="text-body-sm text-on-surface-variant flex items-start gap-1 mt-1">
               <Icon name="location_on" size={16} />
@@ -62,7 +64,7 @@ export function StationPopup({
             <button
               onClick={onToggleFavorite}
               className="p-2 rounded-full hover:bg-surface-container active:scale-95 transition-transform"
-              aria-label={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+              aria-label={isFavorite ? t('station.removeFav') : t('station.addFav')}
             >
               <Icon
                 name="star"
@@ -73,7 +75,7 @@ export function StationPopup({
             <button
               onClick={onClose}
               className="p-2 rounded-full hover:bg-surface-container"
-              aria-label="Fermer"
+              aria-label={t('common.close')}
             >
               <Icon name="close" />
             </button>
@@ -119,7 +121,7 @@ export function StationPopup({
                   </div>
                   <div
                     className={`text-[11px] flex items-center justify-end gap-1 ${stale ? 'text-error' : 'text-on-surface-variant'}`}
-                    title={stale ? 'Donnée non rafraîchie depuis plus de 72 h' : undefined}
+                    title={stale ? t('station.staleTitle') : undefined}
                   >
                     {stale && <Icon name="warning" size={12} />}
                     {timeAgo(fp.d)}
@@ -135,7 +137,7 @@ export function StationPopup({
             onClick={onOpenDetails}
             className="flex-1 bg-surface-container text-on-surface py-3 rounded-xl text-body-sm font-semibold flex items-center justify-center gap-1 active:scale-95 transition-transform"
           >
-            Détails <Icon name="arrow_forward" size={18} />
+            {t('common.details')} <Icon name="arrow_forward" size={18} />
           </button>
           <a
             href={directions}
@@ -143,7 +145,7 @@ export function StationPopup({
             rel="noopener noreferrer"
             className="flex-1 bg-primary text-on-primary py-3 rounded-xl text-body-sm font-semibold flex items-center justify-center gap-1 active:scale-95 transition-transform"
           >
-            <Icon name="directions" size={18} /> Itinéraire
+            <Icon name="directions" size={18} /> {t('common.directions')}
           </a>
         </div>
       </div>

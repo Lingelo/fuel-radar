@@ -8,6 +8,7 @@ import { useFilters } from '../state/FiltersContext';
 import { useViewNav } from '../state/ViewContext';
 import { useFavorites } from '../state/FavoritesContext';
 import { useNearbyStations } from '../hooks/useNearbyStations';
+import { useI18n } from '../i18n';
 import { haversineKm, formatDistance } from '../lib/distance';
 import { timeAgo } from '../lib/data';
 import { formatPrice } from '../lib/format';
@@ -231,6 +232,7 @@ function StationsCluster({
 
 export function MapScreen() {
   const f = useFilters();
+  const { t } = useI18n();
   const nav = useViewNav();
   const fav = useFavorites();
   const { stations, loading } = useNearbyStations();
@@ -343,8 +345,8 @@ export function MapScreen() {
     });
     const zoneLabel = f.searchLabel ?? `${f.userLocation.lat.toFixed(3)}, ${f.userLocation.lng.toFixed(3)}`;
     const payload = {
-      title: 'Carburants — zone partagée',
-      text: `Prix ${f.selectedFuel} dans un rayon de ${f.radiusKm} km autour de ${zoneLabel}.`,
+      title: t('map.shareZoneTitle'),
+      text: t('map.shareZoneText', { fuel: f.selectedFuel, radius: f.radiusKm, label: zoneLabel }),
       url,
     };
     if (navigator.share) {
@@ -357,9 +359,9 @@ export function MapScreen() {
     }
     try {
       await navigator.clipboard.writeText(url);
-      setShareToast('Lien copié dans le presse-papier');
+      setShareToast(t('common.linkCopied'));
     } catch {
-      window.prompt('Copier ce lien :', url);
+      window.prompt(t('common.copyLink'), url);
     }
   };
 
@@ -471,7 +473,7 @@ export function MapScreen() {
               </span>
               {f.selectedBrands.size > 0 && (
                 <span className="bg-surface-container-lowest text-on-surface border border-outline-variant px-3 py-1 rounded-full text-label-caps font-bold tracking-wider whitespace-nowrap">
-                  {f.selectedBrands.size} enseigne{f.selectedBrands.size > 1 ? 's' : ''}
+                  {t('map.brandsCount', { n: f.selectedBrands.size })}
                 </span>
               )}
               {f.openH24Only && (
@@ -484,10 +486,10 @@ export function MapScreen() {
                   type="button"
                   onClick={onShareZone}
                   className="bg-surface-container-lowest text-primary border border-outline-variant hover:border-primary px-3 py-1 rounded-full text-label-caps font-bold tracking-wider whitespace-nowrap flex items-center gap-1 active:scale-95 transition-transform shadow-sm"
-                  aria-label="Partager cette zone"
-                  title="Partager cette zone"
+                  aria-label={t('map.shareZone')}
+                  title={t('map.shareZone')}
                 >
-                  <Icon name="share" size={12} /> Partager
+                  <Icon name="share" size={12} /> {t('common.share')}
                 </button>
               )}
             </div>
@@ -497,24 +499,22 @@ export function MapScreen() {
 
       {loading && (
         <div className="absolute top-32 md:top-24 left-1/2 -translate-x-1/2 z-[400] bg-surface-container-lowest text-on-surface px-4 py-1 rounded-full shadow-md text-body-sm border border-outline-variant">
-          Chargement des stations…
+          {t('map.loadingStations')}
         </div>
       )}
 
       {!loading && stations.length > 0 && priced.length === 0 && hasLocation && (
         <div className="absolute top-32 md:top-24 left-1/2 -translate-x-1/2 z-[400] bg-surface-container-lowest text-on-surface px-4 py-2 rounded-full shadow-md text-body-sm border border-outline-variant">
           {f.openH24Only
-            ? `Aucune station ${f.selectedFuel} ouverte 24/7 dans ce rayon.`
-            : `Aucune station avec ${f.selectedFuel} dans ce rayon.`}
+            ? t('map.noStationsH24', { fuel: f.selectedFuel })
+            : t('map.noStationsFuel', { fuel: f.selectedFuel })}
         </div>
       )}
 
       {!hasLocation && (
         <div className="absolute top-32 md:top-24 left-1/2 -translate-x-1/2 z-[400] bg-surface-container-lowest text-on-surface px-4 py-2 rounded-xl shadow-md text-body-sm border border-outline-variant flex items-center gap-2 max-w-[90vw]">
           <Icon name="location_searching" size={16} className="text-primary shrink-0" />
-          <span className="truncate">
-            Saisis une ville ou utilise ta position pour voir les prix.
-          </span>
+          <span className="truncate">{t('map.welcome')}</span>
         </div>
       )}
 
@@ -530,17 +530,9 @@ export function MapScreen() {
           panelOpen ? 'md:right-[396px]' : 'md:right-4',
         ].join(' ')}
         aria-label={
-          locationDenied
-            ? 'Localisation refusée — réessayer'
-            : locating
-              ? 'Localisation en cours'
-              : 'Me localiser'
+          locationDenied ? t('map.locateDenied') : locating ? t('map.locating') : t('map.locate')
         }
-        title={
-          locationDenied
-            ? 'Localisation refusée. Autorise-la dans ton navigateur puis réessaye.'
-            : 'Me localiser'
-        }
+        title={locationDenied ? t('map.locateDeniedTitle') : t('map.locate')}
       >
         <Icon
           name={locating ? 'sync' : locationDenied ? 'location_disabled' : 'my_location'}
@@ -566,10 +558,7 @@ export function MapScreen() {
           ].join(' ')}
         >
           <Icon name="info" size={16} />
-          <span>
-            Localisation refusée. Autorise-la dans ton navigateur puis touche à
-            nouveau le bouton.
-          </span>
+          <span>{t('map.locateDeniedToast')}</span>
         </div>
       )}
 
@@ -578,10 +567,10 @@ export function MapScreen() {
         <button
           onClick={() => setSheetState('collapsed')}
           className="md:hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-[450] bg-primary text-on-primary rounded-full shadow-[0_4px_12px_rgba(20,27,43,0.25)] px-4 py-2.5 flex items-center gap-2 text-body-sm font-semibold active:scale-95 transition-transform"
-          aria-label="Afficher la liste des stations"
+          aria-label={t('map.showList')}
         >
           <Icon name="expand_less" size={18} />
-          Voir {visible.length} station{visible.length > 1 ? 's' : ''}
+          {t('map.seeStations', { n: visible.length })}
         </button>
       )}
 
@@ -597,23 +586,23 @@ export function MapScreen() {
           <button
             onClick={() => setSheetState((s) => (s === 'expanded' ? 'collapsed' : 'expanded'))}
             className="flex-1 min-w-0 flex items-center gap-1.5 text-left active:scale-[0.98] transition-transform"
-            aria-label={sheetExpanded ? 'Réduire la liste' : 'Étendre la liste'}
+            aria-label={sheetExpanded ? t('map.collapseList') : t('map.expandList')}
           >
             <Icon name={sheetExpanded ? 'expand_more' : 'expand_less'} size={20} className="text-primary shrink-0" />
             <span className="text-body-lg font-semibold text-on-surface truncate">
-              {visible.length} station{visible.length > 1 ? 's' : ''}
+              {t('common.stationsCount', { n: visible.length })}
             </span>
             <span className="text-body-sm text-primary truncate">
-              {sheetExpanded ? 'Réduire' : 'Tout voir'}
+              {sheetExpanded ? t('map.collapse') : t('map.expandAll')}
             </span>
           </button>
           <button
             onClick={() => setSheetState('hidden')}
             className="text-body-sm font-semibold text-on-surface-variant px-2.5 py-1 rounded-lg hover:bg-surface-container active:scale-95 transition-transform shrink-0 flex items-center gap-1"
-            aria-label="Masquer la liste"
+            aria-label={t('map.hideList')}
           >
             <Icon name="close" size={16} />
-            Masquer
+            {t('map.hide')}
           </button>
         </div>
         <div
@@ -627,7 +616,7 @@ export function MapScreen() {
         >
           {visible.length === 0 && (
             <p className="text-center text-body-sm text-on-surface-variant py-lg w-full">
-              Aucune station dans la zone visible.
+              {t('map.noVisible')}
             </p>
           )}
           {visible.slice(0, sheetExpanded ? 50 : 20).map(({ station, price, distance, color }, idx) => {
@@ -687,7 +676,7 @@ export function MapScreen() {
                       : '—'}
                   </span>
                   <span className="text-primary text-label-caps font-bold tracking-wider flex items-center gap-1">
-                    {selected ? 'Centrée' : 'Centrer'} <Icon name="my_location" size={12} />
+                    {selected ? t('map.centered') : t('map.center')} <Icon name="my_location" size={12} />
                   </span>
                 </div>
               </button>
@@ -701,10 +690,10 @@ export function MapScreen() {
         <button
           onClick={() => setPanelOpen(true)}
           className="hidden md:flex absolute top-32 right-0 z-[401] bg-primary text-on-primary rounded-l-full pl-3 pr-4 py-2.5 shadow-[0_4px_12px_rgba(20,27,43,0.25)] active:scale-95 transition-transform items-center gap-2 text-body-sm font-semibold"
-          aria-label="Afficher la liste des stations"
+          aria-label={t('map.showList')}
         >
           <Icon name="chevron_left" size={18} />
-          Voir {visible.length} station{visible.length > 1 ? 's' : ''}
+          {t('map.seeStations', { n: visible.length })}
         </button>
       )}
 
@@ -714,10 +703,10 @@ export function MapScreen() {
           <header className="flex items-start justify-between gap-2 px-4 py-3 border-b border-outline-variant shrink-0">
             <div className="min-w-0">
               <h2 className="text-headline-md font-semibold text-on-surface">
-                {visible.length} station{visible.length > 1 ? 's' : ''}
+                {t('common.stationsCount', { n: visible.length })}
               </h2>
               <p className="text-body-sm text-on-surface-variant">
-                dans la zone visible
+                {t('map.inVisibleArea')}
               </p>
             </div>
             <div className="flex items-start gap-2">
@@ -730,8 +719,8 @@ export function MapScreen() {
               <button
                 onClick={() => setPanelOpen(false)}
                 className="p-1 rounded-full hover:bg-surface-container active:scale-95 transition-transform shrink-0"
-                aria-label="Masquer la liste"
-                title="Masquer la liste"
+                aria-label={t('map.hideList')}
+                title={t('map.hideList')}
               >
                 <Icon name="close" size={20} />
               </button>
@@ -740,7 +729,7 @@ export function MapScreen() {
           <div ref={sidePanelRef} className="overflow-y-auto overscroll-contain flex-1 p-3 flex flex-col gap-2">
             {visible.length === 0 && (
               <p className="text-center text-body-sm text-on-surface-variant py-lg">
-                Aucune station dans la zone visible. Déplace la carte ou élargis le rayon.
+                {t('map.noVisibleHint')}
               </p>
             )}
             {visible.slice(0, 50).map(({ station, price, distance, color }, idx) => {
@@ -794,7 +783,7 @@ export function MapScreen() {
                         : '—'}
                     </span>
                     <span className="text-primary text-label-caps font-bold tracking-wider flex items-center gap-1">
-                      {selected ? 'Centrée' : 'Centrer'} <Icon name="my_location" size={12} />
+                      {selected ? t('map.centered') : t('map.center')} <Icon name="my_location" size={12} />
                     </span>
                   </div>
                 </button>
@@ -802,7 +791,7 @@ export function MapScreen() {
             })}
           </div>
           <footer className="px-4 py-2 border-t border-outline-variant text-body-sm text-on-surface-variant shrink-0 text-center">
-            Double-clic pour ouvrir la fiche
+            {t('map.doubleClickHint')}
           </footer>
         </aside>
       )}

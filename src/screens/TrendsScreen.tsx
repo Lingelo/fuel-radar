@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { fetchNationalHistory, timeAgo, type NationalHistory } from '../lib/data';
 import { FUEL_TYPES, type FuelType } from '../types';
+import { useI18n } from '../i18n';
 import { Icon } from '../components/Icon';
 import { PriceChart } from '../components/PriceChart';
 import { formatPrice, formatPercent } from '../lib/format';
@@ -14,13 +15,13 @@ const FUEL_COLORS: Record<FuelType, string> = {
   GPLc: '#525252',
 };
 
-const RANGES = [
-  { label: '30 j', days: 30 },
-  { label: '90 j', days: 90 },
-  { label: '1 an', days: 365 },
-] as const;
-
 export function TrendsScreen() {
+  const { t } = useI18n();
+  const RANGES = [
+    { label: t('trends.range30'), days: 30 },
+    { label: t('trends.range90'), days: 90 },
+    { label: t('trends.range365'), days: 365 },
+  ] as const;
   const [data, setData] = useState<NationalHistory | null>(null);
   const [loading, setLoading] = useState(true);
   const [days, setDays] = useState<30 | 90 | 365>(90);
@@ -131,11 +132,11 @@ export function TrendsScreen() {
           <header className="flex items-center justify-between flex-wrap gap-2">
             <div>
               <h1 className="text-headline-lg font-semibold text-on-surface">
-                Tendances nationales
+                {t('trends.title')}
               </h1>
               <p className="text-body-sm text-on-surface-variant">
-                Moyennes journalières des prix carburants en France.{' '}
-                {data?.updated && `Mis à jour ${timeAgo(data.updated)}.`}
+                {t('trends.subtitle')}{' '}
+                {data?.updated && `${t('time.updated', { time: timeAgo(data.updated) })}.`}
               </p>
             </div>
             {RangeSwitch}
@@ -173,7 +174,7 @@ export function TrendsScreen() {
                       ].join(' ')}
                     >
                       <Icon name={yc < 0 ? 'trending_down' : 'trending_up'} size={14} />
-                      {formatPercent(yc)} sur 1 an
+                      {t('trends.yearChange', { pct: formatPercent(yc) })}
                     </div>
                   )}
                 </button>
@@ -186,25 +187,25 @@ export function TrendsScreen() {
             <div className="flex items-center justify-between mb-sm">
               <h2 className="text-headline-md font-semibold text-on-surface flex items-center gap-2">
                 <Icon name="insights" className="text-secondary" />
-                Évolution des prix
+                {t('trends.evolution')}
               </h2>
               <button
                 onClick={() => setFullscreen(true)}
                 className="text-body-sm text-primary px-2.5 py-1 rounded-lg hover:bg-surface-container active:scale-95 transition-transform flex items-center gap-1"
-                aria-label="Afficher en plein écran"
-                title="Plein écran"
+                aria-label={t('trends.fullscreenShow')}
+                title={t('trends.fullscreen')}
               >
-                <Icon name="fullscreen" size={18} /> Plein écran
+                <Icon name="fullscreen" size={18} /> {t('trends.fullscreen')}
               </button>
             </div>
             {loading ? (
-              <p className="text-body-sm text-on-surface-variant py-lg text-center">Chargement…</p>
+              <p className="text-body-sm text-on-surface-variant py-lg text-center">{t('common.loading')}</p>
             ) : (
               <PriceChart series={series} fuelColors={FUEL_COLORS} />
             )}
             <div className="mt-sm">{Legend}</div>
             <p className="text-body-sm text-on-surface-variant mt-2">
-              Touche le graphique pour lire les valeurs précises à chaque date.
+              {t('trends.tapHint')}
             </p>
           </section>
         </main>
@@ -217,7 +218,7 @@ export function TrendsScreen() {
             <div className="flex items-center gap-2 min-w-0">
               <Icon name="insights" className="text-secondary" />
               <h2 className="text-headline-md font-semibold text-on-surface truncate">
-                Évolution des prix nationaux
+                {t('trends.evolutionNational')}
               </h2>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -225,8 +226,8 @@ export function TrendsScreen() {
               <button
                 onClick={() => setFullscreen(false)}
                 className="p-2 rounded-full hover:bg-surface-container active:scale-95 transition-transform"
-                aria-label="Quitter le plein écran"
-                title="Fermer (Esc)"
+                aria-label={t('trends.fullscreenExit')}
+                title={t('trends.closeEsc')}
               >
                 <Icon name="close" />
               </button>
@@ -258,7 +259,7 @@ export function TrendsScreen() {
                 <PriceChart series={series} fuelColors={FUEL_COLORS} size="fullscreen" />
               </div>
               <p className="text-body-sm text-on-surface-variant text-center mt-2 shrink-0">
-                Glisse le doigt ou la souris sur le graphique pour lire les prix à une date donnée.
+                {t('trends.dragHint')}
               </p>
             </div>
           </div>

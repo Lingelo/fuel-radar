@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { FUEL_TYPES, type FuelType } from '../types';
 import { useFilters } from '../state/FiltersContext';
+import { useI18n } from '../i18n';
 import { Icon } from './Icon';
 
 const KNOWN_BRANDS = [
@@ -32,6 +33,7 @@ interface Props {
 
 export function FilterSheet({ open, onClose }: Props) {
   const f = useFilters();
+  const { t } = useI18n();
   const [localFuel, setLocalFuel] = useState<FuelType>(f.selectedFuel);
   const [localRadius, setLocalRadius] = useState(f.radiusKm);
   const [localSort, setLocalSort] = useState(f.sortBy);
@@ -80,17 +82,17 @@ export function FilterSheet({ open, onClose }: Props) {
           <button
             onClick={onClose}
             className="text-primary hover:bg-surface-container-low transition-colors p-2 rounded-full active:scale-95"
-            aria-label="Fermer"
+            aria-label={t('common.close')}
           >
             <Icon name="close" />
           </button>
-          <h1 className="text-xl font-bold text-on-surface tracking-tight">Filtres</h1>
+          <h1 className="text-xl font-bold text-on-surface tracking-tight">{t('common.filters')}</h1>
         </div>
         <button
           onClick={reset}
           className="text-primary text-body-sm font-semibold hover:bg-surface-container-low transition-colors px-3 py-2 rounded-lg active:scale-95"
         >
-          Réinitialiser
+          {t('filters.reset')}
         </button>
       </header>
 
@@ -100,7 +102,7 @@ export function FilterSheet({ open, onClose }: Props) {
           {/* Fuel Type */}
           <section className="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05)] border border-surface-container-highest">
             <h2 className="text-headline-md font-semibold text-on-surface mb-sm">
-              Type de carburant
+              {t('filters.fuelType')}
             </h2>
             <div className="flex flex-wrap gap-2">
               {FUEL_TYPES.map((fuel) => (
@@ -122,12 +124,12 @@ export function FilterSheet({ open, onClose }: Props) {
 
           {/* Sort By */}
           <section className="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05)] border border-surface-container-highest">
-            <h2 className="text-headline-md font-semibold text-on-surface mb-sm">Trier par</h2>
+            <h2 className="text-headline-md font-semibold text-on-surface mb-sm">{t('filters.sortBy')}</h2>
             <div className="grid grid-cols-2 gap-2">
               {(
                 [
-                  { v: 'price', label: 'Prix (le moins cher)' },
-                  { v: 'distance', label: 'Distance (le plus proche)' },
+                  { v: 'price', label: t('filters.sortPriceLabel') },
+                  { v: 'distance', label: t('filters.sortDistanceLabel') },
                 ] as const
               ).map(({ v, label }) => (
                 <label
@@ -155,17 +157,16 @@ export function FilterSheet({ open, onClose }: Props) {
           {/* Availability */}
           <section className="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05)] border border-surface-container-highest">
             <h2 className="text-headline-md font-semibold text-on-surface mb-sm">
-              Disponibilité
+              {t('filters.availability')}
             </h2>
             <label className="flex items-start justify-between gap-3 p-2 cursor-pointer">
               <div className="min-w-0 flex-1">
                 <div className="text-body-lg text-on-surface flex items-center gap-2">
                   <Icon name="schedule" size={18} className="text-tertiary" filled />
-                  Ouvert 24/7 uniquement
+                  {t('filters.h24Only')}
                 </div>
                 <div className="text-body-sm text-on-surface-variant">
-                  N'affiche que les stations équipées d'un automate accessible jour
-                  et nuit (champ <code>automate-24-24</code> du gouvernement).
+                  {t('filters.h24Desc')}
                 </div>
               </div>
               <input
@@ -181,7 +182,7 @@ export function FilterSheet({ open, onClose }: Props) {
           <section className="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05)] border border-surface-container-highest">
             <div className="flex justify-between items-center mb-sm">
               <h2 className="text-headline-md font-semibold text-on-surface">
-                Rayon de recherche
+                {t('filters.radius')}
               </h2>
               <span className="text-headline-md font-semibold text-primary">
                 {localRadius} km
@@ -201,7 +202,7 @@ export function FilterSheet({ open, onClose }: Props) {
                 <span>30 km</span>
               </div>
               <p className="text-body-sm text-on-surface-variant mt-1">
-                Limite à 30 km pour garantir le chargement complet de toutes les stations dans la zone.
+                {t('filters.radiusNote')}
               </p>
             </div>
           </section>
@@ -209,18 +210,18 @@ export function FilterSheet({ open, onClose }: Props) {
           {/* Brands */}
           <section className="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05)] border border-surface-container-highest">
             <div className="flex justify-between items-center mb-sm">
-              <h2 className="text-headline-md font-semibold text-on-surface">Enseignes</h2>
+              <h2 className="text-headline-md font-semibold text-on-surface">{t('filters.brands')}</h2>
               <button
                 onClick={toggleAll}
                 className="text-body-sm text-secondary hover:underline"
               >
-                {allSelected ? 'Tout désélectionner' : 'Tout sélectionner'}
+                {allSelected ? t('filters.deselectAll') : t('filters.selectAll')}
               </button>
             </div>
             <p className="text-body-sm text-on-surface-variant mb-2">
               {localBrands.size === 0
-                ? 'Aucun filtre — toutes les enseignes affichées.'
-                : `${localBrands.size} enseigne(s) sélectionnée(s)`}
+                ? t('filters.noBrandFilter')
+                : t('filters.brandsSelected', { n: localBrands.size })}
             </p>
             <div className="space-y-1">
               {KNOWN_BRANDS.map((b) => (
@@ -248,7 +249,7 @@ export function FilterSheet({ open, onClose }: Props) {
           onClick={apply}
           className="w-full bg-primary text-on-primary py-3 px-lg rounded-xl text-headline-md font-semibold flex justify-center items-center gap-2 active:scale-[0.98] transition-transform"
         >
-          Appliquer les filtres
+          {t('filters.apply')}
           <Icon name="check" />
         </button>
       </div>

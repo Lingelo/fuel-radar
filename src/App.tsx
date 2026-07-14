@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { I18nProvider } from './i18n';
 import { FiltersProvider, useFilters } from './state/FiltersContext';
 import { ViewProvider, useViewNav } from './state/ViewContext';
 import { FavoritesProvider } from './state/FavoritesContext';
@@ -90,8 +91,9 @@ function Router() {
 
 export function App() {
   return (
-    <SettingsProvider>
-      <FavoritesProvider>
+    <I18nProvider>
+      <SettingsProvider>
+        <FavoritesProvider>
         <FiltersProvider>
           <ViewProvider>
             <Bootstrap />
@@ -105,7 +107,8 @@ export function App() {
             </div>
           </ViewProvider>
         </FiltersProvider>
-      </FavoritesProvider>
-    </SettingsProvider>
+        </FavoritesProvider>
+      </SettingsProvider>
+    </I18nProvider>
   );
 }
