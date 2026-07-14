@@ -1,4 +1,4 @@
-import type { FuelType } from '../types';
+import { FUEL_LABELS, type FuelType } from '../types';
 
 interface FuelChipProps {
   fuel: FuelType;
@@ -15,7 +15,7 @@ export function FuelChip({ fuel, active, onClick, size = 'md' }: FuelChipProps) 
     : 'bg-surface-container-high text-on-surface hover:bg-surface-container-highest';
   return (
     <button onClick={onClick} className={`${base} ${tone}`}>
-      {fuel}
+      {FUEL_LABELS[fuel]}
     </button>
   );
 }

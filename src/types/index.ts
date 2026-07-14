@@ -2,6 +2,20 @@ export type FuelType = 'Gazole' | 'SP95' | 'SP98' | 'E10' | 'E85' | 'GPLc';
 
 export const FUEL_TYPES: FuelType[] = ['Gazole', 'SP95', 'E10', 'SP98', 'E85', 'GPLc'];
 
+/**
+ * User-facing fuel names. E10 is sold as "SP95-E10" at French pumps: showing
+ * the full name keeps it unambiguous next to plain SP95 in the UI. Internal
+ * codes (storage, URLs, data files) stay unchanged.
+ */
+export const FUEL_LABELS: Record<FuelType, string> = {
+  Gazole: 'Gazole',
+  SP95: 'SP95',
+  E10: 'SP95-E10',
+  SP98: 'SP98',
+  E85: 'E85',
+  GPLc: 'GPLc',
+};
+
 export interface FuelPrice {
   /** Price in euros */
   p: number;

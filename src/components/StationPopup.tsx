@@ -1,5 +1,5 @@
 import type { FuelType, Station } from '../types';
-import { FUEL_TYPES } from '../types';
+import { FUEL_LABELS, FUEL_TYPES } from '../types';
 import { formatDistance } from '../lib/distance';
 import { isStale, timeAgo } from '../lib/data';
 import { formatPriceEuro } from '../lib/format';
@@ -110,7 +110,7 @@ export function StationPopup({
                       : 'bg-surface-variant text-on-surface',
                   ].join(' ')}
                 >
-                  {fuel}
+                  {FUEL_LABELS[fuel]}
                 </span>
                 <div className="text-right">
                   <div

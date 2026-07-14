@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useI18n } from '../i18n';
-import type { FuelType } from '../types';
+import { FUEL_LABELS, type FuelType } from '../types';
 import { formatPrice } from '../lib/format';
 
 interface Series {
@@ -262,7 +262,7 @@ export function PriceChart({ series, fuelColors, size = 'inline' }: Props) {
                   className="w-2.5 h-2.5 rounded-full"
                   style={{ background: fuelColors[pt.fuel] }}
                 />
-                <span className="font-bold tracking-wider uppercase opacity-80">{pt.fuel}</span>
+                <span className="font-bold tracking-wider uppercase opacity-80">{FUEL_LABELS[pt.fuel]}</span>
                 <span className="ml-auto font-mono">{formatPrice(pt.p)} €</span>
               </div>
             ))}

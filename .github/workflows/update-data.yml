@@ -40,16 +40,21 @@ jobs:
       - name: Generate price history (national + per-station)
         run: node scripts/generate-history.mjs --bootstrap
 
-      - name: Commit brands cache if changed
+      # Spain/Portugal have no yearly archive, so their national averages are
+      # accumulated one point per day and committed back (see the script).
+      - name: Append per-country daily averages
+        run: node scripts/generate-history-countries.mjs
+
+      - name: Commit brands cache and country history if changed
         id: commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add brands-cache.json
+          git add brands-cache.json public/data/history-countries.json
           if git diff --staged --quiet; then
-            echo "No brand changes"
+            echo "No brand or history changes"
           else
-            git commit -m "chore: update brands cache $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            git commit -m "chore: update brands cache & country history $(date -u +%Y-%m-%dT%H:%M:%SZ)"
             git push
           fi
 

@@ -27,6 +27,7 @@ export async function invalidateStations(): Promise<void> {
 export async function invalidateHistory(): Promise<void> {
   historyCache.clear();
   nationalPromise = null;
+  countriesPromise = null;
   if ('caches' in window) {
     try {
       await caches.delete('history-data');
@@ -92,6 +93,36 @@ export async function fetchNationalHistory(): Promise<NationalHistory | null> {
     })();
   }
   return nationalPromise;
+}
+
+export type TrendScope = 'ALL' | 'FR' | 'ES' | 'PT';
+
+/**
+ * Daily national averages accumulated per country ('ALL' = the three
+ * countries together) by scripts/generate-history-countries.mjs. Unlike the
+ * French history.json there is no yearly archive behind it, so young series
+ * may only hold a handful of points.
+ */
+export interface CountriesHistory {
+  countries: Partial<Record<TrendScope, Record<string, [number, number][]>>>;
+  updated?: string;
+}
+
+let countriesPromise: Promise<CountriesHistory | null> | null = null;
+export async function fetchCountriesHistory(): Promise<CountriesHistory | null> {
+  if (!countriesPromise) {
+    countriesPromise = (async () => {
+      try {
+        const res = await fetch(`${BASE}data/history-countries.json`);
+        const ct = res.headers.get('content-type') ?? '';
+        if (!res.ok || !ct.includes('json')) return null;
+        return (await res.json()) as CountriesHistory;
+      } catch {
+        return null;
+      }
+    })();
+  }
+  return countriesPromise;
 }
 
 /** Returns true if a fuel price's last update is older than thresholdHours. */

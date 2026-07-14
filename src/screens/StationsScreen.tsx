@@ -4,7 +4,7 @@ import { useViewNav } from '../state/ViewContext';
 import { useFavorites } from '../state/FavoritesContext';
 import { useI18n } from '../i18n';
 import { useNearbyStations } from '../hooks/useNearbyStations';
-import { FUEL_TYPES, type FuelType } from '../types';
+import { FUEL_LABELS, FUEL_TYPES, type FuelType } from '../types';
 import { haversineKm } from '../lib/distance';
 import { getBrowserLocation, reverseGeocodeLabel } from '../lib/geocode';
 import { getPriceBounds, getPriceColor } from '../lib/priceColor';
@@ -176,8 +176,8 @@ export function StationsScreen() {
             {hasLocation && !loading && sorted.length === 0 && (
               <p className="text-center text-body-sm text-on-surface-variant py-lg">
                 {f.openH24Only
-                  ? t('stations.noneH24', { fuel: f.selectedFuel })
-                  : t('stations.none', { fuel: f.selectedFuel })}
+                  ? t('stations.noneH24', { fuel: FUEL_LABELS[f.selectedFuel] })
+                  : t('stations.none', { fuel: FUEL_LABELS[f.selectedFuel] })}
               </p>
             )}
             {sorted.map(({ station, distance, color }, idx) => (

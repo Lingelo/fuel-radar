@@ -8,6 +8,7 @@
     "data:fr": "node scripts/process-data.mjs",
     "data:iberia": "node scripts/process-data-iberia.mjs",
     "history": "node scripts/generate-history.mjs",
+    "history:countries": "node scripts/generate-history-countries.mjs",
     "history:bootstrap": "node scripts/generate-history.mjs --bootstrap",
     "history:daily": "node scripts/generate-history.mjs --daily",
     "dev": "vite",

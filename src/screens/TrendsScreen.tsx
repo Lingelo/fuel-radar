@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { fetchNationalHistory, timeAgo, type NationalHistory } from '../lib/data';
-import { FUEL_TYPES, type FuelType } from '../types';
+import {
+  fetchCountriesHistory,
+  fetchNationalHistory,
+  timeAgo,
+  type CountriesHistory,
+  type NationalHistory,
+  type TrendScope,
+} from '../lib/data';
+import { FUEL_LABELS, FUEL_TYPES, type FuelType } from '../types';
 import { useI18n } from '../i18n';
 import { Icon } from '../components/Icon';
 import { PriceChart } from '../components/PriceChart';
@@ -23,18 +30,32 @@ export function TrendsScreen() {
     { label: t('trends.range365'), days: 365 },
   ] as const;
   const [data, setData] = useState<NationalHistory | null>(null);
+  const [countriesData, setCountriesData] = useState<CountriesHistory | null>(null);
+  const [scope, setScope] = useState<TrendScope>('FR');
   const [loading, setLoading] = useState(true);
   const [days, setDays] = useState<30 | 90 | 365>(90);
   const [activeFuels, setActiveFuels] = useState<Set<FuelType>>(
-    new Set<FuelType>(['Gazole', 'E10', 'SP98']),
+    new Set<FuelType>(['Gazole', 'SP95', 'E10', 'SP98']),
   );
   const [fullscreen, setFullscreen] = useState(false);
 
   useEffect(() => {
-    fetchNationalHistory()
-      .then((d) => setData(d))
+    Promise.all([fetchNationalHistory(), fetchCountriesHistory()])
+      .then(([national, countries]) => {
+        setData(national);
+        setCountriesData(countries);
+      })
       .finally(() => setLoading(false));
   }, []);
+
+  // France keeps its deep series rebuilt from the official yearly archive;
+  // the other scopes only exist in the day-by-day accumulator file.
+  const fuelSeries: Record<string, [number, number][]> = useMemo(() => {
+    if (scope === 'FR') return data?.fuels ?? countriesData?.countries?.FR ?? {};
+    return countriesData?.countries?.[scope] ?? {};
+  }, [scope, data, countriesData]);
+
+  const updatedAt = scope === 'FR' ? data?.updated : countriesData?.updated;
 
   // Lock body scroll while in fullscreen.
   useEffect(() => {
@@ -57,25 +78,24 @@ export function TrendsScreen() {
   }, [fullscreen]);
 
   const series = useMemo(() => {
-    if (!data?.fuels) return [];
     const cutoff = Date.now() - days * 86400_000;
     return FUEL_TYPES.filter((f) => activeFuels.has(f))
       .map((f) => {
-        const arr = (data.fuels[f] ?? []).filter(([t]) => t >= cutoff);
+        const arr = (fuelSeries[f] ?? []).filter(([t]) => t >= cutoff);
         return { fuel: f, points: arr };
       })
       .filter((s) => s.points.length > 0);
-  }, [data, days, activeFuels]);
+  }, [fuelSeries, days, activeFuels]);
 
   const latest = (fuel: FuelType): { price: number; date: number } | null => {
-    const arr = data?.fuels?.[fuel] ?? [];
+    const arr = fuelSeries[fuel] ?? [];
     if (arr.length === 0) return null;
     const [t, p] = arr[arr.length - 1];
     return { price: p, date: t };
   };
 
   const yearChange = (fuel: FuelType): number | null => {
-    const arr = data?.fuels?.[fuel] ?? [];
+    const arr = fuelSeries[fuel] ?? [];
     if (arr.length < 2) return null;
     const cutoff = Date.now() - 365 * 86400_000;
     const past = arr.find(([t]) => t >= cutoff)?.[1] ?? arr[0][1];
@@ -91,6 +111,38 @@ export function TrendsScreen() {
       return next;
     });
   };
+
+  const SCOPES: { id: TrendScope; label: string }[] = [
+    { id: 'FR', label: t('trends.countryFR') },
+    { id: 'ES', label: t('trends.countryES') },
+    { id: 'PT', label: t('trends.countryPT') },
+    { id: 'ALL', label: t('trends.scopeAll') },
+  ];
+  const scopeLabel = SCOPES.find((s) => s.id === scope)!.label;
+
+  // ES/PT/global series grow one point per day since they cannot be
+  // backfilled — tell the user why the chart looks so empty at first.
+  const maxPoints = Math.max(0, ...FUEL_TYPES.map((f) => (fuelSeries[f] ?? []).length));
+  const shortHistory = !loading && maxPoints < 7;
+
+  const ScopeSwitch = (
+    <div className="flex gap-2 overflow-x-auto no-scrollbar">
+      {SCOPES.map((s) => (
+        <button
+          key={s.id}
+          onClick={() => setScope(s.id)}
+          className={[
+            'shrink-0 px-3 py-1.5 rounded-full text-label-caps font-bold tracking-wider whitespace-nowrap transition-colors',
+            scope === s.id
+              ? 'bg-secondary text-on-secondary shadow-sm'
+              : 'bg-surface-container-lowest text-on-surface border border-outline-variant hover:border-secondary',
+          ].join(' ')}
+        >
+          {s.label}
+        </button>
+      ))}
+    </div>
+  );
 
   const RangeSwitch = (
     <div className="flex gap-1 bg-surface-container-lowest rounded-lg p-1 border border-surface-variant">
@@ -119,7 +171,7 @@ export function TrendsScreen() {
             className="w-3 h-3 rounded-full inline-block"
             style={{ background: FUEL_COLORS[s.fuel] }}
           />
-          {s.fuel}
+          {FUEL_LABELS[s.fuel]}
         </span>
       ))}
     </div>
@@ -135,12 +187,21 @@ export function TrendsScreen() {
                 {t('trends.title')}
               </h1>
               <p className="text-body-sm text-on-surface-variant">
-                {t('trends.subtitle')}{' '}
-                {data?.updated && `${t('time.updated', { time: timeAgo(data.updated) })}.`}
+                {t('trends.subtitle', { scope: scopeLabel })}{' '}
+                {updatedAt && `${t('time.updated', { time: timeAgo(updatedAt) })}.`}
               </p>
             </div>
             {RangeSwitch}
           </header>
+
+          {ScopeSwitch}
+
+          {shortHistory && (
+            <p className="text-body-sm text-on-surface-variant bg-surface-container-lowest border border-outline-variant rounded-xl px-md py-sm flex items-start gap-2">
+              <Icon name="info" size={16} className="shrink-0 mt-0.5" />
+              <span>{t('trends.shortHistory')}</span>
+            </p>
+          )}
 
           {/* KPI cards */}
           <section className="grid grid-cols-2 md:grid-cols-3 gap-gutter">
@@ -161,7 +222,7 @@ export function TrendsScreen() {
                       className="w-3 h-3 rounded-full inline-block"
                       style={{ background: FUEL_COLORS[f] }}
                     />
-                    <span className="text-label-caps font-bold tracking-wider text-on-surface">{f}</span>
+                    <span className="text-label-caps font-bold tracking-wider text-on-surface">{FUEL_LABELS[f]}</span>
                   </div>
                   <div className="text-headline-lg font-bold text-on-surface whitespace-nowrap">
                     {formatPrice(lat.price)} €
@@ -218,7 +279,7 @@ export function TrendsScreen() {
             <div className="flex items-center gap-2 min-w-0">
               <Icon name="insights" className="text-secondary" />
               <h2 className="text-headline-md font-semibold text-on-surface truncate">
-                {t('trends.evolutionNational')}
+                {t('trends.evolutionNational', { scope: scopeLabel })}
               </h2>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -250,7 +311,7 @@ export function TrendsScreen() {
                     className="w-2 h-2 rounded-full"
                     style={{ background: FUEL_COLORS[f] }}
                   />
-                  {f}
+                  {FUEL_LABELS[f]}
                 </button>
               ))}
             </div>

@@ -19,7 +19,7 @@ import { SearchBar } from '../components/SearchBar';
 import { FilterSheet } from '../components/FilterSheet';
 import { StationPopup } from '../components/StationPopup';
 import { Icon } from '../components/Icon';
-import { FUEL_TYPES, type Station } from '../types';
+import { FUEL_LABELS, FUEL_TYPES, type Station } from '../types';
 
 interface PricedStation {
   station: Station;
@@ -346,7 +346,7 @@ export function MapScreen() {
     const zoneLabel = f.searchLabel ?? `${f.userLocation.lat.toFixed(3)}, ${f.userLocation.lng.toFixed(3)}`;
     const payload = {
       title: t('map.shareZoneTitle'),
-      text: t('map.shareZoneText', { fuel: f.selectedFuel, radius: f.radiusKm, label: zoneLabel }),
+      text: t('map.shareZoneText', { fuel: FUEL_LABELS[f.selectedFuel], radius: f.radiusKm, label: zoneLabel }),
       url,
     };
     if (navigator.share) {
@@ -445,12 +445,14 @@ export function MapScreen() {
           onOpenFilters={() => setFilterOpen(true)}
         />
         {(() => {
-          const QUICK: typeof FUEL_TYPES = ['Gazole', 'E10', 'SP98'];
+          const QUICK: typeof FUEL_TYPES = ['Gazole', 'SP95', 'E10', 'SP98'];
           const quickList = QUICK.includes(f.selectedFuel)
             ? QUICK
             : [f.selectedFuel, ...QUICK];
           return (
-            <div className="flex gap-2 flex-wrap">
+            // Mobile: one scrollable row so the chips never pile up over the
+            // map; desktop has room to wrap.
+            <div className="flex gap-2 overflow-x-auto no-scrollbar md:flex-wrap md:overflow-x-visible">
               {quickList.map((fuel) => {
                 const active = f.selectedFuel === fuel;
                 return (
@@ -458,26 +460,26 @@ export function MapScreen() {
                     key={fuel}
                     onClick={() => f.setSelectedFuel(fuel)}
                     className={[
-                      'px-3 py-1 rounded-full text-label-caps font-bold tracking-wider whitespace-nowrap transition-colors active:scale-95 shadow-sm',
+                      'shrink-0 px-3 py-1 rounded-full text-label-caps font-bold tracking-wider whitespace-nowrap transition-colors active:scale-95 shadow-sm',
                       active
                         ? 'bg-secondary text-on-secondary'
                         : 'bg-surface-container-lowest text-on-surface border border-outline-variant hover:border-secondary',
                     ].join(' ')}
                   >
-                    {fuel}
+                    {FUEL_LABELS[fuel]}
                   </button>
                 );
               })}
-              <span className="bg-surface-container-lowest text-on-surface border border-outline-variant px-3 py-1 rounded-full text-label-caps font-bold tracking-wider whitespace-nowrap">
+              <span className="shrink-0 bg-surface-container-lowest text-on-surface border border-outline-variant px-3 py-1 rounded-full text-label-caps font-bold tracking-wider whitespace-nowrap">
                 {f.radiusKm} km
               </span>
               {f.selectedBrands.size > 0 && (
-                <span className="bg-surface-container-lowest text-on-surface border border-outline-variant px-3 py-1 rounded-full text-label-caps font-bold tracking-wider whitespace-nowrap">
+                <span className="shrink-0 bg-surface-container-lowest text-on-surface border border-outline-variant px-3 py-1 rounded-full text-label-caps font-bold tracking-wider whitespace-nowrap">
                   {t('map.brandsCount', { n: f.selectedBrands.size })}
                 </span>
               )}
               {f.openH24Only && (
-                <span className="bg-tertiary-container text-on-tertiary-container border border-tertiary-fixed-dim/40 px-3 py-1 rounded-full text-label-caps font-bold tracking-wider whitespace-nowrap flex items-center gap-1">
+                <span className="shrink-0 bg-tertiary-container text-on-tertiary-container border border-tertiary-fixed-dim/40 px-3 py-1 rounded-full text-label-caps font-bold tracking-wider whitespace-nowrap flex items-center gap-1">
                   <Icon name="schedule" size={12} filled /> 24/7
                 </span>
               )}
@@ -485,7 +487,7 @@ export function MapScreen() {
                 <button
                   type="button"
                   onClick={onShareZone}
-                  className="bg-surface-container-lowest text-primary border border-outline-variant hover:border-primary px-3 py-1 rounded-full text-label-caps font-bold tracking-wider whitespace-nowrap flex items-center gap-1 active:scale-95 transition-transform shadow-sm"
+                  className="shrink-0 bg-surface-container-lowest text-primary border border-outline-variant hover:border-primary px-3 py-1 rounded-full text-label-caps font-bold tracking-wider whitespace-nowrap flex items-center gap-1 active:scale-95 transition-transform shadow-sm"
                   aria-label={t('map.shareZone')}
                   title={t('map.shareZone')}
                 >
@@ -506,8 +508,8 @@ export function MapScreen() {
       {!loading && stations.length > 0 && priced.length === 0 && hasLocation && (
         <div className="absolute top-32 md:top-24 left-1/2 -translate-x-1/2 z-[400] bg-surface-container-lowest text-on-surface px-4 py-2 rounded-full shadow-md text-body-sm border border-outline-variant">
           {f.openH24Only
-            ? t('map.noStationsH24', { fuel: f.selectedFuel })
-            : t('map.noStationsFuel', { fuel: f.selectedFuel })}
+            ? t('map.noStationsH24', { fuel: FUEL_LABELS[f.selectedFuel] })
+            : t('map.noStationsFuel', { fuel: FUEL_LABELS[f.selectedFuel] })}
         </div>
       )}
 
@@ -712,7 +714,7 @@ export function MapScreen() {
             <div className="flex items-start gap-2">
               <div className="text-right">
                 <div className="text-label-caps font-bold tracking-wider text-on-surface-variant">
-                  {f.selectedFuel}
+                  {FUEL_LABELS[f.selectedFuel]}
                 </div>
                 <div className="text-body-sm text-primary">{f.radiusKm} km</div>
               </div>

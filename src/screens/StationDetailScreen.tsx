@@ -14,7 +14,7 @@ import { formatPrice, formatPriceDelta } from '../lib/format';
 import { getPriceBounds, getPriceColor } from '../lib/priceColor';
 import { getServiceIcon } from '../lib/services';
 import type { FuelType, Station } from '../types';
-import { FUEL_TYPES } from '../types';
+import { FUEL_LABELS, FUEL_TYPES } from '../types';
 
 interface Props {
   stationId: number;
@@ -285,7 +285,7 @@ export function StationDetailScreen({ stationId }: Props) {
                             : 'bg-surface-variant text-on-surface',
                         ].join(' ')}
                       >
-                        {fuel}
+                        {FUEL_LABELS[fuel]}
                       </span>
                     </div>
                     <div className="text-right">
@@ -325,7 +325,7 @@ export function StationDetailScreen({ stationId }: Props) {
           <section className="bg-surface-container-lowest p-lg rounded-xl shadow-[0_4px_6px_-1px_rgba(22,29,27,0.1)]">
             <h2 className="text-headline-md font-semibold text-on-surface mb-md flex items-center gap-2 border-b border-surface-variant pb-2">
               <Icon name="insights" className="text-secondary" />
-              {t('station.trend7d', { fuel: f.selectedFuel })}
+              {t('station.trend7d', { fuel: FUEL_LABELS[f.selectedFuel] })}
             </h2>
             <PriceTrendBars points={sevenDayPoints(f.selectedFuel)} />
           </section>

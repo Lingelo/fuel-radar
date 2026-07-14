@@ -1,4 +1,4 @@
-import type { FuelType, Station } from '../types';
+import { FUEL_LABELS, type FuelType, type Station } from '../types';
 import { formatDistance } from '../lib/distance';
 import { isStale, timeAgo } from '../lib/data';
 import { formatPrice } from '../lib/format';
@@ -77,7 +77,7 @@ export function StationCard({
                   key={f}
                   className="px-2 py-1 rounded bg-surface-container text-on-surface-variant text-label-caps font-bold tracking-wider"
                 >
-                  {f}: {formatPrice(station.fuels[f]!.p)} €
+                  {FUEL_LABELS[f]}: {formatPrice(station.fuels[f]!.p)} €
                 </span>
               ))}
             </div>
@@ -99,7 +99,7 @@ export function StationCard({
             </div>
           ) : (
             <div className="text-body-sm text-on-surface-variant mt-1">
-              {t('station.noFuel', { fuel: selectedFuel })}
+              {t('station.noFuel', { fuel: FUEL_LABELS[selectedFuel] })}
             </div>
           )}
         </div>
