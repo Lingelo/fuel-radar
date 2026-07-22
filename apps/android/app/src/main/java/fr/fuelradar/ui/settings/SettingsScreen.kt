@@ -23,6 +23,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import fr.fuelradar.data.ServiceLocator
 import fr.fuelradar.data.prefs.AppSettings
@@ -33,6 +35,14 @@ private val STARTUP_TABS = listOf(
     "stations" to "Stations",
     "favorites" to "Favoris",
     "trends" to "Tendances",
+)
+
+private val LANGUAGES = listOf(
+    "" to "Système",
+    "fr" to "Français",
+    "en" to "English",
+    "es" to "Español",
+    "pt" to "Português",
 )
 
 private const val PRIVACY_URL = "https://lingelo.github.io/fuel-radar/privacy.html"
@@ -62,6 +72,37 @@ fun SettingsScreen() {
                 RadioButton(
                     selected = settings.startupTab == route,
                     onClick = { scope.launch { store.setStartupTab(route) } },
+                )
+                Text(label, modifier = Modifier.padding(start = 8.dp))
+            }
+        }
+
+        HorizontalDivider()
+
+        Text("Langue", style = MaterialTheme.typography.titleMedium)
+        val currentLang = AppCompatDelegate.getApplicationLocales().toLanguageTags()
+            .split(",").firstOrNull()?.substringBefore('-') ?: ""
+        LANGUAGES.forEach { (tag, label) ->
+            Row(
+                modifier = Modifier.fillMaxWidth().selectable(
+                    selected = currentLang == tag,
+                    onClick = {
+                        AppCompatDelegate.setApplicationLocales(
+                            if (tag.isEmpty()) LocaleListCompat.getEmptyLocaleList()
+                            else LocaleListCompat.forLanguageTags(tag),
+                        )
+                    },
+                ).padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                RadioButton(
+                    selected = currentLang == tag,
+                    onClick = {
+                        AppCompatDelegate.setApplicationLocales(
+                            if (tag.isEmpty()) LocaleListCompat.getEmptyLocaleList()
+                            else LocaleListCompat.forLanguageTags(tag),
+                        )
+                    },
                 )
                 Text(label, modifier = Modifier.padding(start = 8.dp))
             }

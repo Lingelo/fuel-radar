@@ -8,6 +8,7 @@ import fr.fuelradar.data.ServiceLocator
 import fr.fuelradar.data.model.Station
 import fr.fuelradar.data.prefs.Filters
 import fr.fuelradar.domain.Coords
+import fr.fuelradar.domain.haversineKm
 import fr.fuelradar.domain.priceBounds
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,6 +35,7 @@ data class MapUiState(
     val query: String = "",
     val filters: Filters = Filters(),
     val center: Coords = Coords(48.8566, 2.3522),
+    val hasLocation: Boolean = false,
 )
 
 class MapViewModel : ViewModel() {
@@ -96,13 +98,26 @@ class MapViewModel : ViewModel() {
         viewModelScope.launch { filtersStore.apply(filters) }
     }
 
+    /** [lat]/[lng] is the current camera target (browse mode fallback). The
+     *  circle + station set are anchored to the searched/located point when set. */
     fun load(lat: Double, lng: Double) {
         lastCenter = Coords(lat, lng)
         viewModelScope.launch {
-            _state.value = _state.value.copy(loading = true)
             val filters = filtersStore.filters.first()
+            val located = filters.userLocation != null
+            val anchor = filters.userLocation ?: lastCenter
+            val r = filters.radiusKm.toDouble()
+            _state.value = _state.value.copy(loading = true)
             val fuelCode = filters.fuel.code
-            val stations = repo.nearby(lat, lng, filters.radiusKm.toDouble())
+            // Located: strictly show stations inside the radius circle.
+            // Browse (no location): show stations from the departments around the
+            // current view so the country-level map isn't empty.
+            val browseRadius = maxOf(r, 40.0)
+            val stations = repo.nearby(anchor.lat, anchor.lng, if (located) r else browseRadius)
+                .let { list ->
+                    if (located) list.filter { haversineKm(anchor.lat, anchor.lng, it.lat, it.lng) <= r }
+                    else list
+                }
                 .filter { filters.brands.isEmpty() || (it.brand != null && filters.brands.contains(it.brand)) }
                 .filter { !filters.openH24Only || it.h24 == true }
             val items = stations.map { StationClusterItem(it, it.fuels[fuelCode]?.p) }
@@ -110,7 +125,8 @@ class MapViewModel : ViewModel() {
             val (pMin, pMax) = priceBounds(prices)
             _state.value = _state.value.copy(
                 loading = false, items = items, pMin = pMin, pMax = pMax,
-                center = Coords(lat, lng),
+                center = anchor,
+                hasLocation = filters.userLocation != null,
             )
         }
     }

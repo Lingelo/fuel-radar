@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Framework parent to avoid pulling the Material XML library; the real
-         theming happens in Compose (FuelRadarTheme). -->
-    <style name="Theme.FuelRadar" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- AppCompat parent so AppCompatActivity + per-app locales work; the real
+         visual theming happens in Compose (FuelRadarTheme). -->
+    <style name="Theme.FuelRadar" parent="Theme.AppCompat.DayNight.NoActionBar" />
 </resources>

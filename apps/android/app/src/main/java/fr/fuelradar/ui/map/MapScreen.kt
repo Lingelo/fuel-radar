@@ -49,6 +49,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.clustering.Cluster
 import com.google.maps.android.compose.Circle
 import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.MapsComposeExperimentalApi
 import com.google.maps.android.compose.clustering.Clustering
 import com.google.maps.android.compose.rememberCameraPositionState
@@ -132,14 +133,25 @@ fun MapScreen(
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
+            uiSettings = MapUiSettings(
+                zoomControlsEnabled = false,
+                mapToolbarEnabled = false,
+                myLocationButtonEnabled = false,
+                compassEnabled = false,
+                indoorLevelPickerEnabled = false,
+                rotationGesturesEnabled = false,
+                tiltGesturesEnabled = false,
+            ),
         ) {
-            Circle(
-                center = LatLng(state.center.lat, state.center.lng),
-                radius = state.filters.radiusKm * 1000.0,
-                strokeColor = MaterialTheme.colorScheme.primary,
-                strokeWidth = 3f,
-                fillColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.06f),
-            )
+            if (state.hasLocation) {
+                Circle(
+                    center = LatLng(state.center.lat, state.center.lng),
+                    radius = state.filters.radiusKm * 1000.0,
+                    strokeColor = MaterialTheme.colorScheme.primary,
+                    strokeWidth = 3f,
+                    fillColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.06f),
+                )
+            }
             Clustering(
                 items = state.items,
                 onClusterItemClick = { item ->
