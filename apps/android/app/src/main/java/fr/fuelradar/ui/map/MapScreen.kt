@@ -10,6 +10,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -54,6 +55,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import fr.fuelradar.R
@@ -116,8 +118,9 @@ fun MapScreen(
     var showFilters by remember { mutableStateOf(false) }
     var sheetExpanded by remember { mutableStateOf(false) }
     val cameraPositionState = rememberCameraPositionState {
-        // Country-level view of metropolitan France (mirror of the web default).
-        position = CameraPosition.fromLatLngZoom(LatLng(46.6, 2.5), 6f)
+        // Start zoomed on the (persisted) location; the collector recenters
+        // when a location is set/changed.
+        position = CameraPosition.fromLatLngZoom(LatLng(48.8566, 2.3522), 12f)
     }
 
     val fused = remember { LocationServices.getFusedLocationProviderClient(context) }
@@ -143,6 +146,15 @@ fun MapScreen(
     val permLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
     ) { granted -> if (granted) fetchLocation() }
+    val onLocateClick = {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
+            == PackageManager.PERMISSION_GRANTED
+        ) {
+            fetchLocation()
+        } else {
+            permLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+    }
 
     if (showFilters) {
         FilterSheet(
@@ -255,8 +267,16 @@ fun MapScreen(
                     onSearch = viewModel::search,
                     modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
                     trailingIcon = {
-                        IconButton(onClick = { showFilters = true }) {
-                            Icon(Icons.Filled.Tune, contentDescription = stringResource(R.string.filters))
+                        Row {
+                            IconButton(onClick = onLocateClick) {
+                                Icon(
+                                    Icons.Filled.MyLocation,
+                                    contentDescription = stringResource(R.string.locate_me),
+                                )
+                            }
+                            IconButton(onClick = { showFilters = true }) {
+                                Icon(Icons.Filled.Tune, contentDescription = stringResource(R.string.filters))
+                            }
                         }
                     },
                 )
@@ -284,25 +304,6 @@ fun MapScreen(
 
         val sheetStations = state.items.filter { it.price != null }.sortedBy { it.price!! }
 
-        FloatingActionButton(
-            onClick = {
-                if (ContextCompat.checkSelfPermission(
-                        context,
-                        Manifest.permission.ACCESS_FINE_LOCATION,
-                    ) == PackageManager.PERMISSION_GRANTED
-                ) {
-                    fetchLocation()
-                } else {
-                    permLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-                }
-            },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(end = 16.dp, bottom = if (sheetStations.isNotEmpty()) 156.dp else 16.dp),
-        ) {
-            Icon(Icons.Filled.MyLocation, contentDescription = stringResource(R.string.locate_me))
-        }
-
         // Bottom station sheet — collapsed carousel or expanded vertical list.
         if (sheetStations.isNotEmpty()) {
             Surface(
@@ -324,7 +325,13 @@ fun MapScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { sheetExpanded = !sheetExpanded },
+                            .clickable { sheetExpanded = !sheetExpanded }
+                            .pointerInput(Unit) {
+                                detectVerticalDragGestures { _, dy ->
+                                    if (dy < -6f) sheetExpanded = true
+                                    else if (dy > 6f) sheetExpanded = false
+                                }
+                            },
                     ) {
                         Box(
                             modifier = Modifier

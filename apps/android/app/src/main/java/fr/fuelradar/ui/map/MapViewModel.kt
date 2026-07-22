@@ -57,11 +57,17 @@ class MapViewModel : ViewModel() {
 
     private var lastCenter = Coords(48.8566, 2.3522)
     private var lastUserLoc: Coords? = null
+    private var lastLabel: String? = null
 
     init {
         viewModelScope.launch {
             filtersStore.filters.collect { f ->
                 _state.value = _state.value.copy(filters = f)
+                // Keep the search field in sync with the shared address label.
+                if (f.searchLabel != null && f.searchLabel != lastLabel) {
+                    lastLabel = f.searchLabel
+                    _state.value = _state.value.copy(query = f.searchLabel)
+                }
                 // Any shared location change (search/locate from any screen, incl.
                 // "view on map") recenters the camera.
                 val loc = f.userLocation
@@ -69,7 +75,9 @@ class MapViewModel : ViewModel() {
                     lastUserLoc = loc
                     _target.value = loc
                 }
-                load(lastCenter.lat, lastCenter.lng)
+                // Reload around the new location (fallback: last camera center).
+                val c = loc ?: lastCenter
+                load(c.lat, c.lng)
             }
         }
     }
@@ -136,20 +144,14 @@ class MapViewModel : ViewModel() {
         lastCenter = Coords(lat, lng)
         viewModelScope.launch {
             val filters = filtersStore.filters.first()
-            val located = filters.userLocation != null
-            val anchor = filters.userLocation ?: lastCenter
+            // Always anchored on a location and always radius-limited, so the
+            // map stays consistent with the Stations list.
+            val anchor = filters.userLocation ?: Coords(48.8566, 2.3522)
             val r = filters.radiusKm.toDouble()
             _state.value = _state.value.copy(loading = true)
             val fuelCode = filters.fuel.code
-            // Located: strictly show stations inside the radius circle.
-            // Browse (no location): show stations from the departments around the
-            // current view so the country-level map isn't empty.
-            val browseRadius = maxOf(r, 40.0)
-            val stations = repo.nearby(anchor.lat, anchor.lng, if (located) r else browseRadius)
-                .let { list ->
-                    if (located) list.filter { haversineKm(anchor.lat, anchor.lng, it.lat, it.lng) <= r }
-                    else list
-                }
+            val stations = repo.nearby(anchor.lat, anchor.lng, r)
+                .filter { haversineKm(anchor.lat, anchor.lng, it.lat, it.lng) <= r }
                 .filter { filters.brands.isEmpty() || (it.brand != null && filters.brands.contains(it.brand)) }
                 .filter { !filters.openH24Only || it.h24 == true }
             val items = stations.map { StationClusterItem(it, it.fuels[fuelCode]?.p) }
@@ -160,7 +162,7 @@ class MapViewModel : ViewModel() {
             _state.value = _state.value.copy(
                 loading = false, items = items, pMin = pMin, pMax = pMax,
                 center = anchor,
-                hasLocation = filters.userLocation != null,
+                hasLocation = true,
                 cheapestId = cheapestId,
             )
         }

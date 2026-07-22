@@ -47,10 +47,17 @@ class StationsViewModel : ViewModel() {
     private val _state = MutableStateFlow(StationsUiState())
     val state: StateFlow<StationsUiState> = _state.asStateFlow()
 
+    private var lastLabel: String? = null
+
     init {
         viewModelScope.launch {
             filtersStore.filters.collect { f ->
                 _state.value = _state.value.copy(filters = f)
+                // Keep the search field in sync with the shared address label.
+                if (f.searchLabel != null && f.searchLabel != lastLabel) {
+                    lastLabel = f.searchLabel
+                    _state.value = _state.value.copy(query = f.searchLabel)
+                }
                 reload()
             }
         }

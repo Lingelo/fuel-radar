@@ -52,7 +52,9 @@ private fun brandLogoUrl(brand: String?): String? {
     if (brand.isNullOrBlank()) return null
     val b = brand.lowercase()
     val domain = BRAND_DOMAINS.entries.firstOrNull { b.contains(it.key) }?.value ?: return null
-    return "https://logo.clearbit.com/$domain"
+    // Google favicon service — reliable brand mark by domain (Clearbit's logo
+    // API was shut down). 128px is crisp enough at avatar sizes.
+    return "https://www.google.com/s2/favicons?sz=128&domain=$domain"
 }
 
 @Composable
