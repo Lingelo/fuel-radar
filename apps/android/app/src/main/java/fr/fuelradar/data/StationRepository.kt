@@ -52,6 +52,10 @@ class StationRepository(private val api: FuelApi) {
         data
     }
 
+    /** Look up an already-fetched station by id across cached departments. */
+    fun findCached(id: Long): Station? =
+        deptCache.values.asSequence().flatten().firstOrNull { it.id == id }
+
     fun invalidate() {
         deptCache.clear()
         historyCache.clear()
