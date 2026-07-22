@@ -36,9 +36,14 @@ import androidx.compose.material.icons.filled.LocalGasStation
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.SheetValue
+import androidx.compose.material3.rememberBottomSheetScaffoldState
+import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -50,7 +55,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
@@ -90,7 +97,7 @@ import fr.fuelradar.ui.common.FilterSheet
 
 private const val MAX_PINS = 150
 
-@OptIn(MapsComposeExperimentalApi::class)
+@OptIn(MapsComposeExperimentalApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun MapScreen(
     onOpenStation: (Long) -> Unit,
@@ -180,10 +187,57 @@ fun MapScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        GoogleMap(
-            modifier = Modifier.fillMaxSize(),
-            cameraPositionState = cameraPositionState,
+    val sheetStations = state.items.filter { it.price != null }.sortedBy { it.price!! }
+    val scope = rememberCoroutineScope()
+    val scaffoldState = rememberBottomSheetScaffoldState(
+        bottomSheetState = rememberStandardBottomSheetState(
+            initialValue = SheetValue.PartiallyExpanded,
+            skipHiddenState = true,
+        ),
+    )
+
+    BottomSheetScaffold(
+        scaffoldState = scaffoldState,
+        sheetPeekHeight = if (sheetStations.isEmpty()) 0.dp else 150.dp,
+        sheetContainerColor = MaterialTheme.colorScheme.surface,
+        sheetShape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+        sheetContent = {
+            Column(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+                Text(
+                    "${sheetStations.size} stations",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp),
+                )
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    items(sheetStations, key = { it.station.id }) { item ->
+                        MapStationRow(
+                            item = item,
+                            distanceKm = haversineKm(
+                                state.center.lat, state.center.lng,
+                                item.station.lat, item.station.lng,
+                            ),
+                            cheapest = item.station.id == state.cheapestId,
+                            color = item.price?.let { priceColor(it, state.pMin, state.pMax) }
+                                ?: MaterialTheme.colorScheme.onSurface,
+                            onClick = {
+                                viewModel.goTo(item.station.lat, item.station.lng)
+                                scope.launch { scaffoldState.bottomSheetState.partialExpand() }
+                            },
+                        )
+                    }
+                }
+            }
+        },
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            GoogleMap(
+                modifier = Modifier.fillMaxSize(),
+                cameraPositionState = cameraPositionState,
             uiSettings = MapUiSettings(
                 zoomControlsEnabled = false,
                 mapToolbarEnabled = false,
@@ -302,100 +356,6 @@ fun MapScreen(
             }
         }
 
-        val sheetStations = state.items.filter { it.price != null }.sortedBy { it.price!! }
-
-        // Bottom station sheet — collapsed carousel or expanded vertical list.
-        if (sheetStations.isNotEmpty()) {
-            Surface(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .then(if (sheetExpanded) Modifier.fillMaxHeight(0.55f) else Modifier),
-                shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
-                tonalElevation = 3.dp,
-                shadowElevation = 8.dp,
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .then(if (sheetExpanded) Modifier.fillMaxHeight() else Modifier)
-                        .padding(top = 10.dp, bottom = 12.dp),
-                ) {
-                    // Handle + count — tap to expand/collapse.
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(
-                                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                                indication = null,
-                            ) { sheetExpanded = !sheetExpanded }
-                            .pointerInput(Unit) {
-                                detectVerticalDragGestures { _, dy ->
-                                    if (dy < -6f) sheetExpanded = true
-                                    else if (dy > 6f) sheetExpanded = false
-                                }
-                            },
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.CenterHorizontally)
-                                .size(width = 36.dp, height = 4.dp)
-                                .background(
-                                    MaterialTheme.colorScheme.outlineVariant,
-                                    RoundedCornerShape(2.dp),
-                                ),
-                        )
-                        Text(
-                            "${sheetStations.size} stations",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(start = 16.dp, top = 6.dp, bottom = 8.dp),
-                        )
-                    }
-                    if (sheetExpanded) {
-                        LazyColumn(
-                            modifier = Modifier.weight(1f).fillMaxWidth(),
-                            contentPadding = PaddingValues(horizontal = 16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            items(sheetStations, key = { it.station.id }) { item ->
-                                MapStationRow(
-                                    item = item,
-                                    distanceKm = haversineKm(
-                                        state.center.lat, state.center.lng,
-                                        item.station.lat, item.station.lng,
-                                    ),
-                                    cheapest = item.station.id == state.cheapestId,
-                                    color = item.price?.let { priceColor(it, state.pMin, state.pMax) }
-                                        ?: MaterialTheme.colorScheme.onSurface,
-                                    onClick = {
-                                        viewModel.goTo(item.station.lat, item.station.lng)
-                                        sheetExpanded = false
-                                    },
-                                )
-                            }
-                        }
-                    } else {
-                        LazyRow(
-                            contentPadding = PaddingValues(horizontal = 16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        ) {
-                            items(sheetStations.take(20), key = { it.station.id }) { item ->
-                                MapStationCard(
-                                    item = item,
-                                    distanceKm = haversineKm(
-                                        state.center.lat, state.center.lng,
-                                        item.station.lat, item.station.lng,
-                                    ),
-                                    color = item.price?.let { priceColor(it, state.pMin, state.pMax) }
-                                        ?: MaterialTheme.colorScheme.onSurface,
-                                    onClick = { viewModel.goTo(item.station.lat, item.station.lng) },
-                                )
-                            }
-                        }
-                    }
-                }
-            }
         }
     }
 }
