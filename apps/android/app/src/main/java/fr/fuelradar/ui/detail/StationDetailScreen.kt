@@ -62,9 +62,10 @@ import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapUiSettings
-import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.MapsComposeExperimentalApi
+import com.google.maps.android.compose.MarkerComposable
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.maps.android.compose.rememberMarkerState
 import fr.fuelradar.BuildConfig
 import fr.fuelradar.R
 import fr.fuelradar.data.DeptIndex
@@ -84,7 +85,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class, MapsComposeExperimentalApi::class)
 @Composable
 fun StationDetailScreen(stationId: Long, onBack: () -> Unit) {
     val context = LocalContext.current
@@ -112,6 +113,10 @@ fun StationDetailScreen(stationId: Long, onBack: () -> Unit) {
         } else {
             emptyMap()
         }
+    }
+    // National average history as a fallback when a station has no series.
+    val national by produceState<Map<String, List<List<Double>>>>(emptyMap()) {
+        value = repo.nationalHistory()?.fuels ?: emptyMap()
     }
 
     val st = station
@@ -153,7 +158,19 @@ fun StationDetailScreen(stationId: Long, onBack: () -> Unit) {
                         compassEnabled = false,
                     ),
                 ) {
-                    Marker(state = MarkerState(position = LatLng(st.lat, st.lng)))
+                    MarkerComposable(
+                        keys = arrayOf(st.id),
+                        state = rememberMarkerState(position = LatLng(st.lat, st.lng)),
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(50),
+                            color = Color.White,
+                            shadowElevation = 4.dp,
+                            modifier = Modifier.padding(4.dp),
+                        ) {
+                            BrandLogo(st.brand, size = 44.dp, modifier = Modifier.padding(3.dp))
+                        }
+                    }
                 }
             }
             RoundIconButton(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.close), onBack,
@@ -274,8 +291,10 @@ fun StationDetailScreen(stationId: Long, onBack: () -> Unit) {
         // Trend card — interactive chart for the selected fuel.
         DetailCard {
             SectionTitle(stringResource(R.string.trend_title, filters.fuel.label))
-            val series = history[filters.fuel.code].orEmpty()
-                .takeLast(30).map { it.getOrElse(1) { 0.0 } to it.getOrElse(0) { 0.0 } }
+            val stationRaw = history[filters.fuel.code].orEmpty()
+            val useNational = stationRaw.size < 2
+            val raw = (if (useNational) national[filters.fuel.code].orEmpty() else stationRaw).takeLast(30)
+            val series = raw.map { it.getOrElse(1) { 0.0 } to it.getOrElse(0) { 0.0 } }
             if (series.size < 2) {
                 Text(
                     stringResource(R.string.history_unavailable),
@@ -283,6 +302,14 @@ fun StationDetailScreen(stationId: Long, onBack: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             } else {
+                if (useNational) {
+                    Text(
+                        stringResource(R.string.national_average),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 4.dp),
+                    )
+                }
                 TrendChart(
                     prices = series.map { it.first },
                     epochs = series.map { it.second.toLong() },

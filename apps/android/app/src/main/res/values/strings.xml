@@ -55,6 +55,7 @@
     <string name="current_prices">Prix actuels</string>
     <string name="trend_title">Tendance 7 j (%1$s)</string>
     <string name="services">Services</string>
+    <string name="national_average">Moyenne nationale</string>
     <string name="stale_data">Données anciennes</string>
     <string name="trend_7d">7 j : %1$s</string>
 

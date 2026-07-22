@@ -49,6 +49,7 @@
     <string name="current_prices">Current prices</string>
     <string name="trend_title">7-day trend (%1$s)</string>
     <string name="services">Services</string>
+    <string name="national_average">National average</string>
     <string name="stale_data">Outdated data</string>
     <string name="trend_7d">7 d: %1$s</string>
 
