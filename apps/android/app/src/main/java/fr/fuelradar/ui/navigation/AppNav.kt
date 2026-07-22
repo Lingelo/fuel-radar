@@ -30,6 +30,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import fr.fuelradar.ui.detail.StationDetailScreen
 import fr.fuelradar.ui.favorites.FavoritesScreen
+import fr.fuelradar.ui.map.MapScreen
 import fr.fuelradar.ui.settings.SettingsScreen
 import fr.fuelradar.ui.stations.StationsScreen
 import fr.fuelradar.ui.trends.TrendsScreen
@@ -73,10 +74,12 @@ fun AppNav() {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Tab.Stations.route,
+            startDestination = Tab.Map.route,
             modifier = Modifier.padding(innerPadding),
         ) {
-            composable(Tab.Map.route) { Placeholder("Carte") }
+            composable(Tab.Map.route) {
+                MapScreen(onOpenStation = { id -> navController.navigate("details/$id") })
+            }
             composable(Tab.Stations.route) {
                 StationsScreen(onOpenStation = { id -> navController.navigate("details/$id") })
             }
