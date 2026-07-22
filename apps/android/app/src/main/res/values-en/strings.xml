@@ -62,6 +62,11 @@
     <string name="period_90">90 d</string>
     <string name="period_365">1 yr</string>
     <string name="history_unavailable">History unavailable</string>
+    <string name="trends_subtitle">Average prices %1$s</string>
+    <string name="trends_evolution">Price evolution</string>
+    <string name="trends_short_history">History grows by one point per day; the chart will fill in over time.</string>
+    <string name="trends_tap_hint">Tap or drag the chart to inspect a date.</string>
+    <string name="trends_year_change">%1$s/yr</string>
 
     <string name="settings_title">Settings</string>
     <string name="startup_screen">Startup screen</string>

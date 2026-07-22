@@ -69,6 +69,11 @@
     <string name="period_90">90 j</string>
     <string name="period_365">1 an</string>
     <string name="history_unavailable">Historique indisponible</string>
+    <string name="trends_subtitle">Prix moyens %1$s</string>
+    <string name="trends_evolution">Évolution des prix</string>
+    <string name="trends_short_history">L\'historique s\'enrichit d\'un point par jour ; le graphe se remplira avec le temps.</string>
+    <string name="trends_tap_hint">Touchez ou glissez le graphe pour inspecter une date.</string>
+    <string name="trends_year_change">%1$s/an</string>
 
     <!-- Settings -->
     <string name="settings_title">Réglages</string>
