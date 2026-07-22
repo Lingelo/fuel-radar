@@ -41,6 +41,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -155,18 +156,17 @@ fun MapScreen(
         FilterSheetHost(state, viewModel) { showFilters = false }
     }
 
+    // Recenter the camera whenever a search / locate / "view on map" resolves.
+    // Station loading is driven solely by the filters collector in the VM (the
+    // station set is always anchored on userLocation), so there is deliberately
+    // no camera-driven reload here — that previously raced with the filters
+    // update and left stale pins from the previous location.
     LaunchedEffect(target) {
         target?.let {
             cameraPositionState.animate(
-                CameraUpdateFactory.newLatLngZoom(LatLng(it.lat, it.lng), 13f),
+                CameraUpdateFactory.newLatLngZoom(LatLng(it.lat, it.lng), 12f),
             )
             viewModel.consumeTarget()
-        }
-    }
-    LaunchedEffect(cameraPositionState.isMoving) {
-        if (!cameraPositionState.isMoving) {
-            val c = cameraPositionState.position.target
-            viewModel.load(c.latitude, c.longitude)
         }
     }
 
@@ -193,40 +193,45 @@ fun MapScreen(
                 fillColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.06f),
             )
             // Individual price pins (no clustering). The cheapest one bounces.
+            // Each marker is wrapped in key(station.id) so Compose disposes the
+            // markers that leave the set when the location/radius changes —
+            // otherwise MarkerComposable leaves ghost pins from the old search.
             state.items.take(MAX_PINS).forEach { item ->
-                val markerState = rememberMarkerState(
-                    key = item.station.id.toString(),
-                    position = LatLng(item.station.lat, item.station.lng),
-                )
-                val label = item.price?.let { "${formatPrice(it)} €" }
-                val color = item.price?.let { priceColor(it, state.pMin, state.pMax) } ?: Color.Gray
-                if (item.station.id == state.cheapestId) {
-                    val transition = rememberInfiniteTransition(label = "bounce")
-                    val scale by transition.animateFloat(
-                        initialValue = 1f,
-                        targetValue = 1.22f,
-                        animationSpec = infiniteRepeatable(tween(500), RepeatMode.Reverse),
-                        label = "scale",
+                key(item.station.id) {
+                    val markerState = rememberMarkerState(
+                        key = item.station.id.toString(),
+                        position = LatLng(item.station.lat, item.station.lng),
                     )
-                    // Quantized scale in the marker keys forces re-rasterization
-                    // each step, so the pin visibly bounces. The padding keeps the
-                    // rasterized bounds large enough so the scaled pill isn't clipped.
-                    MarkerComposable(
-                        keys = arrayOf(item.station.id, (scale * 12).toInt()),
-                        state = markerState,
-                        onClick = { onOpenStation(item.station.id); true },
-                    ) {
-                        Box(modifier = Modifier.padding(8.dp)) {
-                            PricePin(label, color, scale = scale)
+                    val label = item.price?.let { "${formatPrice(it)} €" }
+                    val color = item.price?.let { priceColor(it, state.pMin, state.pMax) } ?: Color.Gray
+                    if (item.station.id == state.cheapestId) {
+                        val transition = rememberInfiniteTransition(label = "bounce")
+                        val scale by transition.animateFloat(
+                            initialValue = 1f,
+                            targetValue = 1.22f,
+                            animationSpec = infiniteRepeatable(tween(500), RepeatMode.Reverse),
+                            label = "scale",
+                        )
+                        // Quantized scale in the marker keys forces re-rasterization
+                        // each step, so the pin visibly bounces. The padding keeps the
+                        // rasterized bounds large enough so the scaled pill isn't clipped.
+                        MarkerComposable(
+                            keys = arrayOf(item.station.id, (scale * 12).toInt()),
+                            state = markerState,
+                            onClick = { onOpenStation(item.station.id); true },
+                        ) {
+                            Box(modifier = Modifier.padding(8.dp)) {
+                                PricePin(label, color, scale = scale)
+                            }
                         }
-                    }
-                } else {
-                    MarkerComposable(
-                        keys = arrayOf(item.station.id),
-                        state = markerState,
-                        onClick = { onOpenStation(item.station.id); true },
-                    ) {
-                        PricePin(label, color)
+                    } else {
+                        MarkerComposable(
+                            keys = arrayOf(item.station.id),
+                            state = markerState,
+                            onClick = { onOpenStation(item.station.id); true },
+                        ) {
+                            PricePin(label, color)
+                        }
                     }
                 }
             }
