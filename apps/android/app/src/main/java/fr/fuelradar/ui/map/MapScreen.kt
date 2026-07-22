@@ -276,21 +276,6 @@ fun MapScreen(
             }
         }
 
-        // Three-level bottom sheet: closed (handle + count), base, open.
-        val sheetStations = state.items.filter { it.price != null }.sortedBy { it.price!! }
-        if (sheetStations.isNotEmpty()) {
-            StationSheet(
-                stations = sheetStations,
-                center = state.center,
-                cheapestId = state.cheapestId,
-                pMin = state.pMin,
-                pMax = state.pMax,
-                onOpen = { s ->
-                    viewModel.goTo(s.station.lat, s.station.lng)
-                },
-                modifier = Modifier.align(Alignment.BottomCenter),
-            )
-        }
     }
 }
 
