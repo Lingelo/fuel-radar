@@ -48,32 +48,47 @@ private val FUEL_COLORS = mapOf(
 data class TrendsUiState(
     val loading: Boolean = true,
     val periodDays: Int = 30,
+    val scope: String = "ALL",
     val series: Map<String, List<Double>> = emptyMap(),
 )
 
 class TrendsViewModel : ViewModel() {
     private val repo = ServiceLocator.stations
-    private var full: Map<String, List<Double>> = emptyMap()
+
+    // scope ("ALL"/"FR"/"ES"/"PT") -> fuel -> price series
+    private var byScope: Map<String, Map<String, List<Double>>> = emptyMap()
 
     private val _state = MutableStateFlow(TrendsUiState())
     val state: StateFlow<TrendsUiState> = _state.asStateFlow()
 
     init {
         viewModelScope.launch {
-            val nat = repo.nationalHistory()
-            full = nat?.fuels?.mapValues { (_, points) -> points.map { it.getOrElse(1) { 0.0 } } }
-                ?: emptyMap()
-            applyPeriod(_state.value.periodDays)
+            val countries = repo.countriesHistory()
+            byScope = countries?.countries?.mapValues { (_, fuels) ->
+                fuels.mapValues { (_, points) -> points.map { it.getOrElse(1) { 0.0 } } }
+            } ?: emptyMap()
+            // Fallback: if per-country history is unavailable, use the national FR series.
+            if (byScope.isEmpty()) {
+                val nat = repo.nationalHistory()
+                val frSeries = nat?.fuels?.mapValues { (_, p) -> p.map { it.getOrElse(1) { 0.0 } } }
+                    ?: emptyMap()
+                byScope = mapOf("ALL" to frSeries, "FR" to frSeries)
+            }
+            apply(_state.value.scope, _state.value.periodDays)
         }
     }
 
-    fun setPeriod(days: Int) = applyPeriod(days)
+    fun setPeriod(days: Int) = apply(_state.value.scope, days)
 
-    private fun applyPeriod(days: Int) {
+    fun setScope(scope: String) = apply(scope, _state.value.periodDays)
+
+    private fun apply(scope: String, days: Int) {
+        val series = (byScope[scope] ?: emptyMap()).mapValues { (_, v) -> v.takeLast(days) }
         _state.value = TrendsUiState(
             loading = false,
             periodDays = days,
-            series = full.mapValues { (_, v) -> v.takeLast(days) },
+            scope = scope,
+            series = series,
         )
     }
 }
@@ -84,7 +99,21 @@ fun TrendsScreen(viewModel: TrendsViewModel = viewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Text("Tendances nationales", style = MaterialTheme.typography.headlineSmall)
+        Text("Tendances", style = MaterialTheme.typography.headlineSmall)
+
+        FlowRow(
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            listOf("ALL" to "Tous", "FR" to "France", "ES" to "Espagne", "PT" to "Portugal")
+                .forEach { (code, label) ->
+                    FilterChip(
+                        selected = state.scope == code,
+                        onClick = { viewModel.setScope(code) },
+                        label = { Text(label) },
+                    )
+                }
+        }
 
         Row(
             modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),

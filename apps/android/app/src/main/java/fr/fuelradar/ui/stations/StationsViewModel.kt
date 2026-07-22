@@ -87,6 +87,10 @@ class StationsViewModel : ViewModel() {
         viewModelScope.launch { filtersStore.setSort(sort) }
     }
 
+    fun applyFilters(filters: Filters) {
+        viewModelScope.launch { filtersStore.apply(filters) }
+    }
+
     private suspend fun reload() {
         val s = _state.value
         _state.value = s.copy(loading = true)
@@ -96,6 +100,7 @@ class StationsViewModel : ViewModel() {
         val rows = all
             .asSequence()
             .filter { s.filters.brands.isEmpty() || (it.brand != null && s.filters.brands.contains(it.brand)) }
+            .filter { !s.filters.openH24Only || it.h24 == true }
             .map { st ->
                 StationRow(
                     station = st,

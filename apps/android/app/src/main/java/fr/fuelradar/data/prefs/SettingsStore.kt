@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.map
 private val Context.settingsDataStore: DataStore<Preferences> by preferencesDataStore("settings")
 
 data class AppSettings(
-    val startupTab: String = "stations",
+    val startupTab: String = "map",
     val staleWarning: Boolean = true,
 )
 
@@ -24,7 +24,7 @@ class SettingsStore(context: Context) {
 
     val settings: Flow<AppSettings> = store.data.map { p ->
         AppSettings(
-            startupTab = p[STARTUP] ?: "stations",
+            startupTab = p[STARTUP] ?: "map",
             staleWarning = p[STALE] ?: true,
         )
     }

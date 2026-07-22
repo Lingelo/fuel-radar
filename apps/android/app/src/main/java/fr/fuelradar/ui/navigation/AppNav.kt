@@ -16,7 +16,10 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import fr.fuelradar.data.ServiceLocator
+import kotlinx.coroutines.flow.first
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -46,6 +49,18 @@ private enum class Tab(val route: String, val label: String, val icon: ImageVect
 @Composable
 fun AppNav() {
     val navController = rememberNavController()
+
+    // Honor the startup screen chosen in Settings (map is the graph default).
+    LaunchedEffect(Unit) {
+        val tab = ServiceLocator.settings.settings.first().startupTab
+        if (tab != Tab.Map.route && Tab.entries.any { it.route == tab }) {
+            navController.navigate(tab) {
+                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                launchSingleTop = true
+            }
+        }
+    }
+
     Scaffold(
         bottomBar = {
             NavigationBar {

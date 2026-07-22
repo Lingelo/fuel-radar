@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -25,6 +26,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import fr.fuelradar.ui.common.FilterSheet
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -46,23 +51,41 @@ fun StationsScreen(
     viewModel: StationsViewModel = viewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    var showFilters by remember { mutableStateOf(false) }
+
+    if (showFilters) {
+        FilterSheet(
+            current = state.filters,
+            onDismiss = { showFilters = false },
+            onApply = { viewModel.applyFilters(it); showFilters = false },
+        )
+    }
 
     Scaffold { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
-            OutlinedTextField(
-                value = state.query,
-                onValueChange = viewModel::onQueryChange,
-                singleLine = true,
-                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                placeholder = { Text("Rechercher une adresse") },
-                keyboardActions = androidx.compose.foundation.text.KeyboardActions(
-                    onSearch = { viewModel.search() },
-                ),
-                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                    imeAction = ImeAction.Search,
-                ),
+            Row(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-            )
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                OutlinedTextField(
+                    value = state.query,
+                    onValueChange = viewModel::onQueryChange,
+                    singleLine = true,
+                    leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                    placeholder = { Text("Rechercher une adresse") },
+                    keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+                        onSearch = { viewModel.search() },
+                    ),
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        imeAction = ImeAction.Search,
+                    ),
+                    modifier = Modifier.weight(1f),
+                )
+                IconButton(onClick = { showFilters = true }) {
+                    Icon(Icons.Filled.Tune, contentDescription = "Filtres")
+                }
+            }
 
             Row(
                 modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
