@@ -99,7 +99,16 @@ fun AppNav() {
                 MapScreen(onOpenStation = { id -> navController.navigate("details/$id") })
             }
             composable(Tab.Stations.route) {
-                StationsScreen(onOpenStation = { id -> navController.navigate("details/$id") })
+                StationsScreen(
+                    onOpenStation = { id -> navController.navigate("details/$id") },
+                    onOpenMap = {
+                        navController.navigate(Tab.Map.route) {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                )
             }
             composable(Tab.Favorites.route) {
                 FavoritesScreen(onOpenStation = { id -> navController.navigate("details/$id") })
