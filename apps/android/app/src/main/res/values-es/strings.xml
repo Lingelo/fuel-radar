@@ -46,6 +46,9 @@
 
     <string name="station_not_found">Estación no encontrada</string>
     <string name="open_24h">Abierta 24/7</string>
+    <string name="current_prices">Precios actuales</string>
+    <string name="trend_title">Tendencia 7 d (%1$s)</string>
+    <string name="services">Servicios</string>
     <string name="stale_data">Datos antiguos</string>
     <string name="trend_7d">7 d: %1$s</string>
 

@@ -204,18 +204,21 @@ fun MapScreen(
                     val transition = rememberInfiniteTransition(label = "bounce")
                     val scale by transition.animateFloat(
                         initialValue = 1f,
-                        targetValue = 1.3f,
-                        animationSpec = infiniteRepeatable(tween(450), RepeatMode.Reverse),
+                        targetValue = 1.22f,
+                        animationSpec = infiniteRepeatable(tween(500), RepeatMode.Reverse),
                         label = "scale",
                     )
                     // Quantized scale in the marker keys forces re-rasterization
-                    // each step, so the pin visibly bounces.
+                    // each step, so the pin visibly bounces. The padding keeps the
+                    // rasterized bounds large enough so the scaled pill isn't clipped.
                     MarkerComposable(
                         keys = arrayOf(item.station.id, (scale * 12).toInt()),
                         state = markerState,
                         onClick = { onOpenStation(item.station.id); true },
                     ) {
-                        PricePin(label, color, scale = scale)
+                        Box(modifier = Modifier.padding(8.dp)) {
+                            PricePin(label, color, scale = scale)
+                        }
                     }
                 } else {
                     MarkerComposable(

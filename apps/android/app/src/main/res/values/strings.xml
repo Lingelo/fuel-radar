@@ -52,6 +52,9 @@
     <!-- Detail -->
     <string name="station_not_found">Station introuvable</string>
     <string name="open_24h">Ouvert 24h/24</string>
+    <string name="current_prices">Prix actuels</string>
+    <string name="trend_title">Tendance 7 j (%1$s)</string>
+    <string name="services">Services</string>
     <string name="stale_data">Données anciennes</string>
     <string name="trend_7d">7 j : %1$s</string>
 
