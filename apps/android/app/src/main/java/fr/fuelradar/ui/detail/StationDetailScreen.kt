@@ -114,9 +114,17 @@ fun StationDetailScreen(stationId: Long, onBack: () -> Unit) {
             emptyMap()
         }
     }
-    // National average history as a fallback when a station has no series.
-    val national by produceState<Map<String, List<List<Double>>>>(emptyMap()) {
-        value = repo.nationalHistory()?.fuels ?: emptyMap()
+    // Country average history (FR/ES/PT) as a fallback when a station has no series.
+    val national by produceState<Map<String, List<List<Double>>>>(emptyMap(), station) {
+        val st = station
+        value = if (st != null) {
+            val country = countryOf(st.id)
+            repo.countriesHistory()?.countries?.get(country)
+                ?: repo.nationalHistory()?.fuels
+                ?: emptyMap()
+        } else {
+            emptyMap()
+        }
     }
 
     val st = station
@@ -429,6 +437,13 @@ private fun TrendChart(prices: List<Double>, epochs: List<Long>, color: Color) {
             drawCircle(color, radius = 6f, center = Offset(sx, sy))
         }
     }
+}
+
+/** Station country from the id offset (+100M = ES, +200M = PT, else FR). */
+private fun countryOf(id: Long): String = when {
+    id >= 200_000_000L -> "PT"
+    id >= 100_000_000L -> "ES"
+    else -> "FR"
 }
 
 private fun trendDelta(series: List<List<Double>>?): Double? {
