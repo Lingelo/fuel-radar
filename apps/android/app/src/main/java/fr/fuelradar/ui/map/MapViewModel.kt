@@ -55,11 +55,19 @@ class MapViewModel : ViewModel() {
     val target: StateFlow<Coords?> = _target.asStateFlow()
 
     private var lastCenter = Coords(48.8566, 2.3522)
+    private var lastUserLoc: Coords? = null
 
     init {
         viewModelScope.launch {
             filtersStore.filters.collect { f ->
                 _state.value = _state.value.copy(filters = f)
+                // Any shared location change (search/locate from any screen, incl.
+                // "view on map") recenters the camera.
+                val loc = f.userLocation
+                if (loc != null && loc != lastUserLoc) {
+                    lastUserLoc = loc
+                    _target.value = loc
+                }
                 load(lastCenter.lat, lastCenter.lng)
             }
         }

@@ -96,6 +96,17 @@ class StationsViewModel : ViewModel() {
         viewModelScope.launch { filtersStore.setLocation(lat, lng, label) }
     }
 
+    /** Device geolocation resolved -> reverse-geocode a label and share it. */
+    fun onLocated(lat: Double, lng: Double) {
+        viewModelScope.launch {
+            val r = geocoder.reverse(lat, lng)
+            val label = r?.let {
+                listOf(it.postcode, it.city).filter { s -> s.isNotBlank() }.joinToString(" ")
+            }?.ifBlank { null }
+            filtersStore.setLocation(lat, lng, label)
+        }
+    }
+
     fun toggleFavorite(id: Long) {
         viewModelScope.launch { favStore.toggle(id) }
     }
@@ -131,6 +142,8 @@ class StationsViewModel : ViewModel() {
                 )
             }
             .filter { it.price != null }
+            // Same as the map: only stations within the radius of the address/position.
+            .filter { it.distanceKm <= s.filters.radiusKm.toDouble() }
             .toList()
         val sorted = when (s.filters.sort) {
             SortMode.PRICE -> rows.sortedBy { it.price }

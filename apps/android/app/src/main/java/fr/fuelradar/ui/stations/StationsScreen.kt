@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.LocalGasStation
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.Icons
@@ -55,8 +56,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.android.gms.location.LocationServices
 import fr.fuelradar.data.model.FuelType
 import fr.fuelradar.data.prefs.SortMode
 import androidx.compose.ui.res.stringResource
@@ -81,6 +89,32 @@ fun StationsScreen(
     val settings by ServiceLocator.settings.settings.collectAsStateWithLifecycle(AppSettings())
     var showFilters by remember { mutableStateOf(false) }
 
+    val context = LocalContext.current
+    val fused = remember { LocationServices.getFusedLocationProviderClient(context) }
+    fun fetchLocation() {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
+            == PackageManager.PERMISSION_GRANTED
+        ) {
+            runCatching {
+                fused.lastLocation.addOnSuccessListener { loc ->
+                    if (loc != null) viewModel.onLocated(loc.latitude, loc.longitude)
+                }
+            }
+        }
+    }
+    val permLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted -> if (granted) fetchLocation() }
+    val onLocateClick = {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
+            == PackageManager.PERMISSION_GRANTED
+        ) {
+            fetchLocation()
+        } else {
+            permLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+    }
+
     if (showFilters) {
         FilterSheet(
             current = state.filters,
@@ -99,8 +133,16 @@ fun StationsScreen(
                 onSearch = viewModel::search,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                 trailingIcon = {
-                    IconButton(onClick = { showFilters = true }) {
-                        Icon(Icons.Filled.Tune, contentDescription = stringResource(R.string.filters))
+                    Row {
+                        IconButton(onClick = onLocateClick) {
+                            Icon(
+                                Icons.Filled.MyLocation,
+                                contentDescription = stringResource(R.string.locate_me),
+                            )
+                        }
+                        IconButton(onClick = { showFilters = true }) {
+                            Icon(Icons.Filled.Tune, contentDescription = stringResource(R.string.filters))
+                        }
                     }
                 },
             )
