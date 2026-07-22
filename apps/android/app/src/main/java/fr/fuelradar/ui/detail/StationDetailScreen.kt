@@ -167,15 +167,30 @@ fun StationDetailScreen(stationId: Long, onBack: () -> Unit) {
                 }
             }
 
-            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                Text("${st.addr}, ${st.cp} ${st.city}", style = MaterialTheme.typography.bodyLarge)
-                filters.userLocation?.let {
-                    val d = haversineKm(it.lat, it.lng, st.lat, st.lng)
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                fr.fuelradar.ui.common.BrandLogo(st.brand, size = 52.dp)
+                Column(modifier = Modifier.padding(start = 12.dp)) {
                     Text(
-                        "À ${formatDistance(d)}",
+                        st.brand ?: stringResource(R.string.station_fallback),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        "${st.addr}, ${st.cp} ${st.city}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    filters.userLocation?.let {
+                        val d = haversineKm(it.lat, it.lng, st.lat, st.lng)
+                        Text(
+                            "À ${formatDistance(d)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
 

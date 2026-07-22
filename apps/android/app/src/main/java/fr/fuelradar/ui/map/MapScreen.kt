@@ -4,10 +4,18 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -62,20 +70,23 @@ import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.clustering.Cluster
 import com.google.maps.android.compose.Circle
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.MapsComposeExperimentalApi
-import com.google.maps.android.compose.clustering.Clustering
+import com.google.maps.android.compose.MarkerComposable
+import com.google.maps.android.compose.rememberMarkerState
 import fr.fuelradar.domain.formatDistance
 import fr.fuelradar.domain.formatPriceEuro
 import fr.fuelradar.domain.haversineKm
+import fr.fuelradar.ui.common.BrandLogo
 import com.google.maps.android.compose.rememberCameraPositionState
 import fr.fuelradar.BuildConfig
 import fr.fuelradar.domain.formatPrice
 import fr.fuelradar.domain.priceColor
 import fr.fuelradar.ui.common.FilterSheet
+
+private const val MAX_PINS = 150
 
 @OptIn(MapsComposeExperimentalApi::class)
 @Composable
@@ -103,6 +114,7 @@ fun MapScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val target by viewModel.target.collectAsStateWithLifecycle()
     var showFilters by remember { mutableStateOf(false) }
+    var sheetExpanded by remember { mutableStateOf(false) }
     val cameraPositionState = rememberCameraPositionState {
         // Country-level view of metropolitan France (mirror of the web default).
         position = CameraPosition.fromLatLngZoom(LatLng(46.6, 2.5), 6f)
@@ -179,31 +191,51 @@ fun MapScreen(
                     fillColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.06f),
                 )
             }
-            Clustering(
-                items = state.items,
-                onClusterItemClick = { item ->
-                    onOpenStation(item.station.id)
-                    true
-                },
-                clusterContent = { cluster ->
-                    val prices = cluster.items.mapNotNull { it.price }
-                    val min = prices.minOrNull()
-                    ClusterPin(
-                        priceLabel = min?.let { "${formatPrice(it)} €" },
-                        color = min?.let { priceColor(it, state.pMin, state.pMax) }
-                            ?: MaterialTheme.colorScheme.secondary,
-                        count = cluster.size,
-                    )
-                },
-                clusterItemContent = { item ->
-                    val color = item.price?.let { priceColor(it, state.pMin, state.pMax) } ?: Color.Gray
+            // Pulsing highlight around the cheapest station (a real animated
+            // overlay — reliable, unlike animating a rasterized marker).
+            val cheapest = state.items.firstOrNull { it.station.id == state.cheapestId }
+            if (cheapest != null) {
+                val pulse = rememberInfiniteTransition(label = "pulse")
+                val radius by pulse.animateFloat(
+                    initialValue = 250f,
+                    targetValue = 1100f,
+                    animationSpec = infiniteRepeatable(tween(1200), RepeatMode.Restart),
+                    label = "radius",
+                )
+                val alpha by pulse.animateFloat(
+                    initialValue = 0.35f,
+                    targetValue = 0f,
+                    animationSpec = infiniteRepeatable(tween(1200), RepeatMode.Restart),
+                    label = "alpha",
+                )
+                Circle(
+                    center = LatLng(cheapest.station.lat, cheapest.station.lng),
+                    radius = radius.toDouble(),
+                    fillColor = MaterialTheme.colorScheme.tertiary.copy(alpha = alpha),
+                    strokeColor = Color.Transparent,
+                    strokeWidth = 0f,
+                )
+            }
+            // Individual price pins — no clustering (like the web). Capped for perf.
+            state.items.take(MAX_PINS).forEach { item ->
+                val markerState = rememberMarkerState(
+                    key = item.station.id.toString(),
+                    position = LatLng(item.station.lat, item.station.lng),
+                )
+                MarkerComposable(
+                    keys = arrayOf(item.station.id),
+                    state = markerState,
+                    onClick = {
+                        onOpenStation(item.station.id)
+                        true
+                    },
+                ) {
                     PricePin(
                         priceLabel = item.price?.let { "${formatPrice(it)} €" },
-                        color = color,
-                        bounce = item.station.id == state.cheapestId,
+                        color = item.price?.let { priceColor(it, state.pMin, state.pMax) } ?: Color.Gray,
                     )
-                },
-            )
+                }
+            }
         }
 
         Column(
@@ -237,10 +269,14 @@ fun MapScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 fr.fuelradar.data.model.FuelType.entries.forEach { ft ->
-                    androidx.compose.material3.FilterChip(
+                    androidx.compose.material3.ElevatedFilterChip(
                         selected = state.filters.fuel == ft,
                         onClick = { viewModel.applyFilters(state.filters.copy(fuel = ft)) },
                         label = { Text(ft.label) },
+                        colors = androidx.compose.material3.FilterChipDefaults.elevatedFilterChipColors(
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        ),
                     )
                 }
             }
@@ -267,41 +303,85 @@ fun MapScreen(
             Icon(Icons.Filled.MyLocation, contentDescription = stringResource(R.string.locate_me))
         }
 
-        // Bottom station carousel (cheapest first) — the map's station list.
+        // Bottom station sheet — collapsed carousel or expanded vertical list.
         if (sheetStations.isNotEmpty()) {
             Surface(
-                modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth(),
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .then(if (sheetExpanded) Modifier.fillMaxHeight(0.55f) else Modifier),
                 shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
                 tonalElevation = 3.dp,
                 shadowElevation = 8.dp,
             ) {
-                Column(modifier = Modifier.padding(top = 10.dp, bottom = 12.dp)) {
-                    Box(
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .then(if (sheetExpanded) Modifier.fillMaxHeight() else Modifier)
+                        .padding(top = 10.dp, bottom = 12.dp),
+                ) {
+                    // Handle + count — tap to expand/collapse.
+                    Column(
                         modifier = Modifier
-                            .align(Alignment.CenterHorizontally)
-                            .padding(bottom = 8.dp)
-                            .size(width = 36.dp, height = 4.dp)
-                            .background(
-                                MaterialTheme.colorScheme.outlineVariant,
-                                RoundedCornerShape(2.dp),
-                            ),
-                    )
-                    LazyRow(
-                        contentPadding = PaddingValues(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            .fillMaxWidth()
+                            .clickable { sheetExpanded = !sheetExpanded },
                     ) {
-                        items(sheetStations.take(20), key = { it.station.id }) { item ->
-                            MapStationCard(
-                                item = item,
-                                distanceKm = haversineKm(
-                                    state.center.lat, state.center.lng,
-                                    item.station.lat, item.station.lng,
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.CenterHorizontally)
+                                .size(width = 36.dp, height = 4.dp)
+                                .background(
+                                    MaterialTheme.colorScheme.outlineVariant,
+                                    RoundedCornerShape(2.dp),
                                 ),
-                                cheapest = item.station.id == state.cheapestId,
-                                color = item.price?.let { priceColor(it, state.pMin, state.pMax) }
-                                    ?: MaterialTheme.colorScheme.onSurface,
-                                onClick = { onOpenStation(item.station.id) },
-                            )
+                        )
+                        Text(
+                            "${sheetStations.size} stations",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(start = 16.dp, top = 6.dp, bottom = 8.dp),
+                        )
+                    }
+                    if (sheetExpanded) {
+                        LazyColumn(
+                            modifier = Modifier.weight(1f).fillMaxWidth(),
+                            contentPadding = PaddingValues(horizontal = 16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            items(sheetStations, key = { it.station.id }) { item ->
+                                MapStationRow(
+                                    item = item,
+                                    distanceKm = haversineKm(
+                                        state.center.lat, state.center.lng,
+                                        item.station.lat, item.station.lng,
+                                    ),
+                                    cheapest = item.station.id == state.cheapestId,
+                                    color = item.price?.let { priceColor(it, state.pMin, state.pMax) }
+                                        ?: MaterialTheme.colorScheme.onSurface,
+                                    onClick = {
+                                        viewModel.goTo(item.station.lat, item.station.lng)
+                                        sheetExpanded = false
+                                    },
+                                )
+                            }
+                        }
+                    } else {
+                        LazyRow(
+                            contentPadding = PaddingValues(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            items(sheetStations.take(20), key = { it.station.id }) { item ->
+                                MapStationCard(
+                                    item = item,
+                                    distanceKm = haversineKm(
+                                        state.center.lat, state.center.lng,
+                                        item.station.lat, item.station.lng,
+                                    ),
+                                    color = item.price?.let { priceColor(it, state.pMin, state.pMax) }
+                                        ?: MaterialTheme.colorScheme.onSurface,
+                                    onClick = { viewModel.goTo(item.station.lat, item.station.lng) },
+                                )
+                            }
                         }
                     }
                 }
@@ -314,32 +394,19 @@ fun MapScreen(
 private fun MapStationCard(
     item: StationClusterItem,
     distanceKm: Double,
-    cheapest: Boolean,
     color: Color,
     onClick: () -> Unit,
 ) {
     Card(
         onClick = onClick,
-        modifier = Modifier.width(230.dp),
+        modifier = Modifier.width(230.dp).height(72.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    Icons.Filled.LocalGasStation,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
+            BrandLogo(item.station.brand, size = 36.dp)
             Column(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
                 Text(
                     item.station.brand ?: item.station.city,
@@ -351,15 +418,8 @@ private fun MapStationCard(
                     formatDistance(distanceKm),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
                 )
-                if (cheapest) {
-                    Text(
-                        stringResource(R.string.cheapest),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.tertiary,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
             }
             item.price?.let {
                 Text(
@@ -367,6 +427,50 @@ private fun MapStationCard(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = color,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MapStationRow(
+    item: StationClusterItem,
+    distanceKm: Double,
+    cheapest: Boolean,
+    color: Color,
+    onClick: () -> Unit,
+) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth().height(64.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            BrandLogo(item.station.brand, size = 36.dp)
+            Column(modifier = Modifier.weight(1f).padding(start = 10.dp)) {
+                Text(
+                    item.station.brand ?: item.station.city,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                )
+                Text(
+                    "${formatDistance(distanceKm)} · ${item.station.cp} ${item.station.city}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                )
+            }
+            item.price?.let {
+                Text(
+                    formatPriceEuro(it),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = if (cheapest) MaterialTheme.colorScheme.tertiary else color,
                 )
             }
         }

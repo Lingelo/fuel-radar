@@ -13,11 +13,13 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -40,7 +42,7 @@ fun AddressSearchBar(
     trailingIcon: @Composable (() -> Unit)? = null,
 ) {
     Column(modifier = modifier) {
-        OutlinedTextField(
+        TextField(
             value = query,
             onValueChange = onQueryChange,
             singleLine = true,
@@ -49,6 +51,15 @@ fun AddressSearchBar(
             placeholder = { Text(stringResource(R.string.search_hint)) },
             keyboardActions = KeyboardActions(onSearch = { onSearch() }),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            shape = MaterialTheme.shapes.extraLarge,
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                disabledIndicatorColor = Color.Transparent,
+                errorIndicatorColor = Color.Transparent,
+            ),
             modifier = Modifier.fillMaxWidth(),
         )
         if (suggestions.isNotEmpty()) {
