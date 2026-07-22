@@ -325,7 +325,10 @@ fun MapScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { sheetExpanded = !sheetExpanded }
+                            .clickable(
+                                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                                indication = null,
+                            ) { sheetExpanded = !sheetExpanded }
                             .pointerInput(Unit) {
                                 detectVerticalDragGestures { _, dy ->
                                     if (dy < -6f) sheetExpanded = true
