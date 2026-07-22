@@ -68,7 +68,18 @@ class MapViewModel : ViewModel() {
         if (q.length < 2) return
         viewModelScope.launch {
             val hit = geocoder.search(q).firstOrNull() ?: return@launch
+            val label = listOf(hit.postcode, hit.city).filter { it.isNotBlank() }
+                .joinToString(" ").ifBlank { hit.label }
+            filtersStore.setLocation(hit.lat, hit.lng, label)
             _target.value = Coords(hit.lat, hit.lng)
+        }
+    }
+
+    /** Called when device geolocation resolves — persist it and recenter. */
+    fun onLocated(lat: Double, lng: Double) {
+        viewModelScope.launch {
+            filtersStore.setLocation(lat, lng, null)
+            _target.value = Coords(lat, lng)
         }
     }
 

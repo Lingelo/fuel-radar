@@ -4,12 +4,14 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import fr.fuelradar.data.model.FuelType
+import fr.fuelradar.domain.Coords
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -24,7 +26,13 @@ data class Filters(
     val sort: SortMode = SortMode.PRICE,
     val brands: Set<String> = emptySet(),
     val openH24Only: Boolean = false,
-)
+    val userLat: Double? = null,
+    val userLng: Double? = null,
+    val searchLabel: String? = null,
+) {
+    val userLocation: Coords?
+        get() = if (userLat != null && userLng != null) Coords(userLat, userLng) else null
+}
 
 class FiltersStore(context: Context) {
 
@@ -37,7 +45,16 @@ class FiltersStore(context: Context) {
             sort = p[SORT]?.let { runCatching { SortMode.valueOf(it) }.getOrNull() } ?: SortMode.PRICE,
             brands = p[BRANDS] ?: emptySet(),
             openH24Only = p[H24] ?: false,
+            userLat = p[USER_LAT],
+            userLng = p[USER_LNG],
+            searchLabel = p[SEARCH_LABEL],
         )
+    }
+
+    suspend fun setLocation(lat: Double, lng: Double, label: String?) = store.edit {
+        it[USER_LAT] = lat
+        it[USER_LNG] = lng
+        if (label != null) it[SEARCH_LABEL] = label
     }
 
     suspend fun setFuel(fuel: FuelType) = store.edit { it[FUEL] = fuel.code }
@@ -77,5 +94,8 @@ class FiltersStore(context: Context) {
         val SORT = stringPreferencesKey("sort")
         val BRANDS = stringSetPreferencesKey("brands")
         val H24 = booleanPreferencesKey("open_h24_only")
+        val USER_LAT = doublePreferencesKey("user_lat")
+        val USER_LNG = doublePreferencesKey("user_lng")
+        val SEARCH_LABEL = stringPreferencesKey("search_label")
     }
 }

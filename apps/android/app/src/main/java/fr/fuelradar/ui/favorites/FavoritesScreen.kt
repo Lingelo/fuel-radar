@@ -23,22 +23,60 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.fuelradar.data.ServiceLocator
 import fr.fuelradar.data.model.Station
+import fr.fuelradar.domain.formatDistance
+import fr.fuelradar.domain.formatPriceEuro
+import fr.fuelradar.domain.haversineKm
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+
+data class FavRow(
+    val station: Station,
+    val price: Double?,
+    val distanceKm: Double?,
+    val fuelLabel: String,
+)
+
+data class FavoritesUiState(
+    val loading: Boolean = true,
+    val rows: List<FavRow> = emptyList(),
+)
 
 class FavoritesViewModel : ViewModel() {
     private val repo = ServiceLocator.stations
     private val favStore = ServiceLocator.favorites
+    private val filtersStore = ServiceLocator.filters
 
-    private val _stations = MutableStateFlow<List<Station>>(emptyList())
-    val stations: StateFlow<List<Station>> = _stations.asStateFlow()
+    private val _state = MutableStateFlow(FavoritesUiState())
+    val state: StateFlow<FavoritesUiState> = _state.asStateFlow()
 
     init {
         viewModelScope.launch {
-            favStore.ids.collect { ids ->
-                _stations.value = ids.mapNotNull { repo.findCached(it) }
+            combine(favStore.ids, filtersStore.filters) { ids, f -> ids to f }.collect { (ids, f) ->
+                if (ids.isEmpty()) {
+                    _state.value = FavoritesUiState(loading = false, rows = emptyList())
+                    return@collect
+                }
+                _state.value = _state.value.copy(loading = true)
+                val loc = f.userLocation
+                // Warm the cache with departments around the user so out-of-cache
+                // favorites resolve (mirror of the web behavior).
+                if (loc != null) {
+                    repo.nearby(loc.lat, loc.lng, maxOf(f.radiusKm, 50).toDouble())
+                }
+                val rows = ids.mapNotNull { repo.findCached(it) }.map { st ->
+                    FavRow(
+                        station = st,
+                        price = st.fuels[f.fuel.code]?.p,
+                        distanceKm = loc?.let { haversineKm(it.lat, it.lng, st.lat, st.lng) },
+                        fuelLabel = f.fuel.label,
+                    )
+                }.let { list ->
+                    if (loc != null) list.sortedBy { it.distanceKm ?: Double.MAX_VALUE } else list
+                }
+                _state.value = FavoritesUiState(loading = false, rows = rows)
             }
         }
     }
@@ -49,9 +87,9 @@ fun FavoritesScreen(
     onOpenStation: (Long) -> Unit,
     viewModel: FavoritesViewModel = viewModel(),
 ) {
-    val stations by viewModel.stations.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
-    if (stations.isEmpty()) {
+    if (!state.loading && state.rows.isEmpty()) {
         Column(
             modifier = Modifier.fillMaxSize().padding(32.dp),
             verticalArrangement = Arrangement.Center,
@@ -72,19 +110,42 @@ fun FavoritesScreen(
         contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        items(stations, key = { it.id }) { st ->
-            Card(onClick = { onOpenStation(st.id) }, modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        st.brand ?: "Station",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    Text(
-                        "${st.cp} ${st.city}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+        items(state.rows, key = { it.station.id }) { row ->
+            Card(onClick = { onOpenStation(row.station.id) }, modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            row.station.brand ?: "Station",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Text(
+                            "${row.station.cp} ${row.station.city}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        row.distanceKm?.let {
+                            Text(
+                                formatDistance(it),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                    row.price?.let {
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text(
+                                formatPriceEuro(it),
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                            Text(row.fuelLabel, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
                 }
             }
         }

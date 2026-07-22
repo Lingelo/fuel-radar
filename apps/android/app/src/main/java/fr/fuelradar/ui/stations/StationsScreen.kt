@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.horizontalScroll
@@ -15,6 +16,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -40,8 +42,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.fuelradar.data.model.FuelType
 import fr.fuelradar.data.prefs.SortMode
+import fr.fuelradar.data.ServiceLocator
+import fr.fuelradar.data.prefs.AppSettings
 import fr.fuelradar.domain.formatDistance
 import fr.fuelradar.domain.formatPriceEuro
+import fr.fuelradar.domain.isStale
 import fr.fuelradar.domain.priceColor
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -51,6 +56,7 @@ fun StationsScreen(
     viewModel: StationsViewModel = viewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val settings by ServiceLocator.settings.settings.collectAsStateWithLifecycle(AppSettings())
     var showFilters by remember { mutableStateOf(false) }
 
     if (showFilters) {
@@ -122,12 +128,15 @@ fun StationsScreen(
                 items(state.rows, key = { it.station.id }) { row ->
                     val color = row.price?.let { priceColor(it, state.pMin, state.pMax) }
                         ?: MaterialTheme.colorScheme.onSurfaceVariant
+                    val d = row.station.fuels[state.filters.fuel.code]?.d
+                    val stale = settings.staleWarning && d != null && isStale(d)
                     StationCard(
                         row = row,
                         priceColor = color,
                         cheapest = row.station.id == state.cheapestId,
                         favorite = state.favorites.contains(row.station.id),
                         fuelLabel = state.filters.fuel.label,
+                        stale = stale,
                         onToggleFavorite = { viewModel.toggleFavorite(row.station.id) },
                         onClick = { onOpenStation(row.station.id) },
                     )
@@ -144,6 +153,7 @@ private fun StationCard(
     cheapest: Boolean,
     favorite: Boolean,
     fuelLabel: String,
+    stale: Boolean,
     onToggleFavorite: () -> Unit,
     onClick: () -> Unit,
 ) {
@@ -186,7 +196,17 @@ private fun StationCard(
                         color = priceColor,
                     )
                 }
-                Text(fuelLabel, style = MaterialTheme.typography.labelSmall)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (stale) {
+                        Icon(
+                            Icons.Filled.Warning,
+                            contentDescription = "Données anciennes",
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(14.dp),
+                        )
+                    }
+                    Text(fuelLabel, style = MaterialTheme.typography.labelSmall)
+                }
             }
             IconButton(onClick = onToggleFavorite) {
                 Icon(

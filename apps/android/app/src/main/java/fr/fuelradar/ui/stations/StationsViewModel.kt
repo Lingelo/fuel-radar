@@ -66,13 +66,15 @@ class StationsViewModel : ViewModel() {
         if (q.length < 2) return
         viewModelScope.launch {
             val hit = geocoder.search(q).firstOrNull() ?: return@launch
-            _state.value = _state.value.copy(
-                center = Coords(hit.lat, hit.lng),
-                locationLabel = listOf(hit.postcode, hit.city).filter { it.isNotBlank() }
-                    .joinToString(" ").ifBlank { hit.label },
-            )
-            reload()
+            val label = listOf(hit.postcode, hit.city).filter { it.isNotBlank() }
+                .joinToString(" ").ifBlank { hit.label }
+            // Shared, persisted across screens.
+            filtersStore.setLocation(hit.lat, hit.lng, label)
         }
+    }
+
+    fun setLocation(lat: Double, lng: Double, label: String?) {
+        viewModelScope.launch { filtersStore.setLocation(lat, lng, label) }
     }
 
     fun toggleFavorite(id: Long) {
@@ -94,7 +96,8 @@ class StationsViewModel : ViewModel() {
     private suspend fun reload() {
         val s = _state.value
         _state.value = s.copy(loading = true)
-        val center = s.center
+        val center = s.filters.userLocation ?: Coords(48.8566, 2.3522)
+        val label = s.filters.searchLabel ?: "Paris"
         val fuelCode = s.filters.fuel.code
         val all = repo.nearby(center.lat, center.lng, s.filters.radiusKm.toDouble())
         val rows = all
@@ -123,6 +126,8 @@ class StationsViewModel : ViewModel() {
             pMin = pMin,
             pMax = pMax,
             cheapestId = cheapestId,
+            center = center,
+            locationLabel = label,
         )
     }
 }

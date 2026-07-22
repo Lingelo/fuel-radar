@@ -95,7 +95,7 @@ fun MapScreen(
         ) {
             runCatching {
                 fused.lastLocation.addOnSuccessListener { loc ->
-                    if (loc != null) viewModel.goTo(loc.latitude, loc.longitude)
+                    if (loc != null) viewModel.onLocated(loc.latitude, loc.longitude)
                 }
             }
         }
