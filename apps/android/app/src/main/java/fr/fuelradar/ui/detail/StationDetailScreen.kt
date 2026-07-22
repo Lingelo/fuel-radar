@@ -231,10 +231,10 @@ fun StationDetailScreen(stationId: Long, onBack: () -> Unit) {
                         ) {
                             Text(
                                 fuel.label,
-                                style = MaterialTheme.typography.labelMedium,
+                                style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = if (selected) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                             )
                         }
                         Column(horizontalAlignment = Alignment.End) {
