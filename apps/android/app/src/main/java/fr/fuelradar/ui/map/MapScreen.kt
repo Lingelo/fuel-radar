@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
@@ -12,14 +13,22 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocalGasStation
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -35,6 +44,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -58,6 +68,9 @@ import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.MapsComposeExperimentalApi
 import com.google.maps.android.compose.clustering.Clustering
+import fr.fuelradar.domain.formatDistance
+import fr.fuelradar.domain.formatPriceEuro
+import fr.fuelradar.domain.haversineKm
 import com.google.maps.android.compose.rememberCameraPositionState
 import fr.fuelradar.BuildConfig
 import fr.fuelradar.domain.formatPrice
@@ -187,6 +200,7 @@ fun MapScreen(
                     PricePin(
                         priceLabel = item.price?.let { "${formatPrice(it)} €" },
                         color = color,
+                        bounce = item.station.id == state.cheapestId,
                     )
                 },
             )
@@ -232,6 +246,8 @@ fun MapScreen(
             }
         }
 
+        val sheetStations = state.items.filter { it.price != null }.sortedBy { it.price!! }
+
         FloatingActionButton(
             onClick = {
                 if (ContextCompat.checkSelfPermission(
@@ -244,20 +260,141 @@ fun MapScreen(
                     permLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
                 }
             },
-            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 16.dp, bottom = if (sheetStations.isNotEmpty()) 156.dp else 16.dp),
         ) {
             Icon(Icons.Filled.MyLocation, contentDescription = stringResource(R.string.locate_me))
+        }
+
+        // Bottom station carousel (cheapest first) — the map's station list.
+        if (sheetStations.isNotEmpty()) {
+            Surface(
+                modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth(),
+                shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+                tonalElevation = 3.dp,
+                shadowElevation = 8.dp,
+            ) {
+                Column(modifier = Modifier.padding(top = 10.dp, bottom = 12.dp)) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .padding(bottom = 8.dp)
+                            .size(width = 36.dp, height = 4.dp)
+                            .background(
+                                MaterialTheme.colorScheme.outlineVariant,
+                                RoundedCornerShape(2.dp),
+                            ),
+                    )
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        items(sheetStations.take(20), key = { it.station.id }) { item ->
+                            MapStationCard(
+                                item = item,
+                                distanceKm = haversineKm(
+                                    state.center.lat, state.center.lng,
+                                    item.station.lat, item.station.lng,
+                                ),
+                                cheapest = item.station.id == state.cheapestId,
+                                color = item.price?.let { priceColor(it, state.pMin, state.pMax) }
+                                    ?: MaterialTheme.colorScheme.onSurface,
+                                onClick = { onOpenStation(item.station.id) },
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun PricePin(priceLabel: String?, color: Color) {
+private fun MapStationCard(
+    item: StationClusterItem,
+    distanceKm: Double,
+    cheapest: Boolean,
+    color: Color,
+    onClick: () -> Unit,
+) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.width(230.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    Icons.Filled.LocalGasStation,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+            Column(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
+                Text(
+                    item.station.brand ?: item.station.city,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                )
+                Text(
+                    formatDistance(distanceKm),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                if (cheapest) {
+                    Text(
+                        stringResource(R.string.cheapest),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.tertiary,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            }
+            item.price?.let {
+                Text(
+                    formatPriceEuro(it),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = color,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PricePin(priceLabel: String?, color: Color, bounce: Boolean = false) {
+    val scale = if (bounce) {
+        val transition = androidx.compose.animation.core.rememberInfiniteTransition(label = "bounce")
+        transition.animateFloat(
+            initialValue = 1f,
+            targetValue = 1.18f,
+            animationSpec = androidx.compose.animation.core.infiniteRepeatable(
+                animation = androidx.compose.animation.core.tween(600),
+                repeatMode = androidx.compose.animation.core.RepeatMode.Reverse,
+            ),
+            label = "scale",
+        ).value
+    } else {
+        1f
+    }
     if (priceLabel == null) {
-        Box(modifier = Modifier.padding(2.dp).background(color, RoundedCornerShape(8.dp)).border(2.dp, Color.White, RoundedCornerShape(8.dp)).padding(6.dp))
+        Box(modifier = Modifier.scale(scale).padding(2.dp).background(color, RoundedCornerShape(8.dp)).border(2.dp, Color.White, RoundedCornerShape(8.dp)).padding(6.dp))
         return
     }
     Surface(
+        modifier = Modifier.scale(scale),
         color = color,
         shape = RoundedCornerShape(8.dp),
         border = androidx.compose.foundation.BorderStroke(2.dp, Color.White),

@@ -40,6 +40,7 @@ data class MapUiState(
     val filters: Filters = Filters(),
     val center: Coords = Coords(48.8566, 2.3522),
     val hasLocation: Boolean = false,
+    val cheapestId: Long? = null,
 )
 
 class MapViewModel : ViewModel() {
@@ -154,10 +155,13 @@ class MapViewModel : ViewModel() {
             val items = stations.map { StationClusterItem(it, it.fuels[fuelCode]?.p) }
             val prices = items.mapNotNull { it.price }
             val (pMin, pMax) = priceBounds(prices)
+            val cheapestId = items.filter { it.price != null }
+                .minByOrNull { it.price!! }?.station?.id
             _state.value = _state.value.copy(
                 loading = false, items = items, pMin = pMin, pMax = pMax,
                 center = anchor,
                 hasLocation = filters.userLocation != null,
+                cheapestId = cheapestId,
             )
         }
     }
