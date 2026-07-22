@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FuelRadar</string>
+    <string name="tab_map">Carte</string>
+    <string name="tab_stations">Stations</string>
+    <string name="tab_favorites">Favoris</string>
+    <string name="tab_trends">Tendances</string>
+    <string name="tab_settings">Réglages</string>
+</resources>
