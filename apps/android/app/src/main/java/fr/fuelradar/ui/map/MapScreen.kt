@@ -47,6 +47,8 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -96,13 +98,21 @@ fun MapScreen(
     val fused = remember { LocationServices.getFusedLocationProviderClient(context) }
     fun fetchLocation() {
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
-            == PackageManager.PERMISSION_GRANTED
+            != PackageManager.PERMISSION_GRANTED
         ) {
-            runCatching {
-                fused.lastLocation.addOnSuccessListener { loc ->
-                    if (loc != null) viewModel.onLocated(loc.latitude, loc.longitude)
+            return
+        }
+        runCatching {
+            fused.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, CancellationTokenSource().token)
+                .addOnSuccessListener { loc ->
+                    if (loc != null) {
+                        viewModel.onLocated(loc.latitude, loc.longitude)
+                    } else {
+                        fused.lastLocation.addOnSuccessListener { last ->
+                            if (last != null) viewModel.onLocated(last.latitude, last.longitude)
+                        }
+                    }
                 }
-            }
         }
     }
     val permLauncher = rememberLauncherForActivityResult(

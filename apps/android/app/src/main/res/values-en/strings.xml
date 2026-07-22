@@ -15,6 +15,10 @@
     <string name="close">Close</string>
     <string name="cheapest">Cheapest</string>
     <string name="updated">Updated %1$s</string>
+    <string name="time_now">just now</string>
+    <string name="time_min">%1$d min ago</string>
+    <string name="time_h">%1$d h ago</string>
+    <string name="time_d">%1$d d ago</string>
     <string name="view_on_map">View on map</string>
     <string name="station_fallback">Station</string>
     <string name="directions">Directions</string>

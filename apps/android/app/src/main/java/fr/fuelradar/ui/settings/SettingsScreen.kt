@@ -31,7 +31,7 @@ import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import fr.fuelradar.data.ServiceLocator
 import fr.fuelradar.data.prefs.AppSettings
-import fr.fuelradar.domain.timeAgo
+import fr.fuelradar.ui.common.relativeTime
 import kotlinx.coroutines.launch
 
 private val STARTUP_TABS = listOf(
@@ -167,7 +167,7 @@ fun SettingsScreen() {
         )
         lastUpdate?.let {
             Text(
-                stringResource(R.string.last_update, timeAgo(it)),
+                stringResource(R.string.last_update, relativeTime(it)),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

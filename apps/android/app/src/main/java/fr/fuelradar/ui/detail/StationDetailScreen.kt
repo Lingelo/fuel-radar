@@ -65,7 +65,7 @@ import fr.fuelradar.domain.formatPriceDelta
 import fr.fuelradar.domain.formatPriceEuro
 import fr.fuelradar.domain.haversineKm
 import fr.fuelradar.domain.isStale
-import fr.fuelradar.domain.timeAgo
+import fr.fuelradar.ui.common.relativeTime
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -253,7 +253,7 @@ fun StationDetailScreen(stationId: Long, onBack: () -> Unit) {
                                 )
                             }
                             Text(
-                                "  ${timeAgo(price.d)}",
+                                "  ${relativeTime(price.d)}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )

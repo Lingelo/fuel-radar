@@ -10,7 +10,7 @@ import java.time.temporal.ChronoUnit
  * minSdk 26 has java.time natively.
  */
 
-private fun parseEpochMillis(isoOrYmd: String): Long? {
+fun parseEpochMillis(isoOrYmd: String): Long? {
     val zone = ZoneId.systemDefault()
     return runCatching {
         // Full ISO datetime first (meta.lastUpdate), then plain YYYY-MM-DD.
