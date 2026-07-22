@@ -23,12 +23,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import coil.compose.SubcomposeAsyncImage
 import kotlin.math.absoluteValue
 
 /**
- * Brand → canonical slug. To show a real logo, drop a file named
- * `brand_<slug>.png` (or .webp/.xml) into app/src/main/res/drawable/.
- * Missing files fall back to a colored monogram.
+ * Brand → canonical slug. Drop a `brand_<slug>.(png|webp|xml)` in
+ * app/src/main/res/drawable/ to override with your own asset.
  */
 private val BRAND_SLUGS = linkedMapOf(
     "totalenergies" to "total", "total" to "total",
@@ -43,25 +43,29 @@ private val BRAND_SLUGS = linkedMapOf(
     "plenergy" to "plenoil", "plenoil" to "plenoil",
 )
 
+/** Canonical slug → VectorLogoZone slug (color SVG, loaded at runtime — not bundled). */
+private val VLZ_SLUGS = mapOf(
+    "total" to "total",
+    "shell" to "shell",
+    "bp" to "bp",
+    "esso" to "esso",
+    "carrefour" to "carrefour",
+    "auchan" to "auchan",
+    "repsol" to "repsol",
+    "cepsa" to "cepsa",
+    "galp" to "galp",
+)
+
 private val BRAND_COLORS = linkedMapOf(
-    "total" to Color(0xFFE3001B),
-    "leclerc" to Color(0xFF0066B3),
-    "intermarche" to Color(0xFFE2001A),
-    "systemeu" to Color(0xFFE2001A),
-    "carrefour" to Color(0xFF004E9E),
-    "auchan" to Color(0xFFE2001A),
-    "bp" to Color(0xFF009900),
-    "shell" to Color(0xFFDD1D21),
-    "esso" to Color(0xFF1D4F91),
-    "casino" to Color(0xFF00954C),
-    "avia" to Color(0xFFE2001A),
-    "repsol" to Color(0xFFF29100),
-    "cepsa" to Color(0xFF009639),
-    "moeve" to Color(0xFF00A19A),
-    "galp" to Color(0xFFEF7D00),
-    "prio" to Color(0xFF8BC63F),
-    "ballenoil" to Color(0xFF1B3A6B),
-    "plenoil" to Color(0xFFE2001A),
+    "total" to Color(0xFFE3001B), "leclerc" to Color(0xFF0066B3),
+    "intermarche" to Color(0xFFE2001A), "systemeu" to Color(0xFFE2001A),
+    "carrefour" to Color(0xFF004E9E), "auchan" to Color(0xFFE2001A),
+    "bp" to Color(0xFF009900), "shell" to Color(0xFFDD1D21),
+    "esso" to Color(0xFF1D4F91), "casino" to Color(0xFF00954C),
+    "avia" to Color(0xFFE2001A), "repsol" to Color(0xFFF29100),
+    "cepsa" to Color(0xFF009639), "moeve" to Color(0xFF00A19A),
+    "galp" to Color(0xFFEF7D00), "prio" to Color(0xFF8BC63F),
+    "ballenoil" to Color(0xFF1B3A6B), "plenoil" to Color(0xFFE2001A),
 )
 
 private val PALETTE = listOf(
@@ -75,8 +79,7 @@ private fun slugFor(brand: String?): String? {
 }
 
 private fun brandColor(brand: String?): Color {
-    val slug = slugFor(brand)
-    BRAND_COLORS[slug]?.let { return it }
+    BRAND_COLORS[slugFor(brand)]?.let { return it }
     val b = brand?.lowercase().orEmpty()
     return if (b.isEmpty()) PALETTE[0] else PALETTE[b.hashCode().absoluteValue % PALETTE.size]
 }
@@ -85,16 +88,36 @@ private fun brandColor(brand: String?): Color {
 fun BrandLogo(brand: String?, size: Dp, modifier: Modifier = Modifier) {
     val ctx = LocalContext.current
     val slug = slugFor(brand)
-    val resId = slug?.let {
-        ctx.resources.getIdentifier("brand_$it", "drawable", ctx.packageName)
-    } ?: 0
 
+    val monogram: @Composable () -> Unit = {
+        Box(
+            modifier = Modifier.size(size).background(brandColor(brand), RoundedCornerShape(10.dp)),
+            contentAlignment = Alignment.Center,
+        ) {
+            val letter = brand?.trim()?.take(1)?.uppercase().orEmpty()
+            if (letter.isEmpty()) {
+                Icon(
+                    Icons.Filled.LocalGasStation,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(size * 0.55f),
+                )
+            } else {
+                Text(
+                    letter,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = TextUnit(size.value * 0.42f, TextUnitType.Sp),
+                )
+            }
+        }
+    }
+
+    // 1) Embedded override.
+    val resId = slug?.let { ctx.resources.getIdentifier("brand_$it", "drawable", ctx.packageName) } ?: 0
     if (resId != 0) {
         Box(
-            modifier = modifier
-                .size(size)
-                .clip(RoundedCornerShape(10.dp))
-                .background(Color.White),
+            modifier = modifier.size(size).clip(RoundedCornerShape(10.dp)).background(Color.White),
             contentAlignment = Alignment.Center,
         ) {
             Image(
@@ -107,26 +130,25 @@ fun BrandLogo(brand: String?, size: Dp, modifier: Modifier = Modifier) {
         return
     }
 
-    // Fallback: colored monogram.
-    Box(
-        modifier = modifier.size(size).background(brandColor(brand), RoundedCornerShape(10.dp)),
-        contentAlignment = Alignment.Center,
-    ) {
-        val letter = brand?.trim()?.take(1)?.uppercase().orEmpty()
-        if (letter.isEmpty()) {
-            Icon(
-                Icons.Filled.LocalGasStation,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(size * 0.55f),
-            )
-        } else {
-            Text(
-                letter,
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = TextUnit(size.value * 0.42f, TextUnitType.Sp),
+    // 2) Runtime color logo (VectorLogoZone) — not bundled.
+    val vlz = VLZ_SLUGS[slug]
+    if (vlz != null) {
+        Box(
+            modifier = modifier.size(size).clip(RoundedCornerShape(10.dp)).background(Color.White),
+            contentAlignment = Alignment.Center,
+        ) {
+            SubcomposeAsyncImage(
+                model = "https://www.vectorlogo.zone/logos/$vlz/$vlz-icon.svg",
+                contentDescription = brand,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.size(size).padding(size * 0.14f),
+                loading = { monogram() },
+                error = { monogram() },
             )
         }
+        return
     }
+
+    // 3) Monogram fallback.
+    Box(modifier = modifier, contentAlignment = Alignment.Center) { monogram() }
 }
