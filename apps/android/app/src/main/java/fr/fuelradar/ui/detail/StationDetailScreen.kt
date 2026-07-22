@@ -2,6 +2,7 @@ package fr.fuelradar.ui.detail
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -352,9 +353,13 @@ fun StationDetailScreen(stationId: Long, onBack: () -> Unit) {
 
 @Composable
 private fun DetailCard(content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit) {
+    // Same chrome as the stations-list StationCard: white surface, 1dp border,
+    // low elevation — so cards read consistently across list and detail.
     Card(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceVariant),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Column(modifier = Modifier.padding(16.dp), content = content)
     }
