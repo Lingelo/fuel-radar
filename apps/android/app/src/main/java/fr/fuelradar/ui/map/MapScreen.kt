@@ -187,7 +187,7 @@ fun MapScreen(
             // Search-radius circle around the current location.
             Circle(
                 center = LatLng(state.center.lat, state.center.lng),
-                radius = state.filters.radiusKm * 1000.0,
+                radius = state.radiusKm * 1000.0,
                 strokeColor = MaterialTheme.colorScheme.primary,
                 strokeWidth = 3f,
                 fillColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.06f),

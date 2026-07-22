@@ -39,6 +39,9 @@ data class MapUiState(
     val suggestions: List<AddressResult> = emptyList(),
     val filters: Filters = Filters(),
     val center: Coords = Coords(48.8566, 2.3522),
+    /** Radius actually applied to [items] in the last completed load. The circle
+     *  is drawn from this (not filters.radiusKm) so it always matches the pins. */
+    val radiusKm: Int = 10,
     val hasLocation: Boolean = false,
     val cheapestId: Long? = null,
 )
@@ -163,6 +166,7 @@ class MapViewModel : ViewModel() {
             _state.value = _state.value.copy(
                 loading = false, items = items, pMin = pMin, pMax = pMax,
                 center = anchor,
+                radiusKm = filters.radiusKm,
                 hasLocation = true,
                 cheapestId = cheapestId,
             )

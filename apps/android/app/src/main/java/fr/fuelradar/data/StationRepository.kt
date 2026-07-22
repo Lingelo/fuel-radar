@@ -36,7 +36,7 @@ class StationRepository(private val api: FuelApi) {
     }
 
     suspend fun stationsForDepts(depts: List<String>): List<Station> =
-        depts.flatMap { department(it) }
+        depts.flatMap { department(it) }.distinctBy { it.id }
 
     /** Stations from all departments whose bbox overlaps a radius around a point. */
     suspend fun nearby(lat: Double, lng: Double, radiusKm: Double): List<Station> {
