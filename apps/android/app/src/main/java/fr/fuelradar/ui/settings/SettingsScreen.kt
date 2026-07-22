@@ -19,6 +19,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -30,6 +31,7 @@ import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import fr.fuelradar.data.ServiceLocator
 import fr.fuelradar.data.prefs.AppSettings
+import fr.fuelradar.domain.timeAgo
 import kotlinx.coroutines.launch
 
 private val STARTUP_TABS = listOf(
@@ -55,6 +57,9 @@ fun SettingsScreen() {
     val store = ServiceLocator.settings
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     val settings by store.settings.collectAsStateWithLifecycle(AppSettings())
+    val lastUpdate by produceState<String?>(initialValue = null) {
+        value = ServiceLocator.stations.meta()?.lastUpdate
+    }
 
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -137,6 +142,22 @@ fun SettingsScreen() {
             }.padding(vertical = 8.dp),
         )
 
+        Text(
+            stringResource(R.string.share_app),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.fillMaxWidth().clickable {
+                val intent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(
+                        Intent.EXTRA_TEXT,
+                        "FuelRadar — prix des carburants FR/ES/PT : https://lingelo.github.io/fuel-radar/",
+                    )
+                }
+                runCatching { context.startActivity(Intent.createChooser(intent, null)) }
+            }.padding(vertical = 8.dp),
+        )
+
         HorizontalDivider()
 
         Text(
@@ -144,5 +165,12 @@ fun SettingsScreen() {
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        lastUpdate?.let {
+            Text(
+                stringResource(R.string.last_update, timeAgo(it)),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }

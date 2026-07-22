@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
@@ -33,6 +34,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.fuelradar.data.ServiceLocator
 import fr.fuelradar.data.model.FuelType
+import fr.fuelradar.domain.formatPrice
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -47,17 +49,21 @@ private val FUEL_COLORS = mapOf(
     "GPLc" to Color(0xFF8E24AA),
 )
 
+data class FuelKpi(val latest: Double, val yoyPct: Double?)
+
 data class TrendsUiState(
     val loading: Boolean = true,
     val periodDays: Int = 30,
     val scope: String = "ALL",
     val series: Map<String, List<Double>> = emptyMap(),
+    val kpis: Map<String, FuelKpi> = emptyMap(),
+    val hiddenFuels: Set<String> = emptySet(),
 )
 
 class TrendsViewModel : ViewModel() {
     private val repo = ServiceLocator.stations
 
-    // scope ("ALL"/"FR"/"ES"/"PT") -> fuel -> price series
+    // scope ("ALL"/"FR"/"ES"/"PT") -> fuel -> full price series
     private var byScope: Map<String, Map<String, List<Double>>> = emptyMap()
 
     private val _state = MutableStateFlow(TrendsUiState())
@@ -69,28 +75,43 @@ class TrendsViewModel : ViewModel() {
             byScope = countries?.countries?.mapValues { (_, fuels) ->
                 fuels.mapValues { (_, points) -> points.map { it.getOrElse(1) { 0.0 } } }
             } ?: emptyMap()
-            // Fallback: if per-country history is unavailable, use the national FR series.
             if (byScope.isEmpty()) {
                 val nat = repo.nationalHistory()
                 val frSeries = nat?.fuels?.mapValues { (_, p) -> p.map { it.getOrElse(1) { 0.0 } } }
                     ?: emptyMap()
                 byScope = mapOf("ALL" to frSeries, "FR" to frSeries)
             }
-            apply(_state.value.scope, _state.value.periodDays)
+            apply(_state.value.scope, _state.value.periodDays, _state.value.hiddenFuels)
         }
     }
 
-    fun setPeriod(days: Int) = apply(_state.value.scope, days)
+    fun setPeriod(days: Int) = apply(_state.value.scope, days, _state.value.hiddenFuels)
 
-    fun setScope(scope: String) = apply(scope, _state.value.periodDays)
+    fun setScope(scope: String) = apply(scope, _state.value.periodDays, _state.value.hiddenFuels)
 
-    private fun apply(scope: String, days: Int) {
-        val series = (byScope[scope] ?: emptyMap()).mapValues { (_, v) -> v.takeLast(days) }
+    fun toggleFuel(fuel: String) {
+        val hidden = _state.value.hiddenFuels.toMutableSet()
+        if (!hidden.add(fuel)) hidden.remove(fuel)
+        apply(_state.value.scope, _state.value.periodDays, hidden)
+    }
+
+    private fun apply(scope: String, days: Int, hidden: Set<String>) {
+        val full = byScope[scope] ?: emptyMap()
+        val series = full.mapValues { (_, v) -> v.takeLast(days) }
+        // KPI: latest price + year-over-year change from the full series.
+        val kpis = full.mapValues { (_, v) ->
+            val latest = v.lastOrNull() ?: 0.0
+            val yearAgo = if (v.size > 365) v[v.size - 366] else v.firstOrNull()
+            val yoy = yearAgo?.takeIf { it > 0 }?.let { (latest - it) / it * 100.0 }
+            FuelKpi(latest, yoy)
+        }
         _state.value = TrendsUiState(
             loading = false,
             periodDays = days,
             scope = scope,
-            series = series,
+            series = series.filterKeys { it !in hidden },
+            kpis = kpis,
+            hiddenFuels = hidden,
         )
     }
 }
@@ -153,17 +174,47 @@ fun TrendsScreen(viewModel: TrendsViewModel = viewModel()) {
             modifier = Modifier.fillMaxWidth().height(240.dp).padding(vertical = 8.dp),
         )
 
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            state.series.keys.forEach { fuel ->
-                val color = FUEL_COLORS[fuel] ?: MaterialTheme.colorScheme.primary
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Surface(color = color, shape = CircleShape, modifier = Modifier.size(12.dp)) {}
-                    Text(
-                        "  ${FuelType.fromCode(fuel)?.label ?: fuel}",
-                        style = MaterialTheme.typography.labelMedium,
-                    )
+        // KPI cards double as a clickable legend (tap to show/hide a fuel).
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(top = 8.dp),
+        ) {
+            state.kpis.entries
+                .sortedBy { FuelType.fromCode(it.key)?.ordinal ?: 99 }
+                .forEach { (fuel, kpi) ->
+                    val hidden = fuel in state.hiddenFuels
+                    val color = FUEL_COLORS[fuel] ?: MaterialTheme.colorScheme.primary
+                    Surface(
+                        onClick = { viewModel.toggleFuel(fuel) },
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant
+                            .copy(alpha = if (hidden) 0.4f else 1f),
+                    ) {
+                        Column(modifier = Modifier.padding(10.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Surface(color = color, shape = CircleShape, modifier = Modifier.size(10.dp)) {}
+                                Text(
+                                    "  ${FuelType.fromCode(fuel)?.label ?: fuel}",
+                                    style = MaterialTheme.typography.labelMedium,
+                                )
+                            }
+                            Text(
+                                "${formatPrice(kpi.latest)} €",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                            )
+                            kpi.yoyPct?.let {
+                                val sign = if (it > 0) "+" else ""
+                                Text(
+                                    "$sign${String.format("%.1f", it)} %/an",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = if (it > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.tertiary,
+                                )
+                            }
+                        }
+                    }
                 }
-            }
         }
     }
 }
