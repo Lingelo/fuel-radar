@@ -152,6 +152,7 @@ class MapViewModel : ViewModel() {
             val fuelCode = filters.fuel.code
             val stations = repo.nearby(anchor.lat, anchor.lng, r)
                 .filter { haversineKm(anchor.lat, anchor.lng, it.lat, it.lng) <= r }
+                .filter { it.fuels.containsKey(fuelCode) } // only stations selling the selected fuel
                 .filter { filters.brands.isEmpty() || (it.brand != null && filters.brands.contains(it.brand)) }
                 .filter { !filters.openH24Only || it.h24 == true }
             val items = stations.map { StationClusterItem(it, it.fuels[fuelCode]?.p) }
