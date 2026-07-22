@@ -12,9 +12,12 @@ class FuelRadarApp : Application(), ImageLoaderFactory {
         ServiceLocator.init(this)
     }
 
-    // Enable SVG decoding (Simple Icons brand logos are SVG).
+    // Enable SVG decoding (some brand logos are SVG). allowHardware(false) is
+    // required because brand logos are drawn inside MarkerComposable, which
+    // rasterizes on a software canvas — hardware bitmaps crash there.
     override fun newImageLoader(): ImageLoader =
         ImageLoader.Builder(this)
             .components { add(SvgDecoder.Factory()) }
+            .allowHardware(false)
             .build()
 }

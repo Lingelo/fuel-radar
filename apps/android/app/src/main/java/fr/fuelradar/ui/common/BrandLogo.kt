@@ -24,12 +24,10 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import coil.compose.SubcomposeAsyncImage
+import fr.fuelradar.BuildConfig
 import kotlin.math.absoluteValue
 
-/**
- * Brand → canonical slug. Drop a `brand_<slug>.(png|webp|xml)` in
- * app/src/main/res/drawable/ to override with your own asset.
- */
+/** Brand → canonical slug (used for the embedded-drawable override `brand_<slug>`). */
 private val BRAND_SLUGS = linkedMapOf(
     "totalenergies" to "total", "total" to "total",
     "leclerc" to "leclerc",
@@ -43,17 +41,21 @@ private val BRAND_SLUGS = linkedMapOf(
     "plenergy" to "plenoil", "plenoil" to "plenoil",
 )
 
-/** Canonical slug → VectorLogoZone slug (color SVG, loaded at runtime — not bundled). */
+/** Canonical slug → VectorLogoZone slug (real color SVG). Only entries that actually
+ *  resolve on vectorlogo.zone — most fuel brands are absent there, so this is tiny. */
 private val VLZ_SLUGS = mapOf(
-    "total" to "total",
     "shell" to "shell",
-    "bp" to "bp",
-    "esso" to "esso",
-    "carrefour" to "carrefour",
-    "auchan" to "auchan",
-    "repsol" to "repsol",
-    "cepsa" to "cepsa",
-    "galp" to "galp",
+)
+
+/** Canonical slug → domain (brand icon via favicon service — broad coverage). */
+private val BRAND_DOMAINS = mapOf(
+    "total" to "totalenergies.com", "leclerc" to "e-leclerc.com",
+    "intermarche" to "intermarche.com", "systemeu" to "magasins-u.com",
+    "carrefour" to "carrefour.fr", "auchan" to "auchan.fr",
+    "bp" to "bp.com", "shell" to "shell.com", "esso" to "esso.fr",
+    "casino" to "casino.fr", "avia" to "avia.fr", "repsol" to "repsol.com",
+    "cepsa" to "cepsa.com", "moeve" to "moeve.com", "galp" to "galp.com",
+    "prio" to "prio.pt", "ballenoil" to "ballenoil.es", "plenoil" to "plenoil.com",
 )
 
 private val BRAND_COLORS = linkedMapOf(
@@ -97,16 +99,12 @@ fun BrandLogo(brand: String?, size: Dp, modifier: Modifier = Modifier) {
             val letter = brand?.trim()?.take(1)?.uppercase().orEmpty()
             if (letter.isEmpty()) {
                 Icon(
-                    Icons.Filled.LocalGasStation,
-                    contentDescription = null,
-                    tint = Color.White,
+                    Icons.Filled.LocalGasStation, null, tint = Color.White,
                     modifier = Modifier.size(size * 0.55f),
                 )
             } else {
                 Text(
-                    letter,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
+                    letter, color = Color.White, fontWeight = FontWeight.Bold,
                     fontSize = TextUnit(size.value * 0.42f, TextUnitType.Sp),
                 )
             }
@@ -116,10 +114,7 @@ fun BrandLogo(brand: String?, size: Dp, modifier: Modifier = Modifier) {
     // 1) Embedded override.
     val resId = slug?.let { ctx.resources.getIdentifier("brand_$it", "drawable", ctx.packageName) } ?: 0
     if (resId != 0) {
-        Box(
-            modifier = modifier.size(size).clip(RoundedCornerShape(10.dp)).background(Color.White),
-            contentAlignment = Alignment.Center,
-        ) {
+        LogoFrame(size, modifier) {
             Image(
                 painter = painterResource(resId),
                 contentDescription = brand,
@@ -130,25 +125,49 @@ fun BrandLogo(brand: String?, size: Dp, modifier: Modifier = Modifier) {
         return
     }
 
-    // 2) Runtime color logo (VectorLogoZone) — not bundled.
-    val vlz = VLZ_SLUGS[slug]
-    if (vlz != null) {
-        Box(
-            modifier = modifier.size(size).clip(RoundedCornerShape(10.dp)).background(Color.White),
-            contentAlignment = Alignment.Center,
-        ) {
-            SubcomposeAsyncImage(
-                model = "https://www.vectorlogo.zone/logos/$vlz/$vlz-icon.svg",
-                contentDescription = brand,
-                contentScale = ContentScale.Fit,
-                modifier = Modifier.size(size).padding(size * 0.14f),
-                loading = { monogram() },
-                error = { monogram() },
-            )
+    // 2) Runtime chain (fetched on demand, cached by Coil — nothing bundled):
+    //    logo.dev (real HD logos, needs a free pk_ token) -> VectorLogoZone -> favicon.
+    val domain = BRAND_DOMAINS[slug]
+    val token = BuildConfig.LOGO_DEV_TOKEN
+    val sources = buildList {
+        if (token.isNotBlank() && domain != null) {
+            add("https://img.logo.dev/$domain?token=$token&size=128&format=png&retina=true")
         }
-        return
+        VLZ_SLUGS[slug]?.let { add("https://www.vectorlogo.zone/logos/$it/$it-icon.svg") }
+        if (domain != null) add("https://www.google.com/s2/favicons?sz=128&domain=$domain")
     }
 
-    // 3) Monogram fallback.
-    Box(modifier = modifier, contentAlignment = Alignment.Center) { monogram() }
+    if (sources.isEmpty()) {
+        Box(modifier = modifier, contentAlignment = Alignment.Center) { monogram() }
+    } else {
+        LogoFrame(size, modifier) { RemoteImage(sources, size, brand, monogram) }
+    }
+}
+
+/** Tries each URL in order; falls back to [fallback] once all fail. */
+@Composable
+private fun RemoteImage(
+    sources: List<String>,
+    size: Dp,
+    desc: String?,
+    fallback: @Composable () -> Unit,
+) {
+    SubcomposeAsyncImage(
+        model = sources.first(),
+        contentDescription = desc,
+        contentScale = ContentScale.Fit,
+        modifier = Modifier.size(size).padding(size * 0.16f),
+        loading = { fallback() },
+        error = {
+            if (sources.size > 1) RemoteImage(sources.drop(1), size, desc, fallback) else fallback()
+        },
+    )
+}
+
+@Composable
+private fun LogoFrame(size: Dp, modifier: Modifier, content: @Composable () -> Unit) {
+    Box(
+        modifier = modifier.size(size).clip(RoundedCornerShape(10.dp)).background(Color.White),
+        contentAlignment = Alignment.Center,
+    ) { content() }
 }

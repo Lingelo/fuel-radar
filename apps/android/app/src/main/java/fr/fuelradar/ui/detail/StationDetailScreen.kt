@@ -50,6 +50,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
@@ -241,6 +242,8 @@ fun StationDetailScreen(stationId: Long, onBack: () -> Unit) {
                     val delta = trendDelta(history[fuel.code])
                     Row(
                         modifier = Modifier.fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .clickable { scope.launch { ServiceLocator.filters.setFuel(fuel) } }
                             .background(
                                 if (selected) MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f)
                                 else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
@@ -394,18 +397,31 @@ private fun TrendChart(prices: List<Double>, epochs: List<Long>, color: Color) {
     val min = prices.min()
     val max = prices.max()
     val range = (max - min).takeIf { it > 0 } ?: 1.0
+    val guide = MaterialTheme.colorScheme.outlineVariant
+    val onVariant = MaterialTheme.colorScheme.onSurfaceVariant
 
     Column {
-        Text(
-            "${formatPrice(prices[selected])} €  ·  ${shortDate(epochs.getOrElse(selected) { 0L })}",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = color,
-            modifier = Modifier.padding(bottom = 6.dp),
-        )
-        val guide = MaterialTheme.colorScheme.outlineVariant
+        // Big value + date that follows the finger.
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Bottom,
+        ) {
+            Text(
+                "${formatPrice(prices[selected])} €",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = color,
+            )
+            Text(
+                shortDate(epochs.getOrElse(selected) { 0L }),
+                style = MaterialTheme.typography.bodyMedium,
+                color = onVariant,
+            )
+        }
+        Spacer(Modifier.height(8.dp))
         Canvas(
-            modifier = Modifier.fillMaxWidth().height(140.dp)
+            modifier = Modifier.fillMaxWidth().height(160.dp)
                 .pointerInput(prices) {
                     detectTapGestures { o ->
                         selected = ((o.x / size.width) * (prices.size - 1)).roundToInt()
@@ -419,22 +435,47 @@ private fun TrendChart(prices: List<Double>, epochs: List<Long>, color: Color) {
                     }
                 },
         ) {
+            val padTop = 8f
+            val padBottom = 8f
+            val h = size.height - padTop - padBottom
             val stepX = size.width / (prices.size - 1)
             fun x(i: Int) = i * stepX
-            fun y(v: Double) = size.height * (1f - ((v - min) / range).toFloat())
-            // Line.
+            fun y(v: Double) = padTop + h * (1f - ((v - min) / range).toFloat())
+
+            // Filled area under the curve.
+            val area = androidx.compose.ui.graphics.Path().apply {
+                moveTo(0f, size.height)
+                prices.forEachIndexed { i, v -> lineTo(x(i), y(v)) }
+                lineTo(x(prices.lastIndex), size.height)
+                close()
+            }
+            drawPath(area, color = color.copy(alpha = 0.12f))
+
+            // Line + dots.
             var prev: Offset? = null
             prices.forEachIndexed { i, v ->
                 val p = Offset(x(i), y(v))
-                prev?.let { drawLine(color, it, p, strokeWidth = 4f) }
+                prev?.let { drawLine(color, it, p, strokeWidth = 5f) }
                 prev = p
             }
-            // Selected guide + point.
+            prices.forEachIndexed { i, v ->
+                if (i != selected) drawCircle(color, radius = 3.5f, center = Offset(x(i), y(v)))
+            }
+
+            // Selected scrubber.
             val sx = x(selected)
             val sy = y(prices[selected])
             drawLine(guide, Offset(sx, 0f), Offset(sx, size.height), strokeWidth = 2f)
-            drawCircle(Color.White, radius = 9f, center = Offset(sx, sy))
-            drawCircle(color, radius = 6f, center = Offset(sx, sy))
+            drawCircle(Color.White, radius = 11f, center = Offset(sx, sy))
+            drawCircle(color, radius = 7f, center = Offset(sx, sy))
+        }
+        // Min / max caption.
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text("min ${formatPrice(min)} €", style = MaterialTheme.typography.labelSmall, color = onVariant)
+            Text("max ${formatPrice(max)} €", style = MaterialTheme.typography.labelSmall, color = onVariant)
         }
     }
 }

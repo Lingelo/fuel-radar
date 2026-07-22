@@ -15,6 +15,11 @@ val localProps = Properties().apply {
 val mapsApiKey: String =
     localProps.getProperty("MAPS_API_KEY") ?: System.getenv("MAPS_API_KEY") ?: ""
 
+// Optional logo.dev publishable token (pk_...) for real brand logos, fetched at
+// runtime and cached by Coil. Absent -> favicon/monogram fallback. See local.properties.
+val logoDevToken: String =
+    localProps.getProperty("LOGO_DEV_TOKEN") ?: System.getenv("LOGO_DEV_TOKEN") ?: ""
+
 // Release signing (optional): create apps/android/keystore.properties from
 // keystore.properties.example. Absent -> release falls back to debug signing.
 val keystoreProps = Properties().apply {
@@ -44,6 +49,7 @@ android {
         // project builds without it (the Map screen degrades gracefully).
         buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
+        buildConfigField("String", "LOGO_DEV_TOKEN", "\"$logoDevToken\"")
     }
 
     signingConfigs {
