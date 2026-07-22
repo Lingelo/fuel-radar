@@ -29,7 +29,10 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import fr.fuelradar.ui.detail.StationDetailScreen
+import fr.fuelradar.ui.favorites.FavoritesScreen
+import fr.fuelradar.ui.settings.SettingsScreen
 import fr.fuelradar.ui.stations.StationsScreen
+import fr.fuelradar.ui.trends.TrendsScreen
 
 private enum class Tab(val route: String, val label: String, val icon: ImageVector) {
     Map("map", "Carte", Icons.Filled.Map),
@@ -77,9 +80,11 @@ fun AppNav() {
             composable(Tab.Stations.route) {
                 StationsScreen(onOpenStation = { id -> navController.navigate("details/$id") })
             }
-            composable(Tab.Favorites.route) { Placeholder("Favoris") }
-            composable(Tab.Trends.route) { Placeholder("Tendances") }
-            composable(Tab.Settings.route) { Placeholder("Réglages") }
+            composable(Tab.Favorites.route) {
+                FavoritesScreen(onOpenStation = { id -> navController.navigate("details/$id") })
+            }
+            composable(Tab.Trends.route) { TrendsScreen() }
+            composable(Tab.Settings.route) { SettingsScreen() }
             composable(
                 route = "details/{stationId}",
                 arguments = listOf(navArgument("stationId") { type = NavType.LongType }),

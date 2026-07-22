@@ -42,6 +42,20 @@ typealias DeptBbox = Map<String, List<Double>>
 /** Per-station history: stationId -> fuel -> list of [epoch, price]. */
 typealias StationHistoryData = Map<String, Map<String, List<List<Double>>>>
 
+/** National daily averages: fuel -> list of [epoch, price]. */
+@Serializable
+data class NationalHistory(
+    val fuels: Map<String, List<List<Double>>> = emptyMap(),
+    val updated: String? = null,
+)
+
+/** Per-country daily averages: scope ("ALL"/"FR"/"ES"/"PT") -> fuel -> [epoch, price]. */
+@Serializable
+data class CountriesHistory(
+    val countries: Map<String, Map<String, List<List<Double>>>> = emptyMap(),
+    val updated: String? = null,
+)
+
 /**
  * Fuel types in display order (mirror of FUEL_TYPES / FUEL_LABELS). `code` is
  * the JSON/data key; `label` is the user-facing name (E10 shows as SP95-E10).

@@ -5,6 +5,7 @@ import fr.fuelradar.data.geo.Geocoder
 import fr.fuelradar.data.net.NetworkModule
 import fr.fuelradar.data.prefs.FavoritesStore
 import fr.fuelradar.data.prefs.FiltersStore
+import fr.fuelradar.data.prefs.SettingsStore
 
 /**
  * Minimal manual dependency container. Initialized once from the Application;
@@ -20,6 +21,8 @@ object ServiceLocator {
         private set
     lateinit var filters: FiltersStore
         private set
+    lateinit var settings: SettingsStore
+        private set
 
     fun init(context: Context) {
         val network = NetworkModule(context)
@@ -27,5 +30,6 @@ object ServiceLocator {
         geocoder = Geocoder(network.geocodeApi)
         favorites = FavoritesStore(context)
         filters = FiltersStore(context)
+        settings = SettingsStore(context)
     }
 }

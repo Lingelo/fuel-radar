@@ -52,6 +52,14 @@ class StationRepository(private val api: FuelApi) {
         data
     }
 
+    suspend fun nationalHistory(): fr.fuelradar.data.model.NationalHistory? = withContext(Dispatchers.IO) {
+        runCatching { api.nationalHistory() }.getOrNull()
+    }
+
+    suspend fun countriesHistory(): fr.fuelradar.data.model.CountriesHistory? = withContext(Dispatchers.IO) {
+        runCatching { api.countriesHistory() }.getOrNull()
+    }
+
     /** Look up an already-fetched station by id across cached departments. */
     fun findCached(id: Long): Station? =
         deptCache.values.asSequence().flatten().firstOrNull { it.id == id }
