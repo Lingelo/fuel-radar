@@ -24,7 +24,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import fr.fuelradar.R
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
@@ -99,33 +101,38 @@ fun TrendsScreen(viewModel: TrendsViewModel = viewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Text("Tendances", style = MaterialTheme.typography.headlineSmall)
+        Text(stringResource(R.string.trends_title), style = MaterialTheme.typography.headlineSmall)
 
         FlowRow(
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            listOf("ALL" to "Tous", "FR" to "France", "ES" to "Espagne", "PT" to "Portugal")
-                .forEach { (code, label) ->
-                    FilterChip(
-                        selected = state.scope == code,
-                        onClick = { viewModel.setScope(code) },
-                        label = { Text(label) },
-                    )
-                }
+            listOf(
+                "ALL" to R.string.scope_all,
+                "FR" to R.string.scope_fr,
+                "ES" to R.string.scope_es,
+                "PT" to R.string.scope_pt,
+            ).forEach { (code, labelRes) ->
+                FilterChip(
+                    selected = state.scope == code,
+                    onClick = { viewModel.setScope(code) },
+                    label = { Text(stringResource(labelRes)) },
+                )
+            }
         }
 
         Row(
             modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            listOf(30 to "30 j", 90 to "90 j", 365 to "1 an").forEach { (days, label) ->
-                FilterChip(
-                    selected = state.periodDays == days,
-                    onClick = { viewModel.setPeriod(days) },
-                    label = { Text(label) },
-                )
-            }
+            listOf(30 to R.string.period_30, 90 to R.string.period_90, 365 to R.string.period_365)
+                .forEach { (days, labelRes) ->
+                    FilterChip(
+                        selected = state.periodDays == days,
+                        onClick = { viewModel.setPeriod(days) },
+                        label = { Text(stringResource(labelRes)) },
+                    )
+                }
         }
 
         if (state.loading) {
@@ -136,7 +143,7 @@ fun TrendsScreen(viewModel: TrendsViewModel = viewModel()) {
         }
         if (state.series.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Historique indisponible", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.history_unavailable), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             return
         }

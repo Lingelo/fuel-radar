@@ -28,8 +28,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import fr.fuelradar.R
 import fr.fuelradar.data.model.FuelType
 import fr.fuelradar.data.prefs.Filters
 import fr.fuelradar.data.prefs.SortMode
@@ -61,14 +63,14 @@ fun FilterSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("Filtres", style = MaterialTheme.typography.headlineSmall)
+                Text(stringResource(R.string.filters), style = MaterialTheme.typography.headlineSmall)
                 TextButton(onClick = {
                     fuel = FuelType.GAZOLE; radius = 10; sort = SortMode.PRICE
                     h24 = false; brands = emptySet()
-                }) { Text("Réinitialiser") }
+                }) { Text(stringResource(R.string.reset)) }
             }
 
-            Text("Carburant", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.fuel), style = MaterialTheme.typography.titleMedium)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FuelType.entries.forEach { ft ->
                     FilterChip(
@@ -81,13 +83,13 @@ fun FilterSheet(
 
             HorizontalDivider()
 
-            Text("Trier par", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.sort_by), style = MaterialTheme.typography.titleMedium)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 SortMode.entries.forEach { m ->
                     FilterChip(
                         selected = sort == m,
                         onClick = { sort = m },
-                        label = { Text(if (m == SortMode.PRICE) "Prix" else "Distance") },
+                        label = { Text(stringResource(if (m == SortMode.PRICE) R.string.sort_price else R.string.sort_distance)) },
                     )
                 }
             }
@@ -98,7 +100,7 @@ fun FilterSheet(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Text("Rayon", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.radius), style = MaterialTheme.typography.titleMedium)
                 Text("$radius km", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
             }
             Slider(
@@ -115,7 +117,7 @@ fun FilterSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("Ouvert 24h/24 uniquement", style = MaterialTheme.typography.bodyLarge)
+                Text(stringResource(R.string.h24_only), style = MaterialTheme.typography.bodyLarge)
                 Switch(checked = h24, onCheckedChange = { h24 = it })
             }
 
@@ -126,13 +128,13 @@ fun FilterSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("Marques", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.brands), style = MaterialTheme.typography.titleMedium)
                 TextButton(onClick = {
                     brands = if (brands.size == KNOWN_BRANDS.size) emptySet() else KNOWN_BRANDS.toSet()
-                }) { Text(if (brands.size == KNOWN_BRANDS.size) "Tout désélectionner" else "Tout sélectionner") }
+                }) { Text(stringResource(if (brands.size == KNOWN_BRANDS.size) R.string.deselect_all else R.string.select_all)) }
             }
             Text(
-                if (brands.isEmpty()) "Toutes les marques" else "${brands.size} sélectionnée(s)",
+                if (brands.isEmpty()) stringResource(R.string.all_brands) else stringResource(R.string.brands_selected, brands.size),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -164,10 +166,10 @@ fun FilterSheet(
                     )
                 },
                 modifier = Modifier.fillMaxWidth(),
-            ) { Text("Appliquer", fontWeight = FontWeight.Bold) }
+            ) { Text(stringResource(R.string.apply), fontWeight = FontWeight.Bold) }
 
             OutlinedButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
-                Text("Fermer")
+                Text(stringResource(R.string.close))
             }
         }
     }

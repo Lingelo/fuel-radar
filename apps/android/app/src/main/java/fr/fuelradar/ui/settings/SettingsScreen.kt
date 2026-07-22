@@ -22,8 +22,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.appcompat.app.AppCompatDelegate
+import fr.fuelradar.R
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import fr.fuelradar.data.ServiceLocator
@@ -58,9 +60,9 @@ fun SettingsScreen() {
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text("Réglages", style = MaterialTheme.typography.headlineSmall)
+        Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.headlineSmall)
 
-        Text("Écran de démarrage", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.startup_screen), style = MaterialTheme.typography.titleMedium)
         STARTUP_TABS.forEach { (route, label) ->
             Row(
                 modifier = Modifier.fillMaxWidth().selectable(
@@ -79,7 +81,7 @@ fun SettingsScreen() {
 
         HorizontalDivider()
 
-        Text("Langue", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.language), style = MaterialTheme.typography.titleMedium)
         val currentLang = AppCompatDelegate.getApplicationLocales().toLanguageTags()
             .split(",").firstOrNull()?.substringBefore('-') ?: ""
         LANGUAGES.forEach { (tag, label) ->
@@ -115,7 +117,7 @@ fun SettingsScreen() {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text("Avertir si données anciennes", style = MaterialTheme.typography.bodyLarge)
+            Text(stringResource(R.string.stale_warning), style = MaterialTheme.typography.bodyLarge)
             Switch(
                 checked = settings.staleWarning,
                 onCheckedChange = { scope.launch { store.setStaleWarning(it) } },
@@ -125,7 +127,7 @@ fun SettingsScreen() {
         HorizontalDivider()
 
         Text(
-            "Politique de confidentialité",
+            stringResource(R.string.privacy_policy),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.fillMaxWidth().clickable {
@@ -138,8 +140,7 @@ fun SettingsScreen() {
         HorizontalDivider()
 
         Text(
-            "Données : prix-carburants.gouv.fr (France), Ministerio para la Transición " +
-                "Ecológica (Espagne), DGEG (Portugal). Marques enrichies via OpenStreetMap.",
+            stringResource(R.string.data_credits),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

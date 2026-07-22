@@ -35,6 +35,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import fr.fuelradar.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -70,9 +72,9 @@ fun MapScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text("Carte indisponible", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.map_unavailable), style = MaterialTheme.typography.titleMedium)
             Text(
-                "Clé Google Maps manquante. Ajoutez MAPS_API_KEY dans local.properties.",
+                stringResource(R.string.map_key_missing),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -193,7 +195,7 @@ fun MapScreen(
                     onValueChange = viewModel::onQueryChange,
                     singleLine = true,
                     leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                    placeholder = { Text("Rechercher une adresse") },
+                    placeholder = { Text(stringResource(R.string.search_hint)) },
                     keyboardActions = androidx.compose.foundation.text.KeyboardActions(
                         onSearch = { viewModel.search() },
                     ),
@@ -203,7 +205,7 @@ fun MapScreen(
                     modifier = Modifier.weight(1f).padding(vertical = 4.dp),
                 )
                 IconButton(onClick = { showFilters = true }) {
-                    Icon(Icons.Filled.Tune, contentDescription = "Filtres")
+                    Icon(Icons.Filled.Tune, contentDescription = stringResource(R.string.filters))
                 }
             }
         }
@@ -222,7 +224,7 @@ fun MapScreen(
             },
             modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
         ) {
-            Icon(Icons.Filled.MyLocation, contentDescription = "Me localiser")
+            Icon(Icons.Filled.MyLocation, contentDescription = stringResource(R.string.locate_me))
         }
     }
 }

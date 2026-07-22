@@ -23,6 +23,8 @@ import kotlinx.coroutines.flow.first
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
+import fr.fuelradar.R
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
@@ -38,12 +40,12 @@ import fr.fuelradar.ui.settings.SettingsScreen
 import fr.fuelradar.ui.stations.StationsScreen
 import fr.fuelradar.ui.trends.TrendsScreen
 
-private enum class Tab(val route: String, val label: String, val icon: ImageVector) {
-    Map("map", "Carte", Icons.Filled.Map),
-    Stations("stations", "Stations", Icons.AutoMirrored.Filled.List),
-    Favorites("favorites", "Favoris", Icons.Filled.Favorite),
-    Trends("trends", "Tendances", Icons.AutoMirrored.Filled.ShowChart),
-    Settings("settings", "Réglages", Icons.Filled.Settings),
+private enum class Tab(val route: String, val labelRes: Int, val icon: ImageVector) {
+    Map("map", R.string.tab_map, Icons.Filled.Map),
+    Stations("stations", R.string.tab_stations, Icons.AutoMirrored.Filled.List),
+    Favorites("favorites", R.string.tab_favorites, Icons.Filled.Favorite),
+    Trends("trends", R.string.tab_trends, Icons.AutoMirrored.Filled.ShowChart),
+    Settings("settings", R.string.tab_settings, Icons.Filled.Settings),
 }
 
 @Composable
@@ -69,6 +71,7 @@ fun AppNav() {
                 Tab.entries.forEach { tab ->
                     val selected =
                         currentDestination?.hierarchy?.any { it.route == tab.route } == true
+                    val label = stringResource(tab.labelRes)
                     NavigationBarItem(
                         selected = selected,
                         onClick = {
@@ -80,8 +83,8 @@ fun AppNav() {
                                 restoreState = true
                             }
                         },
-                        icon = { Icon(tab.icon, contentDescription = tab.label) },
-                        label = { Text(tab.label) },
+                        icon = { Icon(tab.icon, contentDescription = label) },
+                        label = { Text(label) },
                     )
                 }
             }

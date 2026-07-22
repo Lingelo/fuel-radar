@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FuelRadar</string>
+
+    <string name="tab_map">Mapa</string>
+    <string name="tab_stations">Estações</string>
+    <string name="tab_favorites">Favoritos</string>
+    <string name="tab_trends">Tendências</string>
+    <string name="tab_settings">Definições</string>
+
+    <string name="search_hint">Procurar um endereço</string>
+    <string name="filters">Filtros</string>
+    <string name="reset">Repor</string>
+    <string name="apply">Aplicar</string>
+    <string name="close">Fechar</string>
+    <string name="cheapest">Mais barato</string>
+    <string name="directions">Direções</string>
+    <string name="share">Partilhar</string>
+    <string name="favorite">Favorito</string>
+
+    <string name="fuel">Combustível</string>
+    <string name="sort_by">Ordenar por</string>
+    <string name="sort_price">Preço</string>
+    <string name="sort_distance">Distância</string>
+    <string name="radius">Raio</string>
+    <string name="h24_only">Apenas abertas 24/7</string>
+    <string name="brands">Marcas</string>
+    <string name="select_all">Selecionar tudo</string>
+    <string name="deselect_all">Desmarcar tudo</string>
+    <string name="all_brands">Todas as marcas</string>
+    <string name="brands_selected">%1$d selecionadas</string>
+
+    <string name="map_unavailable">Mapa indisponível</string>
+    <string name="map_key_missing">Falta a chave do Google Maps. Adicione MAPS_API_KEY em local.properties.</string>
+    <string name="locate_me">Localizar-me</string>
+
+    <string name="no_favorites">Sem favoritos</string>
+    <string name="no_favorites_hint">Adicione estações aos favoritos a partir da lista ou do detalhe.</string>
+
+    <string name="station_not_found">Estação não encontrada</string>
+    <string name="open_24h">Aberta 24/7</string>
+    <string name="stale_data">Dados antigos</string>
+    <string name="trend_7d">7 d: %1$s</string>
+
+    <string name="trends_title">Tendências</string>
+    <string name="scope_all">Todos</string>
+    <string name="scope_fr">França</string>
+    <string name="scope_es">Espanha</string>
+    <string name="scope_pt">Portugal</string>
+    <string name="period_30">30 d</string>
+    <string name="period_90">90 d</string>
+    <string name="period_365">1 ano</string>
+    <string name="history_unavailable">Histórico indisponível</string>
+
+    <string name="settings_title">Definições</string>
+    <string name="startup_screen">Ecrã inicial</string>
+    <string name="stale_warning">Avisar se os dados forem antigos</string>
+    <string name="language">Idioma</string>
+    <string name="privacy_policy">Política de privacidade</string>
+    <string name="share_app">Partilhar a aplicação</string>
+    <string name="last_update">Última atualização: %1$s</string>
+    <string name="data_credits">Dados: prix-carburants.gouv.fr (França), Ministerio para la Transición Ecológica (Espanha), DGEG (Portugal). Marcas enriquecidas via OpenStreetMap.</string>
+    <string name="lang_system">Sistema</string>
+    <string name="lang_fr">Français</string>
+    <string name="lang_en">English</string>
+    <string name="lang_es">Español</string>
+    <string name="lang_pt">Português</string>
+</resources>

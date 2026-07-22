@@ -42,6 +42,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.fuelradar.data.model.FuelType
 import fr.fuelradar.data.prefs.SortMode
+import androidx.compose.ui.res.stringResource
+import fr.fuelradar.R
 import fr.fuelradar.data.ServiceLocator
 import fr.fuelradar.data.prefs.AppSettings
 import fr.fuelradar.domain.formatDistance
@@ -79,7 +81,7 @@ fun StationsScreen(
                     onValueChange = viewModel::onQueryChange,
                     singleLine = true,
                     leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                    placeholder = { Text("Rechercher une adresse") },
+                    placeholder = { Text(stringResource(R.string.search_hint)) },
                     keyboardActions = androidx.compose.foundation.text.KeyboardActions(
                         onSearch = { viewModel.search() },
                     ),
@@ -89,7 +91,7 @@ fun StationsScreen(
                     modifier = Modifier.weight(1f),
                 )
                 IconButton(onClick = { showFilters = true }) {
-                    Icon(Icons.Filled.Tune, contentDescription = "Filtres")
+                    Icon(Icons.Filled.Tune, contentDescription = stringResource(R.string.filters))
                 }
             }
 
@@ -115,7 +117,7 @@ fun StationsScreen(
                     FilterChip(
                         selected = state.filters.sort == mode,
                         onClick = { viewModel.setSort(mode) },
-                        label = { Text(if (mode == SortMode.PRICE) "Prix" else "Distance") },
+                        label = { Text(stringResource(if (mode == SortMode.PRICE) R.string.sort_price else R.string.sort_distance)) },
                     )
                 }
             }
@@ -180,7 +182,7 @@ private fun StationCard(
                 )
                 if (cheapest) {
                     Text(
-                        text = "Le moins cher",
+                        text = stringResource(R.string.cheapest),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.tertiary,
                         fontWeight = FontWeight.Bold,

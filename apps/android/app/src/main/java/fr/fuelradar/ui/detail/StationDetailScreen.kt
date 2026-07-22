@@ -42,8 +42,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import fr.fuelradar.R
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -135,7 +137,7 @@ fun StationDetailScreen(stationId: Long, onBack: () -> Unit) {
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Text("Station introuvable", style = MaterialTheme.typography.bodyLarge)
+                Text(stringResource(R.string.station_not_found), style = MaterialTheme.typography.bodyLarge)
             }
             return@Scaffold
         }
@@ -185,7 +187,7 @@ fun StationDetailScreen(stationId: Long, onBack: () -> Unit) {
                 modifier = Modifier.padding(horizontal = 16.dp),
             ) {
                 Icon(Icons.Filled.Place, contentDescription = null)
-                Text("  Itinéraire")
+                Text("  " + stringResource(R.string.directions))
             }
 
             // Availability chips.
@@ -198,7 +200,7 @@ fun StationDetailScreen(stationId: Long, onBack: () -> Unit) {
                         AssistChip(
                             onClick = {},
                             leadingIcon = { Icon(Icons.Filled.Schedule, contentDescription = null) },
-                            label = { Text("Ouvert 24h/24") },
+                            label = { Text(stringResource(R.string.open_24h)) },
                         )
                     }
                     st.services.orEmpty().forEach { svc ->
