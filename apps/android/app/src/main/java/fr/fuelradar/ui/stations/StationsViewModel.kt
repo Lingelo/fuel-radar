@@ -3,12 +3,15 @@ package fr.fuelradar.ui.stations
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import fr.fuelradar.data.ServiceLocator
+import fr.fuelradar.data.geo.AddressResult
 import fr.fuelradar.data.model.Station
 import fr.fuelradar.data.prefs.Filters
 import fr.fuelradar.data.prefs.SortMode
 import fr.fuelradar.domain.Coords
 import fr.fuelradar.domain.haversineKm
 import fr.fuelradar.domain.priceBounds
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,6 +34,7 @@ data class StationsUiState(
     val cheapestId: Long? = null,
     val filters: Filters = Filters(),
     val favorites: Set<Long> = emptySet(),
+    val suggestions: List<AddressResult> = emptyList(),
 )
 
 class StationsViewModel : ViewModel() {
@@ -57,8 +61,26 @@ class StationsViewModel : ViewModel() {
         }
     }
 
+    private var searchJob: Job? = null
+
     fun onQueryChange(q: String) {
         _state.value = _state.value.copy(query = q)
+        searchJob?.cancel()
+        if (q.trim().length < 2) {
+            _state.value = _state.value.copy(suggestions = emptyList())
+            return
+        }
+        searchJob = viewModelScope.launch {
+            delay(300)
+            _state.value = _state.value.copy(suggestions = geocoder.search(q))
+        }
+    }
+
+    fun selectSuggestion(hit: AddressResult) {
+        val label = listOf(hit.postcode, hit.city).filter { it.isNotBlank() }
+            .joinToString(" ").ifBlank { hit.label }
+        _state.value = _state.value.copy(query = label, suggestions = emptyList())
+        viewModelScope.launch { filtersStore.setLocation(hit.lat, hit.lng, label) }
     }
 
     fun search() {
@@ -66,10 +88,7 @@ class StationsViewModel : ViewModel() {
         if (q.length < 2) return
         viewModelScope.launch {
             val hit = geocoder.search(q).firstOrNull() ?: return@launch
-            val label = listOf(hit.postcode, hit.city).filter { it.isNotBlank() }
-                .joinToString(" ").ifBlank { hit.label }
-            // Shared, persisted across screens.
-            filtersStore.setLocation(hit.lat, hit.lng, label)
+            selectSuggestion(hit)
         }
     }
 

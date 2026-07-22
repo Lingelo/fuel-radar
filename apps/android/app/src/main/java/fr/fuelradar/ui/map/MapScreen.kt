@@ -6,6 +6,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -180,32 +182,42 @@ fun MapScreen(
             )
         }
 
-        Surface(
+        Column(
             modifier = Modifier.fillMaxWidth().padding(12.dp).align(Alignment.TopCenter),
-            shape = MaterialTheme.shapes.extraLarge,
-            tonalElevation = 3.dp,
-            shadowElevation = 3.dp,
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
+            Surface(
+                shape = MaterialTheme.shapes.extraLarge,
+                tonalElevation = 3.dp,
+                shadowElevation = 3.dp,
+                color = MaterialTheme.colorScheme.surface,
             ) {
-                OutlinedTextField(
-                    value = state.query,
-                    onValueChange = viewModel::onQueryChange,
-                    singleLine = true,
-                    leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                    placeholder = { Text(stringResource(R.string.search_hint)) },
-                    keyboardActions = androidx.compose.foundation.text.KeyboardActions(
-                        onSearch = { viewModel.search() },
-                    ),
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                        imeAction = androidx.compose.ui.text.input.ImeAction.Search,
-                    ),
-                    modifier = Modifier.weight(1f).padding(vertical = 4.dp),
+                fr.fuelradar.ui.common.AddressSearchBar(
+                    query = state.query,
+                    suggestions = state.suggestions,
+                    onQueryChange = viewModel::onQueryChange,
+                    onSelect = viewModel::selectSuggestion,
+                    onSearch = viewModel::search,
+                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+                    trailingIcon = {
+                        IconButton(onClick = { showFilters = true }) {
+                            Icon(Icons.Filled.Tune, contentDescription = stringResource(R.string.filters))
+                        }
+                    },
                 )
-                IconButton(onClick = { showFilters = true }) {
-                    Icon(Icons.Filled.Tune, contentDescription = stringResource(R.string.filters))
+            }
+            // Quick fuel pills (mirror of the web map).
+            Row(
+                modifier = Modifier.fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(top = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                fr.fuelradar.data.model.FuelType.entries.forEach { ft ->
+                    androidx.compose.material3.FilterChip(
+                        selected = state.filters.fuel == ft,
+                        onClick = { viewModel.applyFilters(state.filters.copy(fuel = ft)) },
+                        label = { Text(ft.label) },
+                    )
                 }
             }
         }

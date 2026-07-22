@@ -81,29 +81,19 @@ fun StationsScreen(
 
     Scaffold { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
-            Row(
+            fr.fuelradar.ui.common.AddressSearchBar(
+                query = state.query,
+                suggestions = state.suggestions,
+                onQueryChange = viewModel::onQueryChange,
+                onSelect = viewModel::selectSuggestion,
+                onSearch = viewModel::search,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                OutlinedTextField(
-                    value = state.query,
-                    onValueChange = viewModel::onQueryChange,
-                    singleLine = true,
-                    leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                    placeholder = { Text(stringResource(R.string.search_hint)) },
-                    keyboardActions = androidx.compose.foundation.text.KeyboardActions(
-                        onSearch = { viewModel.search() },
-                    ),
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                        imeAction = ImeAction.Search,
-                    ),
-                    modifier = Modifier.weight(1f),
-                )
-                IconButton(onClick = { showFilters = true }) {
-                    Icon(Icons.Filled.Tune, contentDescription = stringResource(R.string.filters))
-                }
-            }
+                trailingIcon = {
+                    IconButton(onClick = { showFilters = true }) {
+                        Icon(Icons.Filled.Tune, contentDescription = stringResource(R.string.filters))
+                    }
+                },
+            )
 
             Row(
                 modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
