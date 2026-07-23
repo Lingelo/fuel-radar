@@ -222,7 +222,7 @@ fun RouteScreen(
                         maxLines = 1,
                     )
                     Text(
-                        summary,
+                        "$summary · ${state.fuel.label}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

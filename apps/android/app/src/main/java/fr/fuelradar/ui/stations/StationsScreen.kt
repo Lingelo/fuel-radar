@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.LocalGasStation
+import androidx.compose.material.icons.filled.LocationDisabled
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.MyLocation
@@ -40,6 +41,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -95,12 +97,9 @@ fun StationsScreen(
 
     val context = LocalContext.current
     val fused = remember { LocationServices.getFusedLocationProviderClient(context) }
+    val locationGranted = fr.fuelradar.ui.common.rememberLocationGranted()
     fun fetchLocation() {
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            return
-        }
+        if (!fr.fuelradar.ui.common.hasFineLocation(context)) return
         runCatching {
             fused.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, CancellationTokenSource().token)
                 .addOnSuccessListener { loc ->
@@ -116,15 +115,13 @@ fun StationsScreen(
     }
     val permLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
-    ) { granted -> if (granted) fetchLocation() }
+    ) { granted ->
+        locationGranted.value = granted
+        if (granted) fetchLocation()
+    }
     val onLocateClick = {
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
-            == PackageManager.PERMISSION_GRANTED
-        ) {
-            fetchLocation()
-        } else {
-            permLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-        }
+        if (locationGranted.value) fetchLocation()
+        else permLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
     }
 
     if (showFilters) {
@@ -154,8 +151,11 @@ fun StationsScreen(
                         }
                         IconButton(onClick = onLocateClick) {
                             Icon(
-                                Icons.Filled.MyLocation,
+                                if (locationGranted.value) Icons.Filled.MyLocation
+                                else Icons.Filled.LocationDisabled,
                                 contentDescription = stringResource(R.string.locate_me),
+                                tint = if (locationGranted.value) LocalContentColor.current
+                                else MaterialTheme.colorScheme.error,
                             )
                         }
                         IconButton(onClick = { showFilters = true }) {
