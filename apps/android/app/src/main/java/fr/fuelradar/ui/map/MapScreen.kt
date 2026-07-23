@@ -161,11 +161,19 @@ fun MapScreen(
     // station set is always anchored on userLocation), so there is deliberately
     // no camera-driven reload here — that previously raced with the filters
     // update and left stale pins from the previous location.
+    // The first recenter (persisted location on launch) jumps instantly so the
+    // map doesn't visibly fly from the default Paris position each start; later
+    // recenters (search / locate) animate.
+    var firstCenter by remember { mutableStateOf(true) }
     LaunchedEffect(target) {
         target?.let {
-            cameraPositionState.animate(
-                CameraUpdateFactory.newLatLngZoom(LatLng(it.lat, it.lng), 12f),
-            )
+            val update = CameraUpdateFactory.newLatLngZoom(LatLng(it.lat, it.lng), 12f)
+            if (firstCenter) {
+                firstCenter = false
+                cameraPositionState.move(update)
+            } else {
+                cameraPositionState.animate(update)
+            }
             viewModel.consumeTarget()
         }
     }
