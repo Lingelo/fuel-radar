@@ -7,6 +7,7 @@ import fr.fuelradar.data.StationRepository
 import fr.fuelradar.data.model.Station
 import fr.fuelradar.data.net.RoutingApi
 import fr.fuelradar.domain.Coords
+import fr.fuelradar.domain.haversineKm
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
@@ -77,12 +78,32 @@ class RoutingRepository(
         }
         val corridorM = corridorKm * 1000.0
 
-        stations.stationsForDepts(depts.toList())
-            .asSequence()
+        val inCorridor = stations.stationsForDepts(depts.toList())
             .filter { it.fuels.containsKey(fuelCode) }
             .filter { PolyUtil.isLocationOnPath(LatLng(it.lat, it.lng), testRoute, false, corridorM) }
-            .sortedBy { it.fuels[fuelCode]?.p ?: Double.MAX_VALUE }
-            .take(max)
-            .toList()
+
+        // Spread the cap ALONG the route instead of taking the globally cheapest:
+        // bucket stations by their progress on the route and keep the cheapest of
+        // each bucket. Otherwise a whole cheap country (e.g. Spain on a FR→PT trip)
+        // would fill all the slots and hide the rest of the journey.
+        val lastIdx = testRoute.size - 1
+        val buckets = arrayOfNulls<Station>(max)
+        val bucketPrice = DoubleArray(max) { Double.MAX_VALUE }
+        for (st in inCorridor) {
+            val price = st.fuels[fuelCode]?.p ?: continue
+            var nearest = 0
+            var nearestKm = Double.MAX_VALUE
+            for (idx in testRoute.indices) {
+                val d = haversineKm(st.lat, st.lng, testRoute[idx].latitude, testRoute[idx].longitude)
+                if (d < nearestKm) { nearestKm = d; nearest = idx }
+            }
+            val b = if (lastIdx <= 0) 0
+            else (nearest.toDouble() / lastIdx * (max - 1)).toInt().coerceIn(0, max - 1)
+            if (price < bucketPrice[b]) {
+                bucketPrice[b] = price
+                buckets[b] = st
+            }
+        }
+        buckets.filterNotNull().sortedBy { it.fuels[fuelCode]?.p ?: Double.MAX_VALUE }
     }
 }
