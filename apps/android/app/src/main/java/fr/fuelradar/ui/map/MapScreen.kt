@@ -11,6 +11,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
@@ -28,14 +29,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.LocationDisabled
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Route
+import androidx.compose.material.icons.filled.TripOrigin
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.ElevatedFilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -56,6 +60,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -99,7 +104,6 @@ import fr.fuelradar.data.geo.AddressResult
 import fr.fuelradar.data.route.RouteState
 import fr.fuelradar.ui.common.AddressSearchBar
 import fr.fuelradar.ui.common.BrandLogo
-import fr.fuelradar.ui.common.FuelSelector
 import fr.fuelradar.ui.common.hasFineLocation
 import fr.fuelradar.ui.common.rememberLocationGranted
 import kotlinx.coroutines.flow.first
@@ -246,27 +250,31 @@ fun MapScreen(
                     color = MaterialTheme.colorScheme.primary,
                     width = 12f,
                 )
-                // #6: a pulse traveling from start to end, looping — a moving
-                // dot along the polyline, cheap to animate (native Circle).
+                // #6: a glowing segment traveling from start to end, looping — an
+                // animated "comet" drawn on top of the route line.
                 val pulse = rememberInfiniteTransition(label = "routePulse")
                 val t by pulse.animateFloat(
                     initialValue = 0f,
                     targetValue = 1f,
                     animationSpec = infiniteRepeatable(
-                        tween(2600, easing = LinearEasing),
+                        tween(2200, easing = LinearEasing),
                         RepeatMode.Restart,
                     ),
                     label = "t",
                 )
                 val pts = route.routePoints
-                val idx = (t * (pts.size - 1)).toInt().coerceIn(0, pts.size - 1)
-                Circle(
-                    center = LatLng(pts[idx].lat, pts[idx].lng),
-                    radius = 3500.0,
-                    fillColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
-                    strokeColor = MaterialTheme.colorScheme.primary,
-                    strokeWidth = 4f,
-                )
+                val n = pts.size
+                val head = (t * (n - 1)).toInt().coerceIn(0, n - 1)
+                val window = maxOf(2, n / 12)
+                val from = (head - window).coerceAtLeast(0)
+                val segment = pts.subList(from, head + 1).map { LatLng(it.lat, it.lng) }
+                if (segment.size >= 2) {
+                    Polyline(
+                        points = segment,
+                        color = MaterialTheme.colorScheme.tertiary,
+                        width = 18f,
+                    )
+                }
                 route.stations.take(MAX_PINS).forEach { rs ->
                     key(rs.station.id) {
                         val ms = rememberMarkerState(
@@ -280,6 +288,21 @@ fun MapScreen(
                             state = ms,
                             onClick = { onOpenStation(rs.station.id); true },
                         ) { PricePin(lbl, c) }
+                    }
+                }
+                // Start / end badges — clearly visible endpoints.
+                val sp = route.routePoints.first()
+                val ep = route.routePoints.last()
+                key("route-start") {
+                    val startState = rememberMarkerState(position = LatLng(sp.lat, sp.lng))
+                    MarkerComposable(keys = arrayOf("start", sp.lat, sp.lng), state = startState) {
+                        EndpointBadge(MaterialTheme.colorScheme.tertiary, Icons.Filled.TripOrigin)
+                    }
+                }
+                key("route-end") {
+                    val endState = rememberMarkerState(position = LatLng(ep.lat, ep.lng))
+                    MarkerComposable(keys = arrayOf("end", ep.lat, ep.lng), state = endState) {
+                        EndpointBadge(MaterialTheme.colorScheme.error, Icons.Filled.Flag)
                     }
                 }
             } else {
@@ -387,11 +410,8 @@ fun MapScreen(
                     )
                 }
             }
-            FuelSelector(
-                selected = state.filters.fuel,
-                onSelect = { viewModel.applyFilters(state.filters.copy(fuel = it)) },
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-            )
+            // Fuel is chosen entirely in the filter sheet (the Tune icon) to keep
+            // the map uncluttered.
         }
 
     }
@@ -567,6 +587,25 @@ private fun PricePin(priceLabel: String?, color: Color, scale: Float = 1f) {
             fontWeight = FontWeight.Bold,
             fontSize = 12.sp,
             modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
+        )
+    }
+}
+
+/** Circular start/end badge shown at the route endpoints. */
+@Composable
+private fun EndpointBadge(color: Color, icon: ImageVector) {
+    Surface(
+        color = color,
+        shape = CircleShape,
+        border = BorderStroke(3.dp, Color.White),
+        shadowElevation = 3.dp,
+        modifier = Modifier.size(34.dp),
+    ) {
+        Icon(
+            icon,
+            contentDescription = null,
+            tint = Color.White,
+            modifier = Modifier.padding(6.dp),
         )
     }
 }

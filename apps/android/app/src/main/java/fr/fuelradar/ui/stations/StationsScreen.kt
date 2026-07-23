@@ -165,11 +165,6 @@ fun StationsScreen(
                 },
             )
 
-            fr.fuelradar.ui.common.FuelSelector(
-                selected = state.filters.fuel,
-                onSelect = { viewModel.setFuel(it) },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-            )
 
             if (state.routeActive) {
                 // Route mode: the list is ordered by distance from the start, not

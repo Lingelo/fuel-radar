@@ -71,7 +71,15 @@ fun FilterSheet(
             }
 
             Text(stringResource(R.string.fuel), style = MaterialTheme.typography.titleMedium)
-            FuelSelector(selected = fuel, onSelect = { fuel = it })
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FuelType.entries.forEach { ft ->
+                    FilterChip(
+                        selected = fuel == ft,
+                        onClick = { fuel = ft },
+                        label = { Text(ft.label) },
+                    )
+                }
+            }
 
             HorizontalDivider()
 
