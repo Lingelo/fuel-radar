@@ -84,4 +84,15 @@
     <string name="lang_en">English</string>
     <string name="lang_es">Español</string>
     <string name="lang_pt">Português</string>
+    <string name="settings_search">Pesquisa</string>
+    <string name="stale_warning_desc">Assinala preços com mais de 48 h.</string>
+    <string name="current_position">Posição atual</string>
+    <string name="position_unknown">Posição desconhecida</string>
+    <string name="refresh">Atualizar</string>
+    <string name="settings_data">Dados</string>
+    <string name="settings_about">Sobre</string>
+    <string name="settings_about_text">O FuelRadar mostra os preços dos combustíveis em França, Espanha e Portugal a partir de dados públicos oficiais.</string>
+    <string name="designed_by">Concebido por %1$s.</string>
+    <string name="source_code">Código-fonte</string>
+    <string name="share_app_desc">Partilhe o FuelRadar com quem o rodeia.</string>
 </resources>

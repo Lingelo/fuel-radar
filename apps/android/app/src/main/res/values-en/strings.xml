@@ -84,4 +84,15 @@
     <string name="lang_en">English</string>
     <string name="lang_es">Español</string>
     <string name="lang_pt">Português</string>
+    <string name="settings_search">Search</string>
+    <string name="stale_warning_desc">Flags prices older than 48 h.</string>
+    <string name="current_position">Current position</string>
+    <string name="position_unknown">Unknown position</string>
+    <string name="refresh">Refresh</string>
+    <string name="settings_data">Data</string>
+    <string name="settings_about">About</string>
+    <string name="settings_about_text">FuelRadar shows fuel prices in France, Spain and Portugal from official public data.</string>
+    <string name="designed_by">Designed by %1$s.</string>
+    <string name="source_code">Source code</string>
+    <string name="share_app_desc">Share FuelRadar with people around you.</string>
 </resources>
