@@ -95,4 +95,5 @@
     <string name="designed_by">Diseñado por %1$s.</string>
     <string name="source_code">Código fuente</string>
     <string name="share_app_desc">Comparte FuelRadar con quienes te rodean.</string>
+    <string name="nat_suffix">(nac.)</string>
 </resources>

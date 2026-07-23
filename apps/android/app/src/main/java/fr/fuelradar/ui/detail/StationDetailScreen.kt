@@ -240,7 +240,11 @@ fun StationDetailScreen(stationId: Long, onBack: () -> Unit) {
                 available.forEach { fuel ->
                     val fp = st.fuels[fuel.code]!!
                     val selected = fuel == filters.fuel
-                    val delta = trendDelta(history[fuel.code])
+                    // Same source policy as the chart: the station's own series,
+                    // falling back to the country average when it has none.
+                    val stationSeries = history[fuel.code]
+                    val deltaFromNational = (stationSeries?.size ?: 0) < 2
+                    val delta = trendDelta(if (deltaFromNational) national[fuel.code] else stationSeries)
                     Row(
                         modifier = Modifier.fillMaxWidth()
                             .clip(RoundedCornerShape(10.dp))
@@ -282,7 +286,8 @@ fun StationDetailScreen(stationId: Long, onBack: () -> Unit) {
                                         modifier = Modifier.size(14.dp),
                                     )
                                     Text(
-                                        " ${formatPriceDelta(delta)}/sem",
+                                        " ${formatPriceDelta(delta)}/sem" +
+                                            if (deltaFromNational) " " + stringResource(R.string.nat_suffix) else "",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = if (delta < 0) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
