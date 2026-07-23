@@ -6,7 +6,11 @@ import fr.fuelradar.data.net.NetworkModule
 import fr.fuelradar.data.prefs.FavoritesStore
 import fr.fuelradar.data.prefs.FiltersStore
 import fr.fuelradar.data.prefs.SettingsStore
+import fr.fuelradar.data.route.RouteSession
 import fr.fuelradar.data.routing.RoutingRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
 /**
  * Minimal manual dependency container. Initialized once from the Application;
@@ -26,6 +30,11 @@ object ServiceLocator {
         private set
     lateinit var routing: RoutingRepository
         private set
+    lateinit var routeSession: RouteSession
+        private set
+
+    /** App-lifetime scope for shared session state (RouteSession). */
+    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     fun init(context: Context) {
         val network = NetworkModule(context)
@@ -35,5 +44,6 @@ object ServiceLocator {
         filters = FiltersStore(context)
         settings = SettingsStore(context)
         routing = RoutingRepository(network.routingApi, stations)
+        routeSession = RouteSession(routing, filters, appScope)
     }
 }

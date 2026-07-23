@@ -242,7 +242,7 @@ fun TrendsScreen(viewModel: TrendsViewModel = viewModel()) {
 
         // KPI cards (tap to toggle a fuel on/off in the chart).
         val kpiFuels = FuelType.entries
-            .filter { state.seriesFull[it.code]?.isNotEmpty() == true }
+            .filter { it.seriesIn(state.seriesFull)?.isNotEmpty() == true }
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),

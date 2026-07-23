@@ -231,20 +231,20 @@ fun StationDetailScreen(stationId: Long, onBack: () -> Unit) {
         }
 
         // Prices card — each fuel colored by tier (across this station's fuels).
-        val available = FuelType.entries.filter { st.fuels.containsKey(it.code) }
-        val ownPrices = available.mapNotNull { st.fuels[it.code]?.p }
+        val available = FuelType.entries.filter { it.availableIn(st.fuels) }
+        val ownPrices = available.mapNotNull { it.priceIn(st.fuels) }
         val (pMin, pMax) = priceBounds(ownPrices)
         DetailCard {
             SectionTitle(stringResource(R.string.current_prices))
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 available.forEach { fuel ->
-                    val fp = st.fuels[fuel.code]!!
+                    val fp = fuel.seriesIn(st.fuels)!!
                     val selected = fuel == filters.fuel
                     // Same source policy as the chart: the station's own series,
                     // falling back to the country average when it has none.
-                    val stationSeries = history[fuel.code]
+                    val stationSeries = fuel.seriesIn(history)
                     val deltaFromNational = (stationSeries?.size ?: 0) < 2
-                    val delta = trendDelta(if (deltaFromNational) national[fuel.code] else stationSeries)
+                    val delta = trendDelta(if (deltaFromNational) fuel.seriesIn(national) else stationSeries)
                     Row(
                         modifier = Modifier.fillMaxWidth()
                             .clip(RoundedCornerShape(10.dp))
@@ -308,9 +308,9 @@ fun StationDetailScreen(stationId: Long, onBack: () -> Unit) {
         // Trend card — interactive chart for the selected fuel.
         DetailCard {
             SectionTitle(stringResource(R.string.trend_title, filters.fuel.label))
-            val stationRaw = history[filters.fuel.code].orEmpty()
+            val stationRaw = filters.fuel.seriesIn(history).orEmpty()
             val useNational = stationRaw.size < 2
-            val raw = (if (useNational) national[filters.fuel.code].orEmpty() else stationRaw).takeLast(30)
+            val raw = (if (useNational) filters.fuel.seriesIn(national).orEmpty() else stationRaw).takeLast(30)
             val series = raw.map { it.getOrElse(1) { 0.0 } to it.getOrElse(0) { 0.0 } }
             if (series.size < 2) {
                 Text(
@@ -515,7 +515,7 @@ private fun shortDate(epoch: Long): String {
 }
 
 private fun shareStation(context: android.content.Context, st: Station, fuel: FuelType) {
-    val price = st.fuels[fuel.code]?.p
+    val price = fuel.priceIn(st.fuels)
     val priceLine = if (price != null) "${fuel.label} : ${formatPrice(price)} €\n" else ""
     val text = buildString {
         append(st.brand ?: "Station"); append("\n")

@@ -85,7 +85,7 @@ class FavoritesViewModel : ViewModel() {
                 val rows = ids.mapNotNull { repo.findCached(it) }.map { st ->
                     FavRow(
                         station = st,
-                        price = st.fuels[f.fuel.code]?.p,
+                        price = f.fuel.priceIn(st.fuels),
                         distanceKm = loc?.let { haversineKm(it.lat, it.lng, st.lat, st.lng) },
                     )
                 }.let { list ->
@@ -106,6 +106,14 @@ class FavoritesViewModel : ViewModel() {
 
     fun setLocation(lat: Double, lng: Double, label: String?) {
         viewModelScope.launch { filtersStore.setLocation(lat, lng, label) }
+    }
+
+    /** "View on map": recenter on the station AND flag it to be highlighted. */
+    fun focusOnMap(station: fr.fuelradar.data.model.Station) {
+        viewModelScope.launch {
+            filtersStore.setLocation(station.lat, station.lng, "${station.cp} ${station.city}")
+            filtersStore.setFocusStation(station.id)
+        }
     }
 }
 
@@ -144,7 +152,7 @@ fun FavoritesScreen(
                 items(state.rows, key = { it.station.id }) { row ->
                     val color = row.price?.let { priceColor(it, state.pMin, state.pMax) }
                         ?: MaterialTheme.colorScheme.onSurfaceVariant
-                    val d = row.station.fuels[state.fuel.code]?.d
+                    val d = state.fuel.dateIn(row.station.fuels)
                     val stale = settings.staleWarning && d != null && isStale(d)
                     val updated = d?.let { stringResource(R.string.updated, relativeTime(it)) }
                     StationCard(
@@ -158,11 +166,7 @@ fun FavoritesScreen(
                         updatedLabel = updated,
                         onToggleFavorite = { viewModel.toggleFavorite(row.station.id) },
                         onViewMap = {
-                            viewModel.setLocation(
-                                row.station.lat,
-                                row.station.lng,
-                                "${row.station.cp} ${row.station.city}",
-                            )
+                            viewModel.focusOnMap(row.station)
                             onOpenMap()
                         },
                         onClick = { onOpenStation(row.station.id) },

@@ -15,6 +15,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 data class StationRow(
@@ -35,6 +36,9 @@ data class StationsUiState(
     val filters: Filters = Filters(),
     val favorites: Set<Long> = emptySet(),
     val suggestions: List<AddressResult> = emptyList(),
+    /** True when a route is active: the list shows stations along the trip,
+     *  ordered by distance from the start (not by price). */
+    val routeActive: Boolean = false,
 )
 
 class StationsViewModel : ViewModel() {
@@ -43,6 +47,7 @@ class StationsViewModel : ViewModel() {
     private val geocoder = ServiceLocator.geocoder
     private val favStore = ServiceLocator.favorites
     private val filtersStore = ServiceLocator.filters
+    private val routeSession = ServiceLocator.routeSession
 
     private val _state = MutableStateFlow(StationsUiState())
     val state: StateFlow<StationsUiState> = _state.asStateFlow()
@@ -51,15 +56,19 @@ class StationsViewModel : ViewModel() {
 
     init {
         viewModelScope.launch {
-            filtersStore.filters.collect { f ->
-                _state.value = _state.value.copy(filters = f)
-                // Keep the search field in sync with the shared address label.
-                if (f.searchLabel != null && f.searchLabel != lastLabel) {
-                    lastLabel = f.searchLabel
-                    _state.value = _state.value.copy(query = f.searchLabel)
+            // The list is a mode-aware view of the same data as the map: when a
+            // route is active it shows the stations along the trip; otherwise the
+            // stations around the searched/located position.
+            combine(filtersStore.filters, routeSession.state) { f, r -> f to r }
+                .collect { (f, r) ->
+                    _state.value = _state.value.copy(filters = f)
+                    // Keep the search field in sync with the shared address label.
+                    if (f.searchLabel != null && f.searchLabel != lastLabel) {
+                        lastLabel = f.searchLabel
+                        _state.value = _state.value.copy(query = f.searchLabel)
+                    }
+                    if (r.active && r.hasRoute) showRoute(r) else reload()
                 }
-                reload()
-            }
         }
         viewModelScope.launch {
             favStore.ids.collect { ids ->
@@ -103,6 +112,14 @@ class StationsViewModel : ViewModel() {
         viewModelScope.launch { filtersStore.setLocation(lat, lng, label) }
     }
 
+    /** "View on map": recenter on the station AND flag it to be highlighted. */
+    fun focusOnMap(station: Station) {
+        viewModelScope.launch {
+            filtersStore.setLocation(station.lat, station.lng, "${station.cp} ${station.city}")
+            filtersStore.setFocusStation(station.id)
+        }
+    }
+
     /** Device geolocation resolved -> reverse-geocode a label and share it. */
     fun onLocated(lat: Double, lng: Double) {
         viewModelScope.launch {
@@ -135,7 +152,7 @@ class StationsViewModel : ViewModel() {
         _state.value = s.copy(loading = true)
         val center = s.filters.userLocation ?: Coords(48.8566, 2.3522)
         val label = s.filters.searchLabel ?: "Paris"
-        val fuelCode = s.filters.fuel.code
+        val fuel = s.filters.fuel
         val all = repo.nearby(center.lat, center.lng, s.filters.radiusKm.toDouble())
         val rows = all
             .asSequence()
@@ -145,7 +162,7 @@ class StationsViewModel : ViewModel() {
                 StationRow(
                     station = st,
                     distanceKm = haversineKm(center.lat, center.lng, st.lat, st.lng),
-                    price = st.fuels[fuelCode]?.p,
+                    price = fuel.priceIn(st.fuels),
                 )
             }
             .filter { it.price != null }
@@ -167,6 +184,21 @@ class StationsViewModel : ViewModel() {
             cheapestId = cheapestId,
             center = center,
             locationLabel = label,
+            routeActive = false,
+        )
+    }
+
+    /** Route mode: show the stations along the trip, already sorted by progression
+     *  from the start (nearest first) — a route is about distance, not price. */
+    private fun showRoute(r: fr.fuelradar.data.route.RouteState) {
+        _state.value = _state.value.copy(
+            loading = false,
+            routeActive = true,
+            rows = r.stations.map { StationRow(it.station, it.distanceKm ?: 0.0, it.price) },
+            pMin = r.pMin,
+            pMax = r.pMax,
+            cheapestId = r.cheapestId,
+            locationLabel = r.startLabel.ifBlank { _state.value.locationLabel },
         )
     }
 }

@@ -75,12 +75,13 @@ fun AppNav() {
                     NavigationBarItem(
                         selected = selected,
                         onClick = {
+                            // Always land on the tab's root: pop back to the graph
+                            // start and drop any detail/route screen sitting on top.
+                            // No saveState/restoreState — otherwise re-tapping a tab
+                            // would restore a detail page instead of the tab root.
                             navController.navigate(tab.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
+                                popUpTo(navController.graph.findStartDestination().id)
                                 launchSingleTop = true
-                                restoreState = true
                             }
                         },
                         icon = { Icon(tab.icon, contentDescription = label) },
@@ -98,24 +99,23 @@ fun AppNav() {
             composable(Tab.Map.route) {
                 MapScreen(
                     onOpenStation = { id -> navController.navigate("details/$id") },
-                    onOpenRoute = { navController.navigate("route") },
-                )
-            }
-            composable("route") {
-                fr.fuelradar.ui.route.RouteScreen(
-                    onBack = { navController.popBackStack() },
-                    onOpenStation = { id -> navController.navigate("details/$id") },
                 )
             }
             composable(Tab.Stations.route) {
                 StationsScreen(
                     onOpenStation = { id -> navController.navigate("details/$id") },
-                    onOpenRoute = { navController.navigate("route") },
+                    onOpenRoute = {
+                        // Route is a mode of the map: activate it and switch there.
+                        ServiceLocator.routeSession.activate()
+                        navController.navigate(Tab.Map.route) {
+                            popUpTo(navController.graph.findStartDestination().id)
+                            launchSingleTop = true
+                        }
+                    },
                     onOpenMap = {
                         navController.navigate(Tab.Map.route) {
-                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            popUpTo(navController.graph.findStartDestination().id)
                             launchSingleTop = true
-                            restoreState = true
                         }
                     },
                 )
@@ -125,9 +125,8 @@ fun AppNav() {
                     onOpenStation = { id -> navController.navigate("details/$id") },
                     onOpenMap = {
                         navController.navigate(Tab.Map.route) {
-                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            popUpTo(navController.graph.findStartDestination().id)
                             launchSingleTop = true
-                            restoreState = true
                         }
                     },
                 )

@@ -107,7 +107,7 @@ fun StationCard(
                             }
                         }
                         val others = FuelType.entries
-                            .filter { it != selectedFuel && station.fuels.containsKey(it.code) }
+                            .filter { it != selectedFuel && it.availableIn(station.fuels) }
                             .take(3)
                         if (others.isNotEmpty()) {
                             FlowRow(
@@ -121,7 +121,7 @@ fun StationCard(
                                         shape = RoundedCornerShape(6.dp),
                                     ) {
                                         Text(
-                                            "${ft.label} ${formatPrice(station.fuels[ft.code]!!.p)} €",
+                                            "${ft.label} ${formatPrice(ft.priceIn(station.fuels)!!)} €",
                                             style = MaterialTheme.typography.labelSmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
