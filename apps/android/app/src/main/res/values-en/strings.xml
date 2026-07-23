@@ -97,4 +97,14 @@
     <string name="share_app_desc">Share FuelRadar with people around you.</string>
     <string name="nat_suffix">(nat.)</string>
     <string name="app_tagline">Fuel prices · FR · ES · PT</string>
+    <string name="route_title">Route</string>
+    <string name="route_start">Start</string>
+    <string name="route_end">Destination</string>
+    <string name="route_corridor">Distance to route</string>
+    <string name="route_show_list">Show list</string>
+    <string name="route_show_map">Show map</string>
+    <string name="route_summary">%1$s · %2$d min · %3$d stations</string>
+    <string name="route_error">Route unavailable. Try again.</string>
+    <string name="route_hint">Enter a start and destination to see stations along the route.</string>
+    <string name="route_no_result">No station in this corridor. Widen the distance.</string>
 </resources>

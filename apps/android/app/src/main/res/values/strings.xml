@@ -105,4 +105,14 @@
     <string name="share_app_desc">Partagez FuelRadar avec vos proches.</string>
     <string name="nat_suffix">(nat.)</string>
     <string name="app_tagline">Prix des carburants · FR · ES · PT</string>
+    <string name="route_title">Itinéraire</string>
+    <string name="route_start">Départ</string>
+    <string name="route_end">Arrivée</string>
+    <string name="route_corridor">Distance au trajet</string>
+    <string name="route_show_list">Voir en liste</string>
+    <string name="route_show_map">Voir sur la carte</string>
+    <string name="route_summary">%1$s · %2$d min · %3$d stations</string>
+    <string name="route_error">Itinéraire indisponible. Réessayez.</string>
+    <string name="route_hint">Saisissez un départ et une arrivée pour voir les stations le long du trajet.</string>
+    <string name="route_no_result">Aucune station dans ce couloir. Élargissez la distance.</string>
 </resources>

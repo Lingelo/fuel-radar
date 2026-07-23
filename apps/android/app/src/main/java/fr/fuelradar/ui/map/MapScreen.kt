@@ -31,6 +31,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationDisabled
 import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.Route
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.ElevatedFilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -98,6 +99,7 @@ private const val MAX_PINS = 150
 @Composable
 fun MapScreen(
     onOpenStation: (Long) -> Unit,
+    onOpenRoute: () -> Unit = {},
     viewModel: MapViewModel = viewModel(),
 ) {
     if (BuildConfig.MAPS_API_KEY.isBlank()) {
@@ -274,6 +276,9 @@ fun MapScreen(
                     modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
                     trailingIcon = {
                         Row {
+                            IconButton(onClick = onOpenRoute) {
+                                Icon(Icons.Filled.Route, contentDescription = stringResource(R.string.route_title))
+                            }
                             IconButton(onClick = onLocateClick) {
                                 Icon(
                                     if (locationGranted.value) Icons.Filled.MyLocation

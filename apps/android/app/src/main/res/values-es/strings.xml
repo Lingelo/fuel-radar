@@ -97,4 +97,14 @@
     <string name="share_app_desc">Comparte FuelRadar con quienes te rodean.</string>
     <string name="nat_suffix">(nac.)</string>
     <string name="app_tagline">Precios de combustible · FR · ES · PT</string>
+    <string name="route_title">Ruta</string>
+    <string name="route_start">Salida</string>
+    <string name="route_end">Destino</string>
+    <string name="route_corridor">Distancia a la ruta</string>
+    <string name="route_show_list">Ver lista</string>
+    <string name="route_show_map">Ver mapa</string>
+    <string name="route_summary">%1$s · %2$d min · %3$d estaciones</string>
+    <string name="route_error">Ruta no disponible. Inténtalo de nuevo.</string>
+    <string name="route_hint">Introduce salida y destino para ver las gasolineras a lo largo de la ruta.</string>
+    <string name="route_no_result">Ninguna gasolinera en este corredor. Amplía la distancia.</string>
 </resources>

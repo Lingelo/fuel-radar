@@ -58,6 +58,14 @@ class NetworkModule(context: Context) {
         .build()
         .create(GeocodeApi::class.java)
 
+    val routingApi: RoutingApi = Retrofit.Builder()
+        // baseUrl is required but overridden by @Url on every call.
+        .baseUrl("https://router.project-osrm.org/")
+        .client(client)
+        .addConverterFactory(converter)
+        .build()
+        .create(RoutingApi::class.java)
+
     private companion object {
         const val MAX_CACHE_BYTES = 50L * 1024 * 1024
     }

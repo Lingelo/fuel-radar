@@ -96,7 +96,16 @@ fun AppNav() {
             modifier = Modifier.padding(innerPadding),
         ) {
             composable(Tab.Map.route) {
-                MapScreen(onOpenStation = { id -> navController.navigate("details/$id") })
+                MapScreen(
+                    onOpenStation = { id -> navController.navigate("details/$id") },
+                    onOpenRoute = { navController.navigate("route") },
+                )
+            }
+            composable("route") {
+                fr.fuelradar.ui.route.RouteScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenStation = { id -> navController.navigate("details/$id") },
+                )
             }
             composable(Tab.Stations.route) {
                 StationsScreen(

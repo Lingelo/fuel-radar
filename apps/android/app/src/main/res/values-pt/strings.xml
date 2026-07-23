@@ -97,4 +97,14 @@
     <string name="share_app_desc">Partilhe o FuelRadar com quem o rodeia.</string>
     <string name="nat_suffix">(nac.)</string>
     <string name="app_tagline">Preços dos combustíveis · FR · ES · PT</string>
+    <string name="route_title">Rota</string>
+    <string name="route_start">Partida</string>
+    <string name="route_end">Destino</string>
+    <string name="route_corridor">Distância à rota</string>
+    <string name="route_show_list">Ver lista</string>
+    <string name="route_show_map">Ver mapa</string>
+    <string name="route_summary">%1$s · %2$d min · %3$d estações</string>
+    <string name="route_error">Rota indisponível. Tente novamente.</string>
+    <string name="route_hint">Introduza partida e destino para ver os postos ao longo da rota.</string>
+    <string name="route_no_result">Nenhum posto neste corredor. Aumente a distância.</string>
 </resources>
