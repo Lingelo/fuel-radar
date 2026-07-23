@@ -13,6 +13,8 @@ import fr.fuelradar.data.model.FuelType
 import fr.fuelradar.domain.Coords
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 
 private val Context.filtersDataStore: DataStore<Preferences> by preferencesDataStore("filters")
@@ -51,6 +53,11 @@ class FiltersStore(context: Context) {
     )
 
     private val sessionLocation = MutableStateFlow(SessionLocation())
+
+    /** Station to briefly highlight on the map after "view on map" (session-only). */
+    private val focusId = MutableStateFlow<Long?>(null)
+    val focusStationId: StateFlow<Long?> = focusId.asStateFlow()
+    fun setFocusStation(id: Long?) { focusId.value = id }
 
     val filters: Flow<Filters> = combine(store.data, sessionLocation) { p, loc ->
         Filters(

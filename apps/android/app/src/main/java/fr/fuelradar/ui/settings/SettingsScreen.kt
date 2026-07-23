@@ -73,7 +73,6 @@ private val LANGUAGES = listOf(
 
 private const val PRIVACY_URL = "https://lingelo.github.io/fuel-radar/privacy.html"
 private const val APP_URL = "https://lingelo.github.io/fuel-radar/"
-private const val SOURCE_URL = "https://github.com/Lingelo/fuel-radar"
 private const val AUTHOR_URL = "https://angelo-lima.fr"
 
 @Composable
@@ -254,20 +253,6 @@ fun SettingsScreen() {
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.fillMaxWidth().clickable { openUrl(context, AUTHOR_URL) }.padding(vertical = 6.dp),
             )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth().clickable { openUrl(context, SOURCE_URL) }.padding(vertical = 6.dp),
-            ) {
-                Icon(
-                    Icons.AutoMirrored.Filled.OpenInNew, null,
-                    tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp),
-                )
-                Text(
-                    "  " + stringResource(R.string.source_code),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
             Text(
                 stringResource(R.string.privacy_policy),
                 style = MaterialTheme.typography.bodyMedium,

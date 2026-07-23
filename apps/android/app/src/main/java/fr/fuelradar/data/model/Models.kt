@@ -56,19 +56,49 @@ data class CountriesHistory(
     val updated: String? = null,
 )
 
+/** High-level fuel family, for the two-level filter (family → fuel). */
+enum class FuelFamily(val label: String) {
+    ESSENCE("Essence"),
+    DIESEL("Diesel"),
+    GPL("GPL"),
+}
+
 /**
- * Fuel types in display order (mirror of FUEL_TYPES / FUEL_LABELS). `code` is
- * the JSON/data key; `label` is the user-facing name (E10 shows as SP95-E10).
+ * Fuel types in display order. A type maps to one or MORE data codes: "Sans-plomb
+ * 95" covers both `SP95` and `E10` (SP95-E10) because they are the same 95-octane
+ * petrol labelled differently across countries (France uses E10, Spain/Portugal
+ * SP95). Matching all codes is what makes a fuel choice work on a cross-border trip.
  */
-enum class FuelType(val code: String, val label: String) {
-    GAZOLE("Gazole", "Gazole"),
-    SP95("SP95", "SP95"),
-    E10("E10", "SP95-E10"),
-    SP98("SP98", "SP98"),
-    E85("E85", "E85"),
-    GPLC("GPLc", "GPLc");
+enum class FuelType(
+    val codes: List<String>,
+    val label: String,
+    val family: FuelFamily,
+) {
+    GAZOLE(listOf("Gazole"), "Gazole", FuelFamily.DIESEL),
+    SP95(listOf("SP95", "E10"), "Sans-plomb 95", FuelFamily.ESSENCE),
+    SP98(listOf("SP98"), "SP98", FuelFamily.ESSENCE),
+    E85(listOf("E85"), "E85", FuelFamily.ESSENCE),
+    GPLC(listOf("GPLc"), "GPLc", FuelFamily.GPL);
+
+    /** Primary code — used for persistence and history lookups. */
+    val code: String get() = codes.first()
+
+    /** Price for this fuel in a station's [fuels] map, trying every code. */
+    fun priceIn(fuels: Map<String, FuelPrice>): Double? =
+        codes.firstNotNullOfOrNull { fuels[it]?.p }
+
+    /** Last-update date for this fuel, trying every code. */
+    fun dateIn(fuels: Map<String, FuelPrice>): String? =
+        codes.firstNotNullOfOrNull { fuels[it]?.d }
+
+    /** True if the station sells this fuel under any of its codes. */
+    fun availableIn(fuels: Map<String, FuelPrice>): Boolean =
+        codes.any { fuels.containsKey(it) }
+
+    /** Value from a by-code map (e.g. a history series), trying every code. */
+    fun <T> seriesIn(byCode: Map<String, T>): T? = codes.firstNotNullOfOrNull { byCode[it] }
 
     companion object {
-        fun fromCode(code: String): FuelType? = entries.firstOrNull { it.code == code }
+        fun fromCode(code: String): FuelType? = entries.firstOrNull { code in it.codes }
     }
 }

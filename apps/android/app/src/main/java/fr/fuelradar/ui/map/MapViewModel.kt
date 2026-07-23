@@ -46,13 +46,28 @@ data class MapUiState(
     val cheapestId: Long? = null,
 )
 
+/** Start/end search fields for the route mode overlay (suggestions per field). */
+data class RouteInputState(
+    val startQuery: String = "",
+    val endQuery: String = "",
+    val startSuggestions: List<AddressResult> = emptyList(),
+    val endSuggestions: List<AddressResult> = emptyList(),
+)
+
 class MapViewModel : ViewModel() {
     private val repo = ServiceLocator.stations
     private val geocoder = ServiceLocator.geocoder
     private val filtersStore = ServiceLocator.filters
+    private val routeSession = ServiceLocator.routeSession
 
     private val _state = MutableStateFlow(MapUiState())
     val state: StateFlow<MapUiState> = _state.asStateFlow()
+
+    /** Shared route state (map is a mode of the map — see RouteSession). */
+    val routeState = routeSession.state
+
+    private val _routeInput = MutableStateFlow(RouteInputState())
+    val routeInput: StateFlow<RouteInputState> = _routeInput.asStateFlow()
 
     /** Set when a search resolves; the screen animates the camera here. */
     private val _target = MutableStateFlow<Coords?>(null)
@@ -146,6 +161,73 @@ class MapViewModel : ViewModel() {
         viewModelScope.launch { filtersStore.apply(filters) }
     }
 
+    // --- Route mode (the route is a mode of the map, see RouteSession) ---
+
+    private var startJob: Job? = null
+    private var endJob: Job? = null
+
+    /** Enter route mode; pre-fill the start with the current location if known. */
+    fun enterRouteMode() {
+        routeSession.activate()
+        viewModelScope.launch {
+            val f = filtersStore.filters.first()
+            val loc = f.userLocation
+            if (routeState.value.start == null && loc != null) {
+                val label = f.searchLabel.orEmpty()
+                routeSession.setStart(loc, label)
+                _routeInput.value = _routeInput.value.copy(startQuery = label)
+            }
+        }
+    }
+
+    fun exitRouteMode() {
+        routeSession.deactivate()
+    }
+
+    fun onRouteStartQueryChange(q: String) {
+        _routeInput.value = _routeInput.value.copy(startQuery = q)
+        startJob?.cancel()
+        if (q.trim().length < 2) {
+            _routeInput.value = _routeInput.value.copy(startSuggestions = emptyList())
+            return
+        }
+        startJob = viewModelScope.launch {
+            delay(300)
+            _routeInput.value = _routeInput.value.copy(startSuggestions = geocoder.search(q))
+        }
+    }
+
+    fun onRouteEndQueryChange(q: String) {
+        _routeInput.value = _routeInput.value.copy(endQuery = q)
+        endJob?.cancel()
+        if (q.trim().length < 2) {
+            _routeInput.value = _routeInput.value.copy(endSuggestions = emptyList())
+            return
+        }
+        endJob = viewModelScope.launch {
+            delay(300)
+            _routeInput.value = _routeInput.value.copy(endSuggestions = geocoder.search(q))
+        }
+    }
+
+    fun selectRouteStart(hit: AddressResult) {
+        val label = labelOf(hit)
+        _routeInput.value = _routeInput.value.copy(startQuery = label, startSuggestions = emptyList())
+        routeSession.setStart(Coords(hit.lat, hit.lng), label)
+    }
+
+    fun selectRouteEnd(hit: AddressResult) {
+        val label = labelOf(hit)
+        _routeInput.value = _routeInput.value.copy(endQuery = label, endSuggestions = emptyList())
+        routeSession.setEnd(Coords(hit.lat, hit.lng), label)
+    }
+
+    fun setRouteCorridor(km: Int) = routeSession.setCorridor(km)
+
+    private fun labelOf(hit: AddressResult): String =
+        listOf(hit.postcode, hit.city).filter { it.isNotBlank() }.joinToString(" ")
+            .ifBlank { hit.label }
+
     /** [lat]/[lng] is the current camera target (browse mode fallback). The
      *  circle + station set are anchored to the searched/located point when set. */
     fun load(lat: Double, lng: Double) {
@@ -157,13 +239,13 @@ class MapViewModel : ViewModel() {
             val anchor = filters.userLocation ?: Coords(48.8566, 2.3522)
             val r = filters.radiusKm.toDouble()
             _state.value = _state.value.copy(loading = true)
-            val fuelCode = filters.fuel.code
+            val fuel = filters.fuel
             val stations = repo.nearby(anchor.lat, anchor.lng, r)
                 .filter { haversineKm(anchor.lat, anchor.lng, it.lat, it.lng) <= r }
-                .filter { it.fuels.containsKey(fuelCode) } // only stations selling the selected fuel
+                .filter { fuel.availableIn(it.fuels) } // only stations selling the selected fuel
                 .filter { filters.brands.isEmpty() || (it.brand != null && filters.brands.contains(it.brand)) }
                 .filter { !filters.openH24Only || it.h24 == true }
-            val items = stations.map { StationClusterItem(it, it.fuels[fuelCode]?.p) }
+            val items = stations.map { StationClusterItem(it, fuel.priceIn(it.fuels)) }
             val prices = items.mapNotNull { it.price }
             val (pMin, pMax) = priceBounds(prices)
             val cheapestId = items.filter { it.price != null }

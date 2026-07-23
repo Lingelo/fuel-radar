@@ -165,30 +165,39 @@ fun StationsScreen(
                 },
             )
 
-            Row(
-                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                FuelType.entries.forEach { fuel ->
-                    FilterChip(
-                        selected = state.filters.fuel == fuel,
-                        onClick = { viewModel.setFuel(fuel) },
-                        label = { Text(fuel.label) },
+
+            if (state.routeActive) {
+                // Route mode: the list is ordered by distance from the start, not
+                // price — make that explicit instead of showing the sort chips.
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        Icons.Filled.Route,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Text(
+                        "${stringResource(R.string.route_title)} · ${stringResource(R.string.sort_distance)}",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 6.dp),
                     )
                 }
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                SortMode.entries.forEach { mode ->
-                    FilterChip(
-                        selected = state.filters.sort == mode,
-                        onClick = { viewModel.setSort(mode) },
-                        label = { Text(stringResource(if (mode == SortMode.PRICE) R.string.sort_price else R.string.sort_distance)) },
-                    )
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    SortMode.entries.forEach { mode ->
+                        FilterChip(
+                            selected = state.filters.sort == mode,
+                            onClick = { viewModel.setSort(mode) },
+                            label = { Text(stringResource(if (mode == SortMode.PRICE) R.string.sort_price else R.string.sort_distance)) },
+                        )
+                    }
                 }
             }
 
@@ -200,7 +209,7 @@ fun StationsScreen(
                 items(state.rows, key = { it.station.id }) { row ->
                     val color = row.price?.let { priceColor(it, state.pMin, state.pMax) }
                         ?: MaterialTheme.colorScheme.onSurfaceVariant
-                    val d = row.station.fuels[state.filters.fuel.code]?.d
+                    val d = state.filters.fuel.dateIn(row.station.fuels)
                     val stale = settings.staleWarning && d != null && isStale(d)
                     val updated = d?.let { stringResource(R.string.updated, relativeTime(it)) }
                     fr.fuelradar.ui.common.StationCard(
@@ -215,11 +224,7 @@ fun StationsScreen(
                         updatedLabel = updated,
                         onToggleFavorite = { viewModel.toggleFavorite(row.station.id) },
                         onViewMap = {
-                            viewModel.setLocation(
-                                row.station.lat,
-                                row.station.lng,
-                                "${row.station.cp} ${row.station.city}",
-                            )
+                            viewModel.focusOnMap(row.station)
                             onOpenMap()
                         },
                         onClick = { onOpenStation(row.station.id) },

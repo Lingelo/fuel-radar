@@ -5,11 +5,13 @@ import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
@@ -27,11 +29,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.LocationDisabled
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Route
+import androidx.compose.material.icons.filled.TripOrigin
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.ElevatedFilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -52,12 +60,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -71,11 +82,14 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.maps.android.compose.Circle
 import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.MapsComposeExperimentalApi
 import com.google.maps.android.compose.MarkerComposable
+import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberMarkerState
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import fr.fuelradar.BuildConfig
 import fr.fuelradar.R
@@ -86,6 +100,8 @@ import fr.fuelradar.domain.formatPriceEuro
 import fr.fuelradar.domain.haversineKm
 import fr.fuelradar.domain.priceColor
 import fr.fuelradar.data.ServiceLocator
+import fr.fuelradar.data.geo.AddressResult
+import fr.fuelradar.data.route.RouteState
 import fr.fuelradar.ui.common.AddressSearchBar
 import fr.fuelradar.ui.common.BrandLogo
 import fr.fuelradar.ui.common.hasFineLocation
@@ -99,7 +115,6 @@ private const val MAX_PINS = 150
 @Composable
 fun MapScreen(
     onOpenStation: (Long) -> Unit,
-    onOpenRoute: () -> Unit = {},
     viewModel: MapViewModel = viewModel(),
 ) {
     if (BuildConfig.MAPS_API_KEY.isBlank()) {
@@ -121,6 +136,16 @@ fun MapScreen(
     val context = LocalContext.current
     val state by viewModel.state.collectAsStateWithLifecycle()
     val target by viewModel.target.collectAsStateWithLifecycle()
+    val route by viewModel.routeState.collectAsStateWithLifecycle()
+    val routeInput by viewModel.routeInput.collectAsStateWithLifecycle()
+    // Station flagged by "view on map": bounce its pin, then release after a moment.
+    val focusId by ServiceLocator.filters.focusStationId.collectAsStateWithLifecycle(null)
+    LaunchedEffect(focusId) {
+        if (focusId != null) {
+            delay(4500)
+            ServiceLocator.filters.setFocusStation(null)
+        }
+    }
     var showFilters by remember { mutableStateOf(false) }
     // Cold-start framing (no saved location yet): a wide Western-Europe view
     // covering France, Spain and Portugal. Once a location is known the camera
@@ -190,10 +215,24 @@ fun MapScreen(
         }
     }
 
+    // In route mode, frame the WHOLE trip (start → end) so the user sees stations
+    // across every country crossed, not just around the start.
+    LaunchedEffect(route.routePoints) {
+        if (route.routePoints.size >= 2) {
+            val b = com.google.android.gms.maps.model.LatLngBounds.builder()
+            route.routePoints.forEach { b.include(LatLng(it.lat, it.lng)) }
+            runCatching {
+                cameraPositionState.animate(CameraUpdateFactory.newLatLngBounds(b.build(), 120))
+            }
+        }
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
+            // Native blue "my location" dot so the user sees where they are (#7).
+            properties = MapProperties(isMyLocationEnabled = locationGranted.value),
             uiSettings = MapUiSettings(
                 zoomControlsEnabled = false,
                 mapToolbarEnabled = false,
@@ -204,6 +243,69 @@ fun MapScreen(
                 tiltGesturesEnabled = false,
             ),
         ) {
+            if (route.active && route.hasRoute) {
+                // Route mode: the trip line + the stations selected along it.
+                Polyline(
+                    points = route.routePoints.map { LatLng(it.lat, it.lng) },
+                    color = MaterialTheme.colorScheme.primary,
+                    width = 12f,
+                )
+                // #6: a glowing segment traveling from start to end, looping — an
+                // animated "comet" drawn on top of the route line.
+                val pulse = rememberInfiniteTransition(label = "routePulse")
+                val t by pulse.animateFloat(
+                    initialValue = 0f,
+                    targetValue = 1f,
+                    animationSpec = infiniteRepeatable(
+                        tween(2200, easing = LinearEasing),
+                        RepeatMode.Restart,
+                    ),
+                    label = "t",
+                )
+                val pts = route.routePoints
+                val n = pts.size
+                val head = (t * (n - 1)).toInt().coerceIn(0, n - 1)
+                val window = maxOf(2, n / 12)
+                val from = (head - window).coerceAtLeast(0)
+                val segment = pts.subList(from, head + 1).map { LatLng(it.lat, it.lng) }
+                if (segment.size >= 2) {
+                    Polyline(
+                        points = segment,
+                        color = MaterialTheme.colorScheme.tertiary,
+                        width = 18f,
+                    )
+                }
+                route.stations.take(MAX_PINS).forEach { rs ->
+                    key(rs.station.id) {
+                        val ms = rememberMarkerState(
+                            key = rs.station.id.toString(),
+                            position = LatLng(rs.station.lat, rs.station.lng),
+                        )
+                        val lbl = rs.price?.let { "${formatPrice(it)} €" }
+                        val c = rs.price?.let { priceColor(it, route.pMin, route.pMax) } ?: Color.Gray
+                        MarkerComposable(
+                            keys = arrayOf(rs.station.id),
+                            state = ms,
+                            onClick = { onOpenStation(rs.station.id); true },
+                        ) { PricePin(lbl, c) }
+                    }
+                }
+                // Start / end badges — clearly visible endpoints.
+                val sp = route.routePoints.first()
+                val ep = route.routePoints.last()
+                key("route-start") {
+                    val startState = rememberMarkerState(position = LatLng(sp.lat, sp.lng))
+                    MarkerComposable(keys = arrayOf("start", sp.lat, sp.lng), state = startState) {
+                        EndpointBadge(MaterialTheme.colorScheme.tertiary, Icons.Filled.TripOrigin)
+                    }
+                }
+                key("route-end") {
+                    val endState = rememberMarkerState(position = LatLng(ep.lat, ep.lng))
+                    MarkerComposable(keys = arrayOf("end", ep.lat, ep.lng), state = endState) {
+                        EndpointBadge(MaterialTheme.colorScheme.error, Icons.Filled.Flag)
+                    }
+                }
+            } else {
             // Search-radius circle around the current location.
             Circle(
                 center = LatLng(state.center.lat, state.center.lng),
@@ -224,7 +326,7 @@ fun MapScreen(
                     )
                     val label = item.price?.let { "${formatPrice(it)} €" }
                     val color = item.price?.let { priceColor(it, state.pMin, state.pMax) } ?: Color.Gray
-                    if (item.station.id == state.cheapestId) {
+                    if (item.station.id == state.cheapestId || item.station.id == focusId) {
                         val transition = rememberInfiniteTransition(label = "bounce")
                         val scale by transition.animateFloat(
                             initialValue = 1f,
@@ -255,62 +357,61 @@ fun MapScreen(
                     }
                 }
             }
+            }
         }
 
         // Search + fuel pills overlay.
         Column(
             modifier = Modifier.fillMaxWidth().padding(12.dp).align(Alignment.TopCenter),
         ) {
-            Surface(
-                shape = MaterialTheme.shapes.extraLarge,
-                tonalElevation = 3.dp,
-                shadowElevation = 3.dp,
-                color = MaterialTheme.colorScheme.surface,
-            ) {
-                AddressSearchBar(
-                    query = state.query,
-                    suggestions = state.suggestions,
-                    onQueryChange = viewModel::onQueryChange,
-                    onSelect = viewModel::selectSuggestion,
-                    onSearch = viewModel::search,
-                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
-                    trailingIcon = {
-                        Row {
-                            IconButton(onClick = onOpenRoute) {
-                                Icon(Icons.Filled.Route, contentDescription = stringResource(R.string.route_title))
-                            }
-                            IconButton(onClick = onLocateClick) {
-                                Icon(
-                                    if (locationGranted.value) Icons.Filled.MyLocation
-                                    else Icons.Filled.LocationDisabled,
-                                    contentDescription = stringResource(R.string.locate_me),
-                                    tint = if (locationGranted.value) MaterialTheme.colorScheme.onSurfaceVariant
-                                    else MaterialTheme.colorScheme.error,
-                                )
-                            }
-                            IconButton(onClick = { showFilters = true }) {
-                                Icon(Icons.Filled.Tune, contentDescription = stringResource(R.string.filters))
-                            }
-                        }
-                    },
+            if (route.active) {
+                RouteInputPanel(
+                    route = route,
+                    input = routeInput,
+                    onStartQuery = viewModel::onRouteStartQueryChange,
+                    onEndQuery = viewModel::onRouteEndQueryChange,
+                    onSelectStart = viewModel::selectRouteStart,
+                    onSelectEnd = viewModel::selectRouteEnd,
+                    onExit = viewModel::exitRouteMode,
                 )
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(top = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                FuelType.entries.forEach { ft ->
-                    ElevatedFilterChip(
-                        selected = state.filters.fuel == ft,
-                        onClick = { viewModel.applyFilters(state.filters.copy(fuel = ft)) },
-                        label = { Text(ft.label) },
-                        colors = FilterChipDefaults.elevatedFilterChipColors(
-                            containerColor = MaterialTheme.colorScheme.surface,
-                            selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        ),
+            } else {
+                Surface(
+                    shape = MaterialTheme.shapes.extraLarge,
+                    tonalElevation = 3.dp,
+                    shadowElevation = 3.dp,
+                    color = MaterialTheme.colorScheme.surface,
+                ) {
+                    AddressSearchBar(
+                        query = state.query,
+                        suggestions = state.suggestions,
+                        onQueryChange = viewModel::onQueryChange,
+                        onSelect = viewModel::selectSuggestion,
+                        onSearch = viewModel::search,
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+                        trailingIcon = {
+                            Row {
+                                IconButton(onClick = { viewModel.enterRouteMode() }) {
+                                    Icon(Icons.Filled.Route, contentDescription = stringResource(R.string.route_title))
+                                }
+                                IconButton(onClick = onLocateClick) {
+                                    Icon(
+                                        if (locationGranted.value) Icons.Filled.MyLocation
+                                        else Icons.Filled.LocationDisabled,
+                                        contentDescription = stringResource(R.string.locate_me),
+                                        tint = if (locationGranted.value) MaterialTheme.colorScheme.onSurfaceVariant
+                                        else MaterialTheme.colorScheme.error,
+                                    )
+                                }
+                                IconButton(onClick = { showFilters = true }) {
+                                    Icon(Icons.Filled.Tune, contentDescription = stringResource(R.string.filters))
+                                }
+                            }
+                        },
                     )
                 }
             }
+            // Fuel is chosen entirely in the filter sheet (the Tune icon) to keep
+            // the map uncluttered.
         }
 
     }
@@ -490,6 +591,25 @@ private fun PricePin(priceLabel: String?, color: Color, scale: Float = 1f) {
     }
 }
 
+/** Circular start/end badge shown at the route endpoints. */
+@Composable
+private fun EndpointBadge(color: Color, icon: ImageVector) {
+    Surface(
+        color = color,
+        shape = CircleShape,
+        border = BorderStroke(3.dp, Color.White),
+        shadowElevation = 3.dp,
+        modifier = Modifier.size(34.dp),
+    ) {
+        Icon(
+            icon,
+            contentDescription = null,
+            tint = Color.White,
+            modifier = Modifier.padding(6.dp),
+        )
+    }
+}
+
 @Composable
 private fun FilterSheetHost(
     state: MapUiState,
@@ -501,4 +621,111 @@ private fun FilterSheetHost(
         onDismiss = onDismiss,
         onApply = { viewModel.applyFilters(it); onDismiss() },
     )
+}
+
+/** Route-mode overlay: start/end address inputs + trip summary, on the map. */
+@Composable
+private fun RouteInputPanel(
+    route: RouteState,
+    input: RouteInputState,
+    onStartQuery: (String) -> Unit,
+    onEndQuery: (String) -> Unit,
+    onSelectStart: (AddressResult) -> Unit,
+    onSelectEnd: (AddressResult) -> Unit,
+    onExit: () -> Unit,
+) {
+    // Collapse the inputs once a route is computed so the map gets full height;
+    // the header chevron re-opens them (mirror of the old route screen).
+    var expanded by remember { mutableStateOf(true) }
+    val focus = LocalFocusManager.current
+    LaunchedEffect(route.hasRoute) {
+        if (route.hasRoute) {
+            expanded = false
+            focus.clearFocus()
+        }
+    }
+
+    Surface(
+        shape = MaterialTheme.shapes.extraLarge,
+        tonalElevation = 3.dp,
+        shadowElevation = 3.dp,
+        color = MaterialTheme.colorScheme.surface,
+    ) {
+        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Filled.Route,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+                Text(
+                    stringResource(R.string.route_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.weight(1f).padding(start = 8.dp),
+                )
+                if (route.hasRoute) {
+                    IconButton(onClick = { expanded = !expanded }) {
+                        Icon(
+                            if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                            contentDescription = null,
+                        )
+                    }
+                }
+                IconButton(onClick = onExit) {
+                    Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.close))
+                }
+            }
+            if (expanded) {
+                Text(
+                    stringResource(R.string.route_start),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 4.dp),
+                )
+                AddressSearchBar(
+                    query = input.startQuery,
+                    suggestions = input.startSuggestions,
+                    onQueryChange = onStartQuery,
+                    onSelect = onSelectStart,
+                    onSearch = {},
+                )
+                Text(
+                    stringResource(R.string.route_end),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 4.dp, top = 6.dp),
+                )
+                AddressSearchBar(
+                    query = input.endQuery,
+                    suggestions = input.endSuggestions,
+                    onQueryChange = onEndQuery,
+                    onSelect = onSelectEnd,
+                    onSearch = {},
+                )
+            }
+            if (route.error) {
+                Text(
+                    stringResource(R.string.route_error),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                )
+            } else if (route.hasRoute) {
+                Text(
+                    stringResource(
+                        R.string.route_summary,
+                        formatDistance(route.distanceKm),
+                        route.durationMin,
+                        route.stations.size,
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 2.dp),
+                )
+            }
+        }
+    }
 }

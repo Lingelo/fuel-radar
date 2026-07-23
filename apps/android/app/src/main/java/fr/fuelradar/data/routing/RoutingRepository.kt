@@ -4,6 +4,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.PolyUtil
 import fr.fuelradar.data.DeptIndex
 import fr.fuelradar.data.StationRepository
+import fr.fuelradar.data.model.FuelType
 import fr.fuelradar.data.model.Station
 import fr.fuelradar.data.net.RoutingApi
 import fr.fuelradar.domain.Coords
@@ -51,7 +52,7 @@ class RoutingRepository(
     suspend fun alongRoute(
         polyline: List<Coords>,
         corridorKm: Double,
-        fuelCode: String,
+        fuel: FuelType,
         max: Int,
     ): List<Station> = withContext(Dispatchers.IO) {
         if (polyline.size < 2) return@withContext emptyList()
@@ -79,31 +80,27 @@ class RoutingRepository(
         val corridorM = corridorKm * 1000.0
 
         val inCorridor = stations.stationsForDepts(depts.toList())
-            .filter { it.fuels.containsKey(fuelCode) }
+            .filter { fuel.availableIn(it.fuels) }
             .filter { PolyUtil.isLocationOnPath(LatLng(it.lat, it.lng), testRoute, false, corridorM) }
 
-        // Spread the cap ALONG the route instead of taking the globally cheapest:
-        // bucket stations by their progress on the route and keep the cheapest of
-        // each bucket. Otherwise a whole cheap country (e.g. Spain on a FR→PT trip)
-        // would fill all the slots and hide the rest of the journey.
-        val lastIdx = testRoute.size - 1
-        val buckets = arrayOfNulls<Station>(max)
-        val bucketPrice = DoubleArray(max) { Double.MAX_VALUE }
-        for (st in inCorridor) {
-            val price = st.fuels[fuelCode]?.p ?: continue
-            var nearest = 0
-            var nearestKm = Double.MAX_VALUE
-            for (idx in testRoute.indices) {
-                val d = haversineKm(st.lat, st.lng, testRoute[idx].latitude, testRoute[idx].longitude)
-                if (d < nearestKm) { nearestKm = d; nearest = idx }
+        // Keep ALL stations in the corridor (not just the cheapest per segment):
+        // the user wants to see every station near the trip, especially the ones
+        // close to home at the start. Only if there are more than [max] do we
+        // sample uniformly ALONG the route, so the density stays even from start
+        // to end instead of cropping one end.
+        if (inCorridor.size <= max) return@withContext inCorridor
+        val ordered = inCorridor
+            .map { st ->
+                var nearest = 0
+                var nearestKm = Double.MAX_VALUE
+                for (idx in testRoute.indices) {
+                    val d = haversineKm(st.lat, st.lng, testRoute[idx].latitude, testRoute[idx].longitude)
+                    if (d < nearestKm) { nearestKm = d; nearest = idx }
+                }
+                st to nearest
             }
-            val b = if (lastIdx <= 0) 0
-            else (nearest.toDouble() / lastIdx * (max - 1)).toInt().coerceIn(0, max - 1)
-            if (price < bucketPrice[b]) {
-                bucketPrice[b] = price
-                buckets[b] = st
-            }
-        }
-        buckets.filterNotNull().sortedBy { it.fuels[fuelCode]?.p ?: Double.MAX_VALUE }
+            .sortedBy { it.second }
+        val stride = ordered.size.toDouble() / max
+        (0 until max).map { ordered[(it * stride).toInt()].first }
     }
 }
