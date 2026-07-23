@@ -18,6 +18,13 @@ concurrency:
 jobs:
   update-and-deploy:
     runs-on: ubuntu-latest
+    # Web moved under apps/web/ (monorepo). working-directory covers every
+    # `run:` step — including the data scripts and the git add/commit/push,
+    # whose relative paths now resolve under apps/web. `uses:` actions ignore
+    # it, so the npm cache path and the artifact path are set explicitly.
+    defaults:
+      run:
+        working-directory: apps/web
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,6 +34,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
+          cache-dependency-path: apps/web/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -71,7 +79,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: dist
+          path: apps/web/dist
 
       - name: Deploy to GitHub Pages
         id: deployment

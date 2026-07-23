@@ -1,0 +1,44 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- FuelRadar web logo (fuel pump + radar waves), from apps/web/public/icon.svg,
+         scaled from its 64px canvas into the adaptive-icon safe zone. -->
+    <group
+        android:scaleX="0.9"
+        android:scaleY="0.9"
+        android:translateX="25.2"
+        android:translateY="25.2">
+        <!-- pump body -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M22,12h14a4,4 0 0 1 4,4v34h-22V16a4,4 0 0 1 4,-4z" />
+        <!-- pump window -->
+        <path
+            android:fillColor="#00564E"
+            android:pathData="M24,20h10v8h-10z" />
+        <!-- base -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M22,48h18v4h-18z" />
+        <!-- nozzle / hose -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M44,22l5,4v18a3,3 0 0 1 -3,3v-3h-2V26l-2,-2 2,-2z" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M44,42a2,2 0 1,0 4,0a2,2 0 1,0 -4,0z" />
+        <!-- radar waves -->
+        <path
+            android:strokeColor="#9DF4E6"
+            android:strokeWidth="3"
+            android:strokeLineCap="round"
+            android:pathData="M44,14a6,6 0 0 1 6,6" />
+        <path
+            android:strokeColor="#9DF4E6"
+            android:strokeWidth="3"
+            android:strokeLineCap="round"
+            android:pathData="M44,8a12,12 0 0 1 12,12" />
+    </group>
+</vector>

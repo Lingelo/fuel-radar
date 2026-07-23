@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- AppCompat parent so AppCompatActivity + per-app locales work; the real
+         visual theming happens in Compose (FuelRadarTheme). Teal window
+         background avoids a white flash before the Compose splash. -->
+    <style name="Theme.FuelRadar" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/splash_teal</item>
+    </style>
+</resources>

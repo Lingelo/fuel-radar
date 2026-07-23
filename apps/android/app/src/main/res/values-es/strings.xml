@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FuelRadar</string>
+
+    <string name="tab_map">Mapa</string>
+    <string name="tab_stations">Estaciones</string>
+    <string name="tab_favorites">Favoritos</string>
+    <string name="tab_trends">Tendencias</string>
+    <string name="tab_settings">Ajustes</string>
+
+    <string name="search_hint">Buscar una dirección</string>
+    <string name="filters">Filtros</string>
+    <string name="reset">Restablecer</string>
+    <string name="apply">Aplicar</string>
+    <string name="close">Cerrar</string>
+    <string name="cheapest">El más barato</string>
+    <string name="updated">Actualizado %1$s</string>
+    <string name="time_now">ahora mismo</string>
+    <string name="time_min">hace %1$d min</string>
+    <string name="time_h">hace %1$d h</string>
+    <string name="time_d">hace %1$d d</string>
+    <string name="view_on_map">Ver en el mapa</string>
+    <string name="station_fallback">Estación</string>
+    <string name="directions">Cómo llegar</string>
+    <string name="share">Compartir</string>
+    <string name="favorite">Favorito</string>
+
+    <string name="fuel">Combustible</string>
+    <string name="sort_by">Ordenar por</string>
+    <string name="sort_price">Precio</string>
+    <string name="sort_distance">Distancia</string>
+    <string name="radius">Radio</string>
+    <string name="h24_only">Solo abiertas 24/7</string>
+    <string name="brands">Marcas</string>
+    <string name="select_all">Seleccionar todo</string>
+    <string name="deselect_all">Deseleccionar todo</string>
+    <string name="all_brands">Todas las marcas</string>
+    <string name="brands_selected">%1$d seleccionadas</string>
+
+    <string name="map_unavailable">Mapa no disponible</string>
+    <string name="map_key_missing">Falta la clave de Google Maps. Añade MAPS_API_KEY en local.properties.</string>
+    <string name="locate_me">Ubicarme</string>
+
+    <string name="no_favorites">Sin favoritos</string>
+    <string name="no_favorites_hint">Añade estaciones a favoritos desde la lista o el detalle.</string>
+    <string name="favorites_title">Favoritos</string>
+    <string name="stations_count">%1$d estaciones</string>
+    <string name="fav_loading_outside">Tus favoritos están fuera de la zona cargada. Busca o ubícate cerca de ellos.</string>
+
+    <string name="station_not_found">Estación no encontrada</string>
+    <string name="open_24h">Abierta 24/7</string>
+    <string name="current_prices">Precios actuales</string>
+    <string name="trend_title">Tendencia 7 d (%1$s)</string>
+    <string name="services">Servicios</string>
+    <string name="national_average">Media nacional</string>
+    <string name="stale_data">Datos antiguos</string>
+    <string name="trend_7d">7 d: %1$s</string>
+
+    <string name="trends_title">Tendencias</string>
+    <string name="scope_all">Todos</string>
+    <string name="scope_fr">Francia</string>
+    <string name="scope_es">España</string>
+    <string name="scope_pt">Portugal</string>
+    <string name="period_30">30 d</string>
+    <string name="period_90">90 d</string>
+    <string name="period_365">1 año</string>
+    <string name="history_unavailable">Historial no disponible</string>
+    <string name="trends_subtitle">Precios medios %1$s</string>
+    <string name="trends_evolution">Evolución de precios</string>
+    <string name="trends_short_history">El historial crece un punto por día; el gráfico se irá completando con el tiempo.</string>
+    <string name="trends_tap_hint">Toca o arrastra el gráfico para inspeccionar una fecha.</string>
+    <string name="trends_year_change">%1$s/año</string>
+
+    <string name="settings_title">Ajustes</string>
+    <string name="startup_screen">Pantalla de inicio</string>
+    <string name="stale_warning">Avisar si los datos son antiguos</string>
+    <string name="language">Idioma</string>
+    <string name="privacy_policy">Política de privacidad</string>
+    <string name="share_app">Compartir la aplicación</string>
+    <string name="last_update">Última actualización: %1$s</string>
+    <string name="data_credits">Datos: prix-carburants.gouv.fr (Francia), Ministerio para la Transición Ecológica (España), DGEG (Portugal). Marcas enriquecidas vía OpenStreetMap.</string>
+    <string name="lang_system">Sistema</string>
+    <string name="lang_fr">Français</string>
+    <string name="lang_en">English</string>
+    <string name="lang_es">Español</string>
+    <string name="lang_pt">Português</string>
+    <string name="settings_search">Búsqueda</string>
+    <string name="stale_warning_desc">Avisa de precios de más de 48 h.</string>
+    <string name="current_position">Posición actual</string>
+    <string name="position_unknown">Posición desconocida</string>
+    <string name="refresh">Actualizar</string>
+    <string name="settings_data">Datos</string>
+    <string name="settings_about">Acerca de</string>
+    <string name="settings_about_text">FuelRadar muestra los precios de combustible en Francia, España y Portugal a partir de datos públicos oficiales.</string>
+    <string name="designed_by">Diseñado por %1$s.</string>
+    <string name="source_code">Código fuente</string>
+    <string name="share_app_desc">Comparte FuelRadar con quienes te rodean.</string>
+    <string name="nat_suffix">(nac.)</string>
+    <string name="app_tagline">Precios de combustible · FR · ES · PT</string>
+    <string name="route_title">Ruta</string>
+    <string name="route_start">Salida</string>
+    <string name="route_end">Destino</string>
+    <string name="route_corridor">Distancia a la ruta</string>
+    <string name="route_show_list">Ver lista</string>
+    <string name="route_show_map">Ver mapa</string>
+    <string name="route_summary">%1$s · %2$d min · %3$d estaciones</string>
+    <string name="route_error">Ruta no disponible. Inténtalo de nuevo.</string>
+    <string name="route_hint">Introduce salida y destino para ver las gasolineras a lo largo de la ruta.</string>
+    <string name="route_no_result">Ninguna gasolinera en este corredor. Amplía la distancia.</string>
+</resources>
