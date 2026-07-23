@@ -29,6 +29,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocationDisabled
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.ElevatedFilterChip
@@ -83,8 +84,12 @@ import fr.fuelradar.domain.formatPrice
 import fr.fuelradar.domain.formatPriceEuro
 import fr.fuelradar.domain.haversineKm
 import fr.fuelradar.domain.priceColor
+import fr.fuelradar.data.ServiceLocator
 import fr.fuelradar.ui.common.AddressSearchBar
 import fr.fuelradar.ui.common.BrandLogo
+import fr.fuelradar.ui.common.hasFineLocation
+import fr.fuelradar.ui.common.rememberLocationGranted
+import kotlinx.coroutines.flow.first
 import kotlin.math.abs
 
 private const val MAX_PINS = 150
@@ -115,17 +120,17 @@ fun MapScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val target by viewModel.target.collectAsStateWithLifecycle()
     var showFilters by remember { mutableStateOf(false) }
+    // Cold-start framing (no saved location yet): a wide Western-Europe view
+    // covering France, Spain and Portugal. Once a location is known the camera
+    // jumps to it (see the target effect below).
     val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(LatLng(48.8566, 2.3522), 12f)
+        position = CameraPosition.fromLatLngZoom(LatLng(43.0, -3.0), 4.6f)
     }
 
     val fused = remember { LocationServices.getFusedLocationProviderClient(context) }
+    val locationGranted = rememberLocationGranted()
     fun fetchLocation() {
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            return
-        }
+        if (!hasFineLocation(context)) return
         runCatching {
             fused.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, CancellationTokenSource().token)
                 .addOnSuccessListener { loc ->
@@ -141,14 +146,19 @@ fun MapScreen(
     }
     val permLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
-    ) { granted -> if (granted) fetchLocation() }
+    ) { granted ->
+        locationGranted.value = granted
+        if (granted) fetchLocation()
+    }
     val onLocateClick = {
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
-            == PackageManager.PERMISSION_GRANTED
-        ) {
-            fetchLocation()
-        } else {
-            permLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        if (locationGranted.value) fetchLocation()
+        else permLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+    }
+    // On first launch with no saved location, ask for / use the device location.
+    LaunchedEffect(Unit) {
+        if (ServiceLocator.filters.filters.first().userLocation == null) {
+            if (locationGranted.value) fetchLocation()
+            else permLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
         }
     }
 
@@ -265,7 +275,13 @@ fun MapScreen(
                     trailingIcon = {
                         Row {
                             IconButton(onClick = onLocateClick) {
-                                Icon(Icons.Filled.MyLocation, contentDescription = stringResource(R.string.locate_me))
+                                Icon(
+                                    if (locationGranted.value) Icons.Filled.MyLocation
+                                    else Icons.Filled.LocationDisabled,
+                                    contentDescription = stringResource(R.string.locate_me),
+                                    tint = if (locationGranted.value) MaterialTheme.colorScheme.onSurfaceVariant
+                                    else MaterialTheme.colorScheme.error,
+                                )
                             }
                             IconButton(onClick = { showFilters = true }) {
                                 Icon(Icons.Filled.Tune, contentDescription = stringResource(R.string.filters))

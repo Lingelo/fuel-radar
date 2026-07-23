@@ -22,6 +22,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.LocationDisabled
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
@@ -88,10 +89,9 @@ fun SettingsScreen() {
 
     // Locate-me (reverse-geocode + share to the whole app), mirror of the map/list.
     val fused = androidx.compose.runtime.remember { LocationServices.getFusedLocationProviderClient(context) }
+    val locationGranted = fr.fuelradar.ui.common.rememberLocationGranted()
     fun fetchLocation() {
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
-            != PackageManager.PERMISSION_GRANTED
-        ) return
+        if (!fr.fuelradar.ui.common.hasFineLocation(context)) return
         runCatching {
             fused.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, CancellationTokenSource().token)
                 .addOnSuccessListener { loc ->
@@ -110,11 +110,13 @@ fun SettingsScreen() {
     }
     val permLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
-    ) { granted -> if (granted) fetchLocation() }
+    ) { granted ->
+        locationGranted.value = granted
+        if (granted) fetchLocation()
+    }
     val onLocateClick = {
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
-            == PackageManager.PERMISSION_GRANTED
-        ) fetchLocation() else permLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        if (locationGranted.value) fetchLocation()
+        else permLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
     }
 
     Column(
@@ -186,7 +188,12 @@ fun SettingsScreen() {
                     )
                 }
                 FilledTonalButton(onClick = onLocateClick) {
-                    Icon(Icons.Filled.MyLocation, null, modifier = Modifier.size(16.dp))
+                    Icon(
+                        if (locationGranted.value) Icons.Filled.MyLocation
+                        else Icons.Filled.LocationDisabled,
+                        null,
+                        modifier = Modifier.size(16.dp),
+                    )
                     Text("  " + stringResource(R.string.refresh))
                 }
             }

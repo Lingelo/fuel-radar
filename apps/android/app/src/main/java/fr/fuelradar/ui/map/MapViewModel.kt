@@ -120,10 +120,15 @@ class MapViewModel : ViewModel() {
         }
     }
 
-    /** Called when device geolocation resolves — persist it and recenter. */
+    /** Called when device geolocation resolves — reverse-geocode a label (shown in
+     *  the search field), share it, and recenter. */
     fun onLocated(lat: Double, lng: Double) {
         viewModelScope.launch {
-            filtersStore.setLocation(lat, lng, null)
+            val r = geocoder.reverse(lat, lng)
+            val label = r?.let {
+                listOf(it.postcode, it.city).filter { s -> s.isNotBlank() }.joinToString(" ")
+            }?.ifBlank { null }
+            filtersStore.setLocation(lat, lng, label)
             _target.value = Coords(lat, lng)
         }
     }

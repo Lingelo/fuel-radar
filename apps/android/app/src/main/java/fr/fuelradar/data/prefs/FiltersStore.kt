@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -13,7 +12,8 @@ import androidx.datastore.preferences.preferencesDataStore
 import fr.fuelradar.data.model.FuelType
 import fr.fuelradar.domain.Coords
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 
 private val Context.filtersDataStore: DataStore<Preferences> by preferencesDataStore("filters")
 
@@ -38,23 +38,35 @@ class FiltersStore(context: Context) {
 
     private val store = context.applicationContext.filtersDataStore
 
-    val filters: Flow<Filters> = store.data.map { p ->
+    /**
+     * The searched/located position is intentionally NOT persisted: every app
+     * restart starts from scratch (the user either locates or types an address).
+     * It lives in-memory only, shared across screens for the session. Fuel /
+     * radius / sort / brands remain persisted preferences.
+     */
+    private data class SessionLocation(
+        val lat: Double? = null,
+        val lng: Double? = null,
+        val label: String? = null,
+    )
+
+    private val sessionLocation = MutableStateFlow(SessionLocation())
+
+    val filters: Flow<Filters> = combine(store.data, sessionLocation) { p, loc ->
         Filters(
             fuel = p[FUEL]?.let { FuelType.fromCode(it) } ?: FuelType.GAZOLE,
             radiusKm = p[RADIUS] ?: 10,
             sort = p[SORT]?.let { runCatching { SortMode.valueOf(it) }.getOrNull() } ?: SortMode.PRICE,
             brands = p[BRANDS] ?: emptySet(),
             openH24Only = p[H24] ?: false,
-            userLat = p[USER_LAT],
-            userLng = p[USER_LNG],
-            searchLabel = p[SEARCH_LABEL],
+            userLat = loc.lat,
+            userLng = loc.lng,
+            searchLabel = loc.label,
         )
     }
 
-    suspend fun setLocation(lat: Double, lng: Double, label: String?) = store.edit {
-        it[USER_LAT] = lat
-        it[USER_LNG] = lng
-        if (label != null) it[SEARCH_LABEL] = label
+    fun setLocation(lat: Double, lng: Double, label: String?) {
+        sessionLocation.value = SessionLocation(lat, lng, label ?: sessionLocation.value.label)
     }
 
     suspend fun setFuel(fuel: FuelType) = store.edit { it[FUEL] = fuel.code }
@@ -94,8 +106,5 @@ class FiltersStore(context: Context) {
         val SORT = stringPreferencesKey("sort")
         val BRANDS = stringSetPreferencesKey("brands")
         val H24 = booleanPreferencesKey("open_h24_only")
-        val USER_LAT = doublePreferencesKey("user_lat")
-        val USER_LNG = doublePreferencesKey("user_lng")
-        val SEARCH_LABEL = stringPreferencesKey("search_label")
     }
 }
