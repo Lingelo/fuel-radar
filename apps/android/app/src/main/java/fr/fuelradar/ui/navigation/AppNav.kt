@@ -111,7 +111,16 @@ fun AppNav() {
                 )
             }
             composable(Tab.Favorites.route) {
-                FavoritesScreen(onOpenStation = { id -> navController.navigate("details/$id") })
+                FavoritesScreen(
+                    onOpenStation = { id -> navController.navigate("details/$id") },
+                    onOpenMap = {
+                        navController.navigate(Tab.Map.route) {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                )
             }
             composable(Tab.Trends.route) { TrendsScreen() }
             composable(Tab.Settings.route) { SettingsScreen() }

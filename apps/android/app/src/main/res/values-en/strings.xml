@@ -43,6 +43,9 @@
 
     <string name="no_favorites">No favorites</string>
     <string name="no_favorites_hint">Add stations to favorites from the list or detail.</string>
+    <string name="favorites_title">Favorites</string>
+    <string name="stations_count">%1$d stations</string>
+    <string name="fav_loading_outside">Your favorites are outside the loaded area. Search or locate yourself near them.</string>
 
     <string name="station_not_found">Station not found</string>
     <string name="open_24h">Open 24/7</string>

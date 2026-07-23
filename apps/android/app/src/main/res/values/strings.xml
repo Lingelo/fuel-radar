@@ -48,6 +48,9 @@
     <!-- Favorites -->
     <string name="no_favorites">Aucun favori</string>
     <string name="no_favorites_hint">Ajoutez des stations en favori depuis la liste ou le détail.</string>
+    <string name="favorites_title">Favoris</string>
+    <string name="stations_count">%1$d stations</string>
+    <string name="fav_loading_outside">Vos favoris sont hors de la zone chargée. Recherchez ou localisez-vous près d\'eux.</string>
 
     <!-- Detail -->
     <string name="station_not_found">Station introuvable</string>
