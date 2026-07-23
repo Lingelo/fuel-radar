@@ -195,6 +195,7 @@ const fr = {
     'FuelRadar — données ouvertes des gouvernements français, espagnol et portugais + OpenStreetMap.',
   'settings.designedBy': 'Conçu et développé par',
   'settings.sourceCode': 'Code source sur GitHub',
+  'settings.downloadAndroid': "Télécharger l'app Android",
 
   'install.button': 'Installer',
   'install.aria': "Installer l'application",
@@ -387,6 +388,7 @@ const es: Messages = {
     'FuelRadar — datos abiertos de los gobiernos francés, español y portugués + OpenStreetMap.',
   'settings.designedBy': 'Diseñado y desarrollado por',
   'settings.sourceCode': 'Código fuente en GitHub',
+  'settings.downloadAndroid': 'Descargar la app de Android',
 
   'install.button': 'Instalar',
   'install.aria': 'Instalar la aplicación',
@@ -575,6 +577,7 @@ const pt: Messages = {
     'FuelRadar — dados abertos dos governos francês, espanhol e português + OpenStreetMap.',
   'settings.designedBy': 'Concebido e desenvolvido por',
   'settings.sourceCode': 'Código-fonte no GitHub',
+  'settings.downloadAndroid': 'Baixar a app Android',
 
   'install.button': 'Instalar',
   'install.aria': 'Instalar a aplicação',
@@ -759,6 +762,7 @@ const en: Messages = {
     'FuelRadar — open data from the French, Spanish and Portuguese governments + OpenStreetMap.',
   'settings.designedBy': 'Designed and developed by',
   'settings.sourceCode': 'Source code on GitHub',
+  'settings.downloadAndroid': 'Download the Android app',
 
   'install.button': 'Install',
   'install.aria': 'Install the app',

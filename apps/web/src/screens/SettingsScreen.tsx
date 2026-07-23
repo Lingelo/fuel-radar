@@ -283,6 +283,15 @@ export function SettingsScreen() {
             <Icon name="open_in_new" size={16} />
             {t('settings.sourceCode')}
           </a>
+          <a
+            href="https://github.com/Lingelo/fuel-radar/releases/latest"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 text-body-sm font-semibold text-primary hover:underline"
+          >
+            <Icon name="download" size={16} />
+            {t('settings.downloadAndroid')}
+          </a>
         </section>
       </main>
 
