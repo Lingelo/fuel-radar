@@ -21,6 +21,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.CircularProgressIndicator
@@ -33,6 +35,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -42,10 +45,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.MapsComposeExperimentalApi
@@ -62,7 +63,6 @@ import fr.fuelradar.domain.formatPrice
 import fr.fuelradar.domain.priceColor
 import fr.fuelradar.ui.common.AddressSearchBar
 import fr.fuelradar.ui.common.StationCard
-import kotlinx.coroutines.delay
 
 @OptIn(MapsComposeExperimentalApi::class)
 @Composable
@@ -75,11 +75,26 @@ fun RouteScreen(
     val favorites by ServiceLocator.favorites.ids.collectAsStateWithLifecycle(emptySet())
     val hasRoute = state.routePoints.size >= 2
 
-    // Dismiss the keyboard once a route is computed so the map gets full height
-    // (and the camera can fit the whole route).
+    // Auto-collapse the input panel and dismiss the keyboard once a route is
+    // computed, so the map gets full height (and the camera fits the whole route).
     val focus = androidx.compose.ui.platform.LocalFocusManager.current
+    var panelExpanded by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(true) }
     androidx.compose.runtime.LaunchedEffect(hasRoute) {
-        if (hasRoute) focus.clearFocus()
+        if (hasRoute) {
+            panelExpanded = false
+            focus.clearFocus()
+        }
+    }
+
+    val summary = if (hasRoute) {
+        stringResource(
+            R.string.route_summary,
+            formatDistance(state.distanceKm),
+            state.durationMin,
+            state.stations.size,
+        )
+    } else {
+        ""
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -98,6 +113,12 @@ fun RouteScreen(
                 modifier = Modifier.weight(1f).padding(start = 4.dp),
             )
             if (hasRoute) {
+                IconButton(onClick = { panelExpanded = !panelExpanded }) {
+                    Icon(
+                        if (panelExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                        contentDescription = null,
+                    )
+                }
                 IconButton(onClick = { viewModel.toggleList() }) {
                     if (state.showList) {
                         Icon(Icons.Filled.Map, contentDescription = stringResource(R.string.route_show_map))
@@ -108,81 +129,105 @@ fun RouteScreen(
             }
         }
 
-        // Start / end address inputs.
-        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-            FieldLabel(stringResource(R.string.route_start))
-            AddressSearchBar(
-                query = state.startQuery,
-                suggestions = state.startSuggestions,
-                onQueryChange = viewModel::onStartQueryChange,
-                onSelect = viewModel::selectStart,
-                onSearch = {},
-                modifier = Modifier.fillMaxWidth(),
-                trailingIcon = {
-                    IconButton(onClick = { viewModel.useMyLocationAsStart() }) {
-                        Icon(Icons.Filled.MyLocation, contentDescription = stringResource(R.string.locate_me))
-                    }
-                },
-            )
-            Spacer(Modifier.height(8.dp))
-            FieldLabel(stringResource(R.string.route_end))
-            AddressSearchBar(
-                query = state.endQuery,
-                suggestions = state.endSuggestions,
-                onQueryChange = viewModel::onEndQueryChange,
-                onSelect = viewModel::selectEnd,
-                onSearch = {},
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
+        if (panelExpanded) {
+            // Start / end address inputs (same pill look as the map search).
+            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                FieldLabel(stringResource(R.string.route_start))
+                SearchFieldPill {
+                    AddressSearchBar(
+                        query = state.startQuery,
+                        suggestions = state.startSuggestions,
+                        onQueryChange = viewModel::onStartQueryChange,
+                        onSelect = viewModel::selectStart,
+                        onSearch = {},
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+                        trailingIcon = {
+                            IconButton(onClick = { viewModel.useMyLocationAsStart() }) {
+                                Icon(Icons.Filled.MyLocation, contentDescription = stringResource(R.string.locate_me))
+                            }
+                        },
+                    )
+                }
+                Spacer(Modifier.height(8.dp))
+                FieldLabel(stringResource(R.string.route_end))
+                SearchFieldPill {
+                    AddressSearchBar(
+                        query = state.endQuery,
+                        suggestions = state.endSuggestions,
+                        onQueryChange = viewModel::onEndQueryChange,
+                        onSelect = viewModel::selectEnd,
+                        onSearch = {},
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+                    )
+                }
+            }
 
-        // Corridor distance + fuel pills.
-        Row(
-            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                stringResource(R.string.route_corridor),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            listOf(1, 2, 5).forEach { km ->
-                FilterChip(
-                    selected = state.corridorKm == km,
-                    onClick = { viewModel.setCorridor(km) },
-                    label = { Text("$km km") },
+            // Corridor distance + fuel pills.
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    stringResource(R.string.route_corridor),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                listOf(1, 2, 5).forEach { km ->
+                    FilterChip(
+                        selected = state.corridorKm == km,
+                        onClick = { viewModel.setCorridor(km) },
+                        label = { Text("$km km") },
+                    )
+                }
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                FuelType.entries.forEach { fuel ->
+                    FilterChip(
+                        selected = state.fuel == fuel,
+                        onClick = { viewModel.setFuel(fuel) },
+                        label = { Text(fuel.label) },
+                    )
+                }
+            }
+
+            if (hasRoute) {
+                Text(
+                    summary,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 )
             }
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            FuelType.entries.forEach { fuel ->
-                FilterChip(
-                    selected = state.fuel == fuel,
-                    onClick = { viewModel.setFuel(fuel) },
-                    label = { Text(fuel.label) },
-                )
+        } else if (hasRoute) {
+            // Collapsed: compact bar (tap to expand) so the map stays large.
+            Surface(
+                onClick = { panelExpanded = true },
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surface,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceVariant),
+                tonalElevation = 1.dp,
+            ) {
+                Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
+                    Text(
+                        "${state.startQuery} → ${state.endQuery}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                    )
+                    Text(
+                        summary,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
-        }
-
-        // Summary.
-        if (hasRoute) {
-            Text(
-                stringResource(
-                    R.string.route_summary,
-                    formatDistance(state.distanceKm),
-                    state.durationMin,
-                    state.stations.size,
-                ),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            )
         }
 
         // Content.
@@ -230,11 +275,15 @@ private fun RouteMap(state: RouteUiState, onOpenStation: (Long) -> Unit) {
         CenteredMessage(stringResource(R.string.map_unavailable))
         return
     }
-    val cameraPositionState = rememberCameraPositionState()
+    // Center on the departure whenever the map is shown (this composable is
+    // recreated on every map/list switch, so the camera re-centers on the start).
+    val startPoint = state.routePoints.firstOrNull() ?: state.start
+    val cameraPositionState = rememberCameraPositionState {
+        if (startPoint != null) {
+            position = CameraPosition.fromLatLngZoom(LatLng(startPoint.lat, startPoint.lng), 11f)
+        }
+    }
     val routeColor = MaterialTheme.colorScheme.primary
-
-    // Fit the camera to the route bounds once the map is visible.
-    LaunchedEffectFit(state.routePoints, state.showList, cameraPositionState)
 
     GoogleMap(
         modifier = Modifier.fillMaxSize(),
@@ -349,33 +398,13 @@ private fun RouteList(
     }
 }
 
-/** Camera fit extracted so it can use LaunchedEffect with the camera state. */
 @Composable
-private fun LaunchedEffectFit(
-    routePoints: List<fr.fuelradar.domain.Coords>,
-    showList: Boolean,
-    cameraPositionState: com.google.maps.android.compose.CameraPositionState,
-) {
-    androidx.compose.runtime.LaunchedEffect(routePoints, showList) {
-        if (!showList && routePoints.size >= 2) {
-            val b = LatLngBounds.builder()
-            routePoints.forEach { b.include(LatLng(it.lat, it.lng)) }
-            val bounds = b.build()
-            // Retry until the map is measured (newLatLngBounds throws otherwise),
-            // which also covers the keyboard closing and the map resizing.
-            var done = false
-            repeat(6) { attempt ->
-                if (done) return@repeat
-                delay(if (attempt == 0) 300L else 350L)
-                done = runCatching {
-                    cameraPositionState.animate(CameraUpdateFactory.newLatLngBounds(bounds, 120))
-                }.isSuccess
-            }
-            if (!done) {
-                val mid = routePoints[routePoints.size / 2]
-                cameraPositionState.position =
-                    CameraPosition.fromLatLngZoom(LatLng(mid.lat, mid.lng), 7f)
-            }
-        }
-    }
+private fun SearchFieldPill(content: @Composable () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.extraLarge,
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 3.dp,
+        shadowElevation = 3.dp,
+    ) { content() }
 }

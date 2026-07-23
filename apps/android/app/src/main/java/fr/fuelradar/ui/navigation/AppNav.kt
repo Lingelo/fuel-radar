@@ -110,6 +110,7 @@ fun AppNav() {
             composable(Tab.Stations.route) {
                 StationsScreen(
                     onOpenStation = { id -> navController.navigate("details/$id") },
+                    onOpenRoute = { navController.navigate("route") },
                     onOpenMap = {
                         navController.navigate(Tab.Map.route) {
                             popUpTo(navController.graph.findStartDestination().id) { saveState = true }

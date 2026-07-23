@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.LocalGasStation
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.Route
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.Icons
@@ -85,6 +86,7 @@ import fr.fuelradar.ui.common.relativeTime
 fun StationsScreen(
     onOpenStation: (Long) -> Unit,
     onOpenMap: () -> Unit = {},
+    onOpenRoute: () -> Unit = {},
     viewModel: StationsViewModel = viewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -144,6 +146,12 @@ fun StationsScreen(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                 trailingIcon = {
                     Row {
+                        IconButton(onClick = onOpenRoute) {
+                            Icon(
+                                Icons.Filled.Route,
+                                contentDescription = stringResource(R.string.route_title),
+                            )
+                        }
                         IconButton(onClick = onLocateClick) {
                             Icon(
                                 Icons.Filled.MyLocation,
