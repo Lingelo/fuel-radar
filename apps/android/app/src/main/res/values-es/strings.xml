@@ -96,4 +96,5 @@
     <string name="source_code">Código fuente</string>
     <string name="share_app_desc">Comparte FuelRadar con quienes te rodean.</string>
     <string name="nat_suffix">(nac.)</string>
+    <string name="app_tagline">Precios de combustible · FR · ES · PT</string>
 </resources>

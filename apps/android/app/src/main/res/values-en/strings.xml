@@ -96,4 +96,5 @@
     <string name="source_code">Source code</string>
     <string name="share_app_desc">Share FuelRadar with people around you.</string>
     <string name="nat_suffix">(nat.)</string>
+    <string name="app_tagline">Fuel prices · FR · ES · PT</string>
 </resources>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12+ system splash: teal background + the pump logo, flowing into
+         the Compose splash so there is no white flash. -->
+    <style name="Theme.FuelRadar" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/splash_teal</item>
+        <item name="android:windowSplashScreenBackground">@color/splash_teal</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+    </style>
+</resources>
