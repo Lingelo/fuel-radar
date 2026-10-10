@@ -216,6 +216,10 @@ const fr = {
     "Sur ton navigateur, ouvre le menu (icône ⋮ en haut à droite, ou dans la barre d'adresse).",
   'install.generic2':
     'Cherche « Installer FuelRadar » ou « Ajouter à l’écran d’accueil », et confirme.',
+  'install.ios1':
+    'Dans Safari, touche le bouton Partager (carré avec une flèche vers le haut) en bas de l’écran.',
+  'install.ios2':
+    'Fais défiler puis choisis « Sur l’écran d’accueil », et touche « Ajouter ».',
 
   'update.newVersion': 'Nouvelle version disponible',
   'update.reload': 'Recharger',
@@ -416,6 +420,10 @@ const es: Messages = {
   'install.generic1':
     'En tu navegador, abre el menú (icono ⋮ arriba a la derecha o en la barra de direcciones).',
   'install.generic2': 'Busca «Instalar FuelRadar» o «Añadir a pantalla de inicio» y confirma.',
+  'install.ios1':
+    'En Safari, toca el botón Compartir (cuadrado con una flecha hacia arriba) en la parte inferior.',
+  'install.ios2':
+    'Desplázate y elige «Añadir a pantalla de inicio», luego toca «Añadir».',
 
   'update.newVersion': 'Nueva versión disponible',
   'update.reload': 'Recargar',
@@ -614,6 +622,10 @@ const pt: Messages = {
     'No teu navegador, abre o menu (ícone ⋮ no canto superior direito ou na barra de endereço).',
   'install.generic2':
     'Procura «Instalar FuelRadar» ou «Adicionar ao ecrã principal» e confirma.',
+  'install.ios1':
+    'No Safari, toca no botão Partilhar (quadrado com uma seta para cima) na parte inferior do ecrã.',
+  'install.ios2':
+    'Desliza e escolhe «Adicionar ao ecrã principal», depois toca em «Adicionar».',
 
   'update.newVersion': 'Nova versão disponível',
   'update.reload': 'Recarregar',
@@ -805,6 +817,10 @@ const en: Messages = {
     'Tap ⋮ then "Open in browser" (Chrome or Safari), then come back here to install the app.',
   'install.generic1': 'In your browser, open the menu (⋮ icon top right, or in the address bar).',
   'install.generic2': 'Look for "Install FuelRadar" or "Add to Home screen", and confirm.',
+  'install.ios1':
+    'In Safari, tap the Share button (square with an arrow pointing up) at the bottom of the screen.',
+  'install.ios2':
+    'Scroll down, choose "Add to Home Screen", then tap "Add".',
 
   'update.newVersion': 'New version available',
   'update.reload': 'Reload',

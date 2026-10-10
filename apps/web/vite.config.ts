@@ -14,8 +14,9 @@ export default defineConfig(({ command }) => ({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.svg', 'icon-192.png.svg'],
+      includeAssets: ['icon.svg', 'apple-touch-icon.png'],
       manifest: {
+        id: BASE,
         name: 'FuelRadar',
         short_name: 'FuelRadar',
         description:
@@ -24,21 +25,22 @@ export default defineConfig(({ command }) => ({
         scope: BASE,
         start_url: BASE,
         display: 'standalone',
+        categories: ['travel', 'navigation', 'utilities'],
         background_color: '#121212',
         theme_color: '#121212',
+        // PNG icons are what Android (WebAPK) and most launchers expect;
+        // the SVG stays as a crisp fallback. Regenerate the PNGs from
+        // icon.svg if the logo changes.
         icons: [
+          { src: 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
           {
-            src: 'icon.svg',
-            sizes: 'any',
-            type: 'image/svg+xml',
-            purpose: 'any',
-          },
-          {
-            src: 'icon.svg',
-            sizes: 'any',
-            type: 'image/svg+xml',
+            src: 'icon-maskable-512.png',
+            sizes: '512x512',
+            type: 'image/png',
             purpose: 'maskable',
           },
+          { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
         ],
       },
       workbox: {
