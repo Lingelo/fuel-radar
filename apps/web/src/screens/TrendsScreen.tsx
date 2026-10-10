@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useForegroundRefresh } from '../hooks/useForegroundRefresh';
 import {
   fetchCountriesHistory,
   fetchNationalHistory,
@@ -41,6 +42,8 @@ export function TrendsScreen() {
   );
   const [fullscreen, setFullscreen] = useState(false);
 
+  // Re-read when the app resumes after a while (installed PWA).
+  const refreshVersion = useForegroundRefresh();
   useEffect(() => {
     Promise.all([fetchNationalHistory(), fetchCountriesHistory()])
       .then(([national, countries]) => {
@@ -48,7 +51,7 @@ export function TrendsScreen() {
         setCountriesData(countries);
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [refreshVersion]);
 
   // France keeps its deep series rebuilt from the official yearly archive;
   // the other scopes only exist in the day-by-day accumulator file.

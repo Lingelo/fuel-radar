@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import { MapContainer, Marker, TileLayer, useMap } from 'react-leaflet';
 import { useFilters } from '../state/FiltersContext';
@@ -8,6 +8,7 @@ import { fetchDepartment, fetchDeptHistory, timeAgo } from '../lib/data';
 import { deptsAround } from '../lib/deptIndex';
 import { haversineKm, formatDistance } from '../lib/distance';
 import { useI18n } from '../i18n';
+import { useForegroundRefresh } from '../hooks/useForegroundRefresh';
 import { Icon } from '../components/Icon';
 import { BrandAvatar } from '../components/BrandAvatar';
 import { PriceTrendBars } from '../components/PriceTrendBars';
@@ -62,10 +63,14 @@ export function StationDetailScreen({ stationId }: Props) {
   }, [toast]);
   const [history, setHistory] = useState<Record<string, [number, number][]>>({});
   const [loading, setLoading] = useState(true);
+  // Background refreshes (app resumed) update prices in place; only a new
+  // station shows the loading state.
+  const refreshVersion = useForegroundRefresh();
+  const loadedId = useRef<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
+    if (loadedId.current !== stationId) setLoading(true);
     (async () => {
       // Try to find the station by scanning departments around the user —
       // the bbox index covers France plus the Spanish/Portuguese datasets,
@@ -100,12 +105,13 @@ export function StationDetailScreen({ stationId }: Props) {
       if (!cancelled) {
         setStation(found);
         setLoading(false);
+        loadedId.current = stationId;
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [stationId, f.userLocation, f.radiusKm]);
+  }, [stationId, f.userLocation, f.radiusKm, refreshVersion]);
 
   if (loading) {
     return (
