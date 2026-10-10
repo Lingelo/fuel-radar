@@ -3,59 +3,65 @@ import type { MetaData, Station, StationHistoryData } from '../types';
 
 const BASE = import.meta.env.BASE_URL;
 
-const deptCache = new Map<string, Station[]>();
-const historyCache = new Map<string, StationHistoryData>();
-let metaPromise: Promise<MetaData | null> | null = null;
-
-/**
- * Drop in-memory station caches and best-effort purge the corresponding
- * Cache Storage entry so the next fetch goes back to the network. Used
- * when the app is brought back to foreground after a long pause.
+/*
+ * In-memory caches are tagged with a generation. Invalidating bumps the
+ * generation instead of clearing: the next read goes back to the network
+ * (the service worker is NetworkFirst, so it only falls back to its cache
+ * when offline), and if that fails we keep serving the last good copy
+ * rather than blanking the screen.
+ *
+ * `cache: 'no-cache'` makes the browser revalidate with GitHub Pages
+ * (cheap 304) instead of trusting its HTTP cache for up to 10 minutes.
  */
-export async function invalidateStations(): Promise<void> {
-  deptCache.clear();
+interface Entry<T> {
+  gen: number;
+  data: T;
+}
+let stationGen = 0;
+let historyGen = 0;
+const deptCache = new Map<string, Entry<Station[]>>();
+const historyCache = new Map<string, Entry<StationHistoryData>>();
+let metaPromise: Promise<MetaData | null> | null = null;
+let lastMeta: MetaData | null = null;
+
+const NO_CACHE: RequestInit = { cache: 'no-cache' };
+
+/** Mark station data stale so the next read re-fetches it. */
+export function invalidateStations(): void {
+  stationGen += 1;
   metaPromise = null;
-  if ('caches' in window) {
-    try {
-      await caches.delete('station-data');
-    } catch {
-      // ignore — cache may not exist on first launch
-    }
-  }
 }
 
-export async function invalidateHistory(): Promise<void> {
-  historyCache.clear();
+/** Mark history data stale so the next read re-fetches it. */
+export function invalidateHistory(): void {
+  historyGen += 1;
   nationalPromise = null;
   countriesPromise = null;
-  if ('caches' in window) {
-    try {
-      await caches.delete('history-data');
-    } catch {
-      // ignore
-    }
-  }
+}
+
+/**
+ * Fetch a JSON data file. Returns `null` when the file legitimately does
+ * not exist (404, or an HTML error page), throws on network failure so
+ * callers can fall back to what they already have.
+ */
+async function fetchJson<T>(path: string): Promise<T | null> {
+  const res = await fetch(`${BASE}data/${path}`, NO_CACHE);
+  if (!res.ok) return null;
+  const ct = res.headers.get('content-type') ?? '';
+  if (!ct.includes('json')) return null;
+  return (await res.json()) as T;
 }
 
 export async function fetchDepartment(dept: string): Promise<Station[]> {
-  if (deptCache.has(dept)) return deptCache.get(dept)!;
+  const hit = deptCache.get(dept);
+  if (hit && hit.gen === stationGen) return hit.data;
   try {
-    const res = await fetch(`${BASE}data/departments/${dept}.json`);
-    if (!res.ok) {
-      deptCache.set(dept, []);
-      return [];
-    }
-    const ct = res.headers.get('content-type') ?? '';
-    if (!ct.includes('json')) {
-      deptCache.set(dept, []);
-      return [];
-    }
-    const data = (await res.json()) as Station[];
-    deptCache.set(dept, data);
+    const data = (await fetchJson<Station[]>(`departments/${dept}.json`)) ?? [];
+    deptCache.set(dept, { gen: stationGen, data });
     return data;
   } catch {
-    deptCache.set(dept, []);
-    return [];
+    // Offline / flaky network: keep the previous copy, retry on next read.
+    return hit?.data ?? [];
   }
 }
 
@@ -66,9 +72,12 @@ export async function fetchDepartments(depts: string[]): Promise<Station[]> {
 
 export async function fetchMeta(): Promise<MetaData | null> {
   if (!metaPromise) {
-    metaPromise = fetch(`${BASE}data/meta.json`)
-      .then((r) => (r.ok ? r.json() : null))
-      .catch(() => null);
+    metaPromise = fetchJson<MetaData>('meta.json')
+      .then((m) => (lastMeta = m ?? lastMeta))
+      .catch(() => {
+        metaPromise = null;
+        return lastMeta;
+      });
   }
   return metaPromise;
 }
@@ -79,18 +88,15 @@ export interface NationalHistory {
 }
 
 let nationalPromise: Promise<NationalHistory | null> | null = null;
+let lastNational: NationalHistory | null = null;
 export async function fetchNationalHistory(): Promise<NationalHistory | null> {
   if (!nationalPromise) {
-    nationalPromise = (async () => {
-      try {
-        const res = await fetch(`${BASE}data/history.json`);
-        const ct = res.headers.get('content-type') ?? '';
-        if (!res.ok || !ct.includes('json')) return null;
-        return (await res.json()) as NationalHistory;
-      } catch {
-        return null;
-      }
-    })();
+    nationalPromise = fetchJson<NationalHistory>('history.json')
+      .then((d) => (lastNational = d ?? lastNational))
+      .catch(() => {
+        nationalPromise = null;
+        return lastNational;
+      });
   }
   return nationalPromise;
 }
@@ -109,18 +115,15 @@ export interface CountriesHistory {
 }
 
 let countriesPromise: Promise<CountriesHistory | null> | null = null;
+let lastCountries: CountriesHistory | null = null;
 export async function fetchCountriesHistory(): Promise<CountriesHistory | null> {
   if (!countriesPromise) {
-    countriesPromise = (async () => {
-      try {
-        const res = await fetch(`${BASE}data/history-countries.json`);
-        const ct = res.headers.get('content-type') ?? '';
-        if (!res.ok || !ct.includes('json')) return null;
-        return (await res.json()) as CountriesHistory;
-      } catch {
-        return null;
-      }
-    })();
+    countriesPromise = fetchJson<CountriesHistory>('history-countries.json')
+      .then((d) => (lastCountries = d ?? lastCountries))
+      .catch(() => {
+        countriesPromise = null;
+        return lastCountries;
+      });
   }
   return countriesPromise;
 }
@@ -134,24 +137,14 @@ export function isStale(updateDate: string, thresholdHours = 72): boolean {
 
 /** Fetch per-station price history for a whole department. Returns {} if missing or non-JSON. */
 export async function fetchDeptHistory(dept: string): Promise<StationHistoryData> {
-  if (historyCache.has(dept)) return historyCache.get(dept)!;
+  const hit = historyCache.get(dept);
+  if (hit && hit.gen === historyGen) return hit.data;
   try {
-    const res = await fetch(`${BASE}data/history/${dept}.json`);
-    if (!res.ok) {
-      historyCache.set(dept, {});
-      return {};
-    }
-    const ct = res.headers.get('content-type') ?? '';
-    if (!ct.includes('json')) {
-      historyCache.set(dept, {});
-      return {};
-    }
-    const data = (await res.json()) as StationHistoryData;
-    historyCache.set(dept, data);
+    const data = (await fetchJson<StationHistoryData>(`history/${dept}.json`)) ?? {};
+    historyCache.set(dept, { gen: historyGen, data });
     return data;
   } catch {
-    historyCache.set(dept, {});
-    return {};
+    return hit?.data ?? {};
   }
 }
 

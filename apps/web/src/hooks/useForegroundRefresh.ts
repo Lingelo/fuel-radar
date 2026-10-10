@@ -1,34 +1,66 @@
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import { invalidateHistory, invalidateStations } from '../lib/data';
 
-/**
- * Bumps an integer whenever the document becomes visible again after at
- * least `staleAfterMs` of being hidden. Components can include this
- * value in their useEffect deps to force a re-fetch with fresh data
- * when the user comes back to the app.
+/** Hidden for at least this long → refresh when the app comes back. */
+const STALE_AFTER_HIDDEN_MS = 60_000;
+/** Data is regenerated every 2 h; refresh an app left open on screen this often. */
+const MAX_AGE_MS = 30 * 60_000;
+const CHECK_INTERVAL_MS = 60_000;
+
+/*
+ * One app-wide refresh clock, shared by every screen. An installed PWA is
+ * rarely reloaded: the OS just suspends and resumes it, sometimes for days,
+ * so in-memory data has to be marked stale explicitly. Every consumer gets
+ * the same `version` and puts it in its effect deps to re-fetch.
  */
-export function useForegroundRefresh(staleAfterMs = 60_000): number {
-  const [version, setVersion] = useState(0);
+let version = 0;
+let lastRefresh = Date.now();
+let hiddenSince: number | null = null;
+let started = false;
+const listeners = new Set<() => void>();
 
-  useEffect(() => {
-    let hiddenSince: number | null = null;
-    const onVisibility = () => {
-      if (document.visibilityState === 'hidden') {
-        hiddenSince = Date.now();
-        return;
-      }
-      if (hiddenSince === null) return;
-      const elapsed = Date.now() - hiddenSince;
-      hiddenSince = null;
-      if (elapsed < staleAfterMs) return;
-      // Foreground after being away long enough — wipe caches and bump.
-      Promise.all([invalidateStations(), invalidateHistory()]).finally(() =>
-        setVersion((v) => v + 1),
-      );
-    };
-    document.addEventListener('visibilitychange', onVisibility);
-    return () => document.removeEventListener('visibilitychange', onVisibility);
-  }, [staleAfterMs]);
+function refresh() {
+  lastRefresh = Date.now();
+  invalidateStations();
+  invalidateHistory();
+  version += 1;
+  listeners.forEach((l) => l());
+}
 
-  return version;
+function start() {
+  if (started || typeof document === 'undefined') return;
+  started = true;
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      hiddenSince = Date.now();
+      return;
+    }
+    const hiddenFor = hiddenSince === null ? 0 : Date.now() - hiddenSince;
+    hiddenSince = null;
+    if (hiddenFor >= STALE_AFTER_HIDDEN_MS || Date.now() - lastRefresh >= MAX_AGE_MS) refresh();
+  });
+  // Back online after a dead zone: whatever loaded meanwhile came from cache.
+  window.addEventListener('online', refresh);
+  // App kept on screen (e.g. phone mount): no visibility change ever fires.
+  setInterval(() => {
+    if (document.visibilityState === 'visible' && Date.now() - lastRefresh >= MAX_AGE_MS) {
+      refresh();
+    }
+  }, CHECK_INTERVAL_MS);
+}
+
+function subscribe(listener: () => void) {
+  start();
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+const getVersion = () => version;
+
+/**
+ * Integer bumped whenever station/history data should be re-fetched:
+ * app resumed after a while, network back, or data simply getting old.
+ */
+export function useForegroundRefresh(): number {
+  return useSyncExternalStore(subscribe, getVersion, getVersion);
 }

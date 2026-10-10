@@ -10,7 +10,8 @@ interface BeforeInstallPromptEvent extends Event {
 export type InstallPlatform =
   | 'native-prompt'    // Chromium captured beforeinstallprompt; we can call prompt()
   | 'in-app-webview'   // Facebook/Instagram/Gmail in-app browser
-  | 'unsupported'      // Already installed, iOS Safari, or browser can't install
+  | 'ios'              // iOS / iPadOS: manual Share → Add to Home Screen
+  | 'unsupported'      // Already installed, or browser can't install
   | 'generic';         // Firefox / desktop without prompt → use browser menu
 
 interface State {
@@ -40,11 +41,13 @@ function detectPlatform(): InstallPlatform {
   const isWebview = /FBAN|FBAV|Instagram|Twitter|Line|MicroMessenger|GSA|LinkedIn/.test(ua);
   if (isWebview) return 'in-app-webview';
 
-  // iOS Safari has no beforeinstallprompt and our custom Share + Add to Home
-  // Screen modal had safe-area issues. Hide the button entirely; users can
-  // still install manually via Safari → Partager → Sur l'écran d'accueil.
-  const isIOS = /iPad|iPhone|iPod/.test(ua) && !('MSStream' in window);
-  if (isIOS) return 'unsupported';
+  // iOS has no beforeinstallprompt: the user has to go through Share →
+  // Add to Home Screen, so we show a guide instead. iPadOS reports itself
+  // as "Macintosh" — tell it apart from a real Mac by its touch support.
+  const isIOS =
+    /iPad|iPhone|iPod/.test(ua) ||
+    (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  if (isIOS) return 'ios';
 
   return 'generic';
 }

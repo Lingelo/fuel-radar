@@ -21,6 +21,18 @@ export function UpdateBanner() {
       onNeedRefresh() {
         setNeedRefresh(true);
       },
+      // The browser only checks for a new service worker on navigation,
+      // which an installed app almost never does: poll on resume and hourly.
+      onRegisteredSW(_url, registration) {
+        if (!registration) return;
+        const check = () => {
+          if (navigator.onLine) registration.update().catch(() => {});
+        };
+        setInterval(check, 60 * 60_000);
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') check();
+        });
+      },
       onRegisterError(error) {
         console.error('SW registration error:', error);
       },
