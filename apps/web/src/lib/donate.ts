@@ -1,9 +1,10 @@
 /**
- * Lien de dons (Ko-fi), injecté au build via `VITE_DONATE_URL`
+ * Lien de dons (Ko-fi). Surchargeable au build via `VITE_DONATE_URL`
  * (variable de dépôt `DONATE_URL`, voir .github/workflows/deploy.yml).
  * Vide → la section « Soutenir » et le bandeau restent masqués.
  */
-export const donateUrl: string = import.meta.env.VITE_DONATE_URL ?? '';
+export const donateUrl: string =
+  import.meta.env.VITE_DONATE_URL || 'https://ko-fi.com/angelolima';
 
 const KEY = 'fuelradar:donate';
 const SESSION_KEY = 'fuelradar:donate-visit';

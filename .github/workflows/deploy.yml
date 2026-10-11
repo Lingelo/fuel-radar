@@ -64,9 +64,9 @@ jobs:
           # runtime, no error. Configure the secret in
           # Settings -> Secrets and variables -> Actions.
           VITE_MAPTILER_KEY: ${{ secrets.MAPTILER_KEY }}
-          # Optional: donation link (e.g. https://ko-fi.com/<pseudo>). Set it
-          # as a repository *variable* (not a secret) named DONATE_URL.
-          # Absent -> the "Support" section and banner stay hidden.
+          # Optional: overrides the donation link (default
+          # https://ko-fi.com/angelolima, see src/lib/donate.ts). Set it as a
+          # repository *variable* (not a secret) named DONATE_URL.
           VITE_DONATE_URL: ${{ vars.DONATE_URL }}
 
       - name: Upload artifact
