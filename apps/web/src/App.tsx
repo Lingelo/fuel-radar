@@ -6,6 +6,7 @@ import { FavoritesProvider } from './state/FavoritesContext';
 import { SettingsProvider } from './state/SettingsContext';
 import { BottomNavBar } from './components/BottomNavBar';
 import { UpdateBanner } from './components/UpdateBanner';
+import { DonateBanner } from './components/DonateBanner';
 import { MapScreen } from './screens/MapScreen';
 import { StationDetailScreen } from './screens/StationDetailScreen';
 import { FavoritesScreen } from './screens/FavoritesScreen';
@@ -88,6 +89,7 @@ export function App() {
                 <Router />
               </main>
               <BottomNavBar />
+              <DonateBanner />
               <UpdateBanner />
             </div>
           </ViewProvider>

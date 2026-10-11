@@ -9,6 +9,7 @@ import { useI18n, LOCALES } from '../i18n';
 import { Icon } from '../components/Icon';
 import { InstallButton } from '../components/InstallButton';
 import { ScreenHeader } from '../components/ScreenHeader';
+import { donateUrl } from '../lib/donate';
 
 export function SettingsScreen() {
   const s = useSettings();
@@ -215,6 +216,25 @@ export function SettingsScreen() {
             {'share' in navigator ? t('common.share') : t('common.copyLinkBtn')}
           </button>
         </section>
+
+        {donateUrl && (
+          <section className="bg-surface-container-lowest rounded-xl p-md border border-outline-variant">
+            <h2 className="text-headline-md font-semibold text-on-surface mb-sm flex items-center gap-2">
+              <Icon name="volunteer_activism" className="text-primary" />
+              {t('donate.title')}
+            </h2>
+            <p className="text-body-sm text-on-surface-variant mb-3">{t('donate.settingsText')}</p>
+            <a
+              href={donateUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-primary text-on-primary px-4 py-2 rounded-lg text-body-sm font-semibold inline-flex items-center gap-2 active:scale-95 transition-transform"
+            >
+              <Icon name="favorite" size={18} filled />
+              {t('donate.cta')}
+            </a>
+          </section>
+        )}
 
         <section className="bg-surface-container-lowest rounded-xl p-md border border-outline-variant">
           <h2 className="text-headline-md font-semibold text-on-surface mb-sm">{t('settings.data')}</h2>
