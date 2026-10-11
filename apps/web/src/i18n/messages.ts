@@ -204,6 +204,11 @@ const fr = {
   'settings.designedBy': 'Conçu et développé par',
   'settings.sourceCode': 'Code source sur GitHub',
   'settings.downloadAndroid': "Télécharger l'app Android",
+  'donate.title': 'Soutenir FuelRadar',
+  'donate.settingsText':
+    "FuelRadar est gratuit et sans publicité. Au-delà d'un certain nombre de visites, le fond de carte devient payant : un petit don aide à le garder en ligne.",
+  'donate.bannerText': 'La carte a un coût au-delà d\'un certain trafic. Un petit don aide à garder l\'app gratuite et sans pub.',
+  'donate.cta': 'Faire un don',
 
   'install.button': 'Installer',
   'install.aria': "Installer l'application",
@@ -409,6 +414,11 @@ const es: Messages = {
   'settings.designedBy': 'Diseñado y desarrollado por',
   'settings.sourceCode': 'Código fuente en GitHub',
   'settings.downloadAndroid': 'Descargar la app de Android',
+  'donate.title': 'Apoyar FuelRadar',
+  'donate.settingsText':
+    'FuelRadar es gratuito y sin publicidad. A partir de cierto número de visitas, el mapa de fondo pasa a ser de pago: una pequeña donación ayuda a mantenerlo en línea.',
+  'donate.bannerText': 'El mapa tiene un coste a partir de cierto tráfico. Una pequeña donación ayuda a mantener la app gratuita y sin anuncios.',
+  'donate.cta': 'Donar',
 
   'install.button': 'Instalar',
   'install.aria': 'Instalar la aplicación',
@@ -610,6 +620,11 @@ const pt: Messages = {
   'settings.designedBy': 'Concebido e desenvolvido por',
   'settings.sourceCode': 'Código-fonte no GitHub',
   'settings.downloadAndroid': 'Baixar a app Android',
+  'donate.title': 'Apoiar o FuelRadar',
+  'donate.settingsText':
+    'O FuelRadar é gratuito e sem publicidade. A partir de um certo número de visitas, o mapa de fundo passa a ser pago: um pequeno donativo ajuda a mantê-lo online.',
+  'donate.bannerText': 'O mapa tem um custo a partir de um certo tráfego. Um pequeno donativo ajuda a manter a app gratuita e sem anúncios.',
+  'donate.cta': 'Fazer um donativo',
 
   'install.button': 'Instalar',
   'install.aria': 'Instalar a aplicação',
@@ -807,6 +822,11 @@ const en: Messages = {
   'settings.designedBy': 'Designed and developed by',
   'settings.sourceCode': 'Source code on GitHub',
   'settings.downloadAndroid': 'Download the Android app',
+  'donate.title': 'Support FuelRadar',
+  'donate.settingsText':
+    'FuelRadar is free and ad-free. Past a certain number of visits, the base map starts costing money: a small donation helps keep it online.',
+  'donate.bannerText': 'The map costs money past a certain amount of traffic. A small donation helps keep the app free and ad-free.',
+  'donate.cta': 'Donate',
 
   'install.button': 'Install',
   'install.aria': 'Install the app',
